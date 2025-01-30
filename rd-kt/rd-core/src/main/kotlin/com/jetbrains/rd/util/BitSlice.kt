@@ -1,5 +1,7 @@
 package com.jetbrains.rd.util
 
+import java.util.concurrent.atomic.AtomicInteger
+
 open class BitSlice(val lowBit: Int, val bitCount: Int) {
     init {
         require(lowBit >= 0)  { "[lowBit] must be >= 0, actual: '$lowBit'"}
