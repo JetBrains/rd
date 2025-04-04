@@ -63,7 +63,7 @@ jobs:
 
     - name: Get nuget
       if: steps.cache-nuget.outputs.cache-hit != 'true'
-      uses: nuget/setup-nuget@v1
+      uses: nuget/setup-nuget@v2
       with:
         nuget-version: '5.x'
 
