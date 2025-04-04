@@ -26,7 +26,7 @@ jobs:
       run: cd rd-net && dotnet build --configuration Release --no-restore
     - name: Tests
       run: cd rd-net && dotnet test --no-restore --verbosity quiet --logger trx
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: failure()
       with:
         name: ${{ runner.os }}.test-results

@@ -177,7 +177,7 @@ jobs:
         endif()
 
     - name: Upload environment script log
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: build-log-${{ matrix.config.os }}
@@ -231,7 +231,7 @@ jobs:
       run: cd export && cmake -E tar "cfv" ../${{ env.artifact }} --format=zip include libs
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
