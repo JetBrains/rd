@@ -17,17 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Gradle Wrapper Cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.GRADLE_USER_HOME }}/wrapper
-          key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
-# TODO: See https://github.com/actions/runner/issues/449
-#      - name: Gradle Cache
-#        uses: actions/cache@v3
-#        with:
-#          path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
-#          key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Assemble
         run: ./gradlew assemble

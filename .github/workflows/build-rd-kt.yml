@@ -20,16 +20,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Gradle Wrapper Cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.GRADLE_USER_HOME }}/wrapper
-        key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
-    - name: Gradle Cache
-      uses: actions/cache@v3
-      with:
-        path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
-        key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Assemble
       run: ./gradlew assemble
@@ -41,9 +33,3 @@ jobs:
       with:
         name: tests-log.${{ runner.os }}
         path: "**/reports/*"
-  validation:
-    runs-on: ubuntu-22.04
-    name: "Validate Gradle wrapper"
-    steps:
-      - uses: actions/checkout@v2
-      - uses: gradle/wrapper-validation-action@v3
