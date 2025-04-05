@@ -221,29 +221,137 @@ Model types may contain a variety of members:
   - async maps (the ones that use the new threading model, see below): `asyncMap("name", keyType, valueType)`
 
     Note that the value type may only be scalar for async map.
-  - TODO: `array` and below
+- non-observable collections:
+  - `array`
+  - `immutableList`
 - methods (for interfaces): `method("name", returnType, vararg argumentTypes)`
 
 ### Settings
-TODO
+rd-gen allows customizing the code generation via `settings`. Settings are specific for different generators.
 
-#### Transformations (as-is, reversed, symmetric)
-TODO
+Usually, the settings are defined in the `Ext` models' constructors, like this:
+```kotlin
+object MyModel : Ext(SolutionModel.Solution) {
+    init {
+        setting(Kotlin11Generator.Namespace, "my.plugin.model")
+        setting(CSharp50Generator.Namespace, "MyPlugin.Model")
+    }
+}
+```
+
+#### Flow Transformations (as-is, reversed, symmetric)
+Some protocol entities (such as calls and signals) support several different flow transformations.
+This is useful if you want one protocol party to be able to only publish a signal or start a call,
+and another party to only subscribe to a signal or to serve the call.
+
+When setting up a generator, you always have a choice which flow transformation kind to use.
+
+The default flow transformation is **as-is**,
+which means that the entities will be generated as they are written in the model sources.
+E.g., a `call` will be generated as a call.
+
+The other flow transformations are **reversed**,
+which means that the entities will be generated as if they were reversed: a `signal` gets converted into a `sink`,
+a `call` gets converted into an `endpoint`, a property gets converted into a `propertyView`.
 
 ### Threading
-TODO: default threading model, `.async`, new threading model
+The default threading model supposes
+that all the protocol calls and model changes are made from the same protocol dispatcher
+(usually tied to the main thread of the application).
+The call results and any changes are also dispatched to the same protocol dispatcher.
+
+When using suspending mode (in Kotlin),
+the protocol will use the dispatcher from the current coroutine context to serve the callbacks.
+
+If you make any call from a non-supported thread, the protocol will log an assertion error.
+
+If you wish to relax the threading, use the `.async` annotation on the corresponding model member
+(such as a `call` or a `property`).
+Be aware that this way, there won't be any guarantees about the order of events happening with such an entity. 
 
 ### Contexts
 TODO
 
-Gradle Configuration
---------------------
-TODO
+Running rd-gen
+--------------
+There are several ways to run rd-gen: as a standalone tool, or as a Gradle task.
+
+### Standalone
+rd-gen is essentially a runnable Java `.jar` file.
+See `com.jetbrains.rd.generator.nova.RdGen` class for the possible options description,
+or run rd-gen with `--help` flag.
+
+### Gradle
+To run rd-gen via Gradle, follow these steps:
+1. Add Maven Central repository to your `settings.gradle.kts`, to be able to install plugins from Maven Central (as we do not use the Gradle Plugin Portal as of now):
+
+   ```kotlin
+   // settings.gradle.kts
+   pluginManagement {
+     repositories {
+         gradlePluginPortal()
+         mavenCentral()
+     }
+     resolutionStrategy {
+         eachPlugin {
+             if (requested.id.id == "com.jetbrains.rdgen") {
+                 useModule("com.jetbrains.rd:rd-gen:${requested.version}")
+             }
+         }
+     }
+   } 
+   ```
+2. Add the `com.jetbrains.rd.generator.nova` plugin to your `build.gradle.kts`:   
+   ```kotlin
+   plugins {
+       id("com.jetbrains.rdgen") version "2025.1.1"
+   }
+   ```
+3. Configure the `rdgen` extension on the top level of the `build.gradle.kts`, for example:
+   ```kotlin
+   rdgen {
+       verbose = true
+       packages = "model.rider"
+   
+       generator {
+           language = "kotlin"
+           transform = "asis"
+           root = "com.jetbrains.rider.model.nova.ide.IdeRoot"
+           directory = "$ktOutput"
+       }
+   
+       generator {
+           language = "csharp"
+           transform = "reversed"
+           root = "com.jetbrains.rider.model.nova.ide.IdeRoot"
+           directory = "$csOutput"
+       }
+   }
+   ```
+4. If required, configure the `RdGenTask`:
+   ```kotlin
+   tasks.withType<RdGenTask> {
+       val classPath = sourceSets["main"].runtimeClasspath
+       inputs.files(classPath)
+       outputs.dirs(csOutput, ktOutput)
+    
+       classpath(classPath)
+   }
+   ```
 
 Examples
 --------
-TODO (add links)
+See the following Rider plugins for examples of how to use rd-gen:
+- [JetBrains Rider Plugin Template][rider-plugin-template]:
+  - [protocol model definition][rider-plugin-template.model],
+  - [Gradle build setup][rider-plugin-template.gradle];
+- [F# language support in JetBrains Rider][resharper-fsharp]:
+  - [protocol model definition][resharper-fsharp.model],
+  - [Gradle build setup][resharper-fsharp.gradle].
 
-Walkthrough
------------
-TODO
+[resharper-fsharp.gradle]: https://github.com/JetBrains/resharper-fsharp/blob/4dd3eb739c53d351f0f7638f774653bbd57e0f18/rider-fsharp/protocol/build.gradle.kts
+[resharper-fsharp.model]: https://github.com/JetBrains/resharper-fsharp/tree/4dd3eb739c53d351f0f7638f774653bbd57e0f18/rider-fsharp/protocol/src/kotlin/model
+[resharper-fsharp]: https://github.com/JetBrains/resharper-fsharp/
+[rider-plugin-template.gradle]: https://github.com/ForNeVeR/rider-plugin-template/blob/f91bed6e211b9e257363e5700b385a1c845c1e65/content/protocol/build.gradle.kts
+[rider-plugin-template.model]: https://github.com/ForNeVeR/rider-plugin-template/blob/f91bed6e211b9e257363e5700b385a1c845c1e65/content/protocol/src/main/kotlin/model/rider/RdPluginTemplateModel.kt
+[rider-plugin-template]: https://github.com/ForNeVeR/rider-plugin-template
