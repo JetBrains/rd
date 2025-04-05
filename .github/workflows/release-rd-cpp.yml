@@ -25,23 +25,23 @@ jobs:
       matrix:
         config:
         - {
-            name: "RD CPP Windows Latest MSVC", artifact: "RD-CPP-Windows-MSVC-2019-",
-            os: windows-latest,
+            name: "RD CPP Windows 2022 MSVC 2019", artifact: "RD-CPP-Windows-MSVC-2019-",
+            os: windows-2022,
             cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
             SEP: \,
             suffix: win-vs19            
           }
         - {
-            name: "RD CPP Ubuntu Latest Clang", artifact: "RD-CPP-Linux-Clang-",
-            os: ubuntu-latest,
+            name: "RD CPP Ubuntu 24.04 Clang", artifact: "RD-CPP-Linux-Clang-",
+            os: ubuntu-24.04,
             cc: "clang", cxx: "clang++",
             SEP: /,
               suffix: linux-clang
           }
         - {
-            name: "RD CPP macOS Latest Clang", artifact: "RD-CPP-macOS-Clang-",
-            os: macos-latest,
+            name: "RD CPP macOS 14 Clang", artifact: "RD-CPP-macOS-Clang-",
+            os: macos-14,
             cc: "clang", cxx: "clang++",
             SEP: /,
               suffix: mac-clang
