@@ -39,6 +39,7 @@ Plugin for RdFramework used for defining models using regular C#
 
 ### RdGen
 Rd Generator: generates stubs (Kotlin/C#/C++) classes by Kotlin DSL models
+* [**Documentation**][docs.rd-gen]
 * Sources: https://github.com/JetBrains/rd/tree/HEAD/rd-kt/rd-gen
 * Gradle: https://mvnrepository.com/artifact/com.jetbrains.rd/rd-gen
   
@@ -173,3 +174,5 @@ Look at cross tests
 ## License
 
 Rd is licensed under the [Apache 2.0](LICENSE) license. Rd distributions may include third-party software licensed separately; see [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.TXT) for details.
+
+[docs.rd-gen]: docs/rd-gen.md
