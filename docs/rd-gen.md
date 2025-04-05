@@ -27,7 +27,8 @@ Each of these models may have a set of _members_, such as:
   - signals (sinks / signal sources): "fire and forget"
   - calls, callbacks: it's possible to return a result
 
-The protocol allows use for persistent models that have mutable members in memory, as well as in a RPC-like way without any persistence via signals and calls.
+The protocol allows using of stateful models that have mutable members in memory,
+as well as in a stateless RPC-like way via signals and calls.
  
 Model Definition
 ----------------
@@ -111,7 +112,7 @@ The protocol allows to declare the following type of entities:
 3. `interfacedef`: declares an interface that may be implemented by other types. Example:
    ```kotlin
    val Interface = interfacedef {
-       call("foo", PredefinedType.void, PredefinedType.void)
+       method("foo", PredefinedType.void, PredefinedType.void)
    }
    val BaseClassWithInterface = baseclass implements Interface with {
    }
