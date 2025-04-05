@@ -7,7 +7,7 @@ import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ISource
 import java.time.Duration
 import java.util.*
-import java.util.EnumSet
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.schedule
 
 private val timer by lazy { Timer("rd throttler", true) }
