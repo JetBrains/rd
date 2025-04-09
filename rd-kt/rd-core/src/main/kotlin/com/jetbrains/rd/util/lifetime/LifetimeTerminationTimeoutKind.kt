@@ -17,13 +17,13 @@ enum class LifetimeTerminationTimeoutKind(val value: Int) {
      */
     Short(1),
     /**
-     * Short timeout (5s).
+     * Long timeout (5s).
      *
      * The actual value can be overridden via [Lifetime.setTerminationTimeoutMs].
      */
     Long(2),
     /**
-     * Short timeout (30s).
+     * Extra long timeout (30s).
      *
      * The actual value can be overridden via [Lifetime.setTerminationTimeoutMs].
      */
