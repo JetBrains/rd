@@ -334,18 +334,7 @@ namespace JetBrains.Rd.Reflection
         result = null;
       }
 
-      SetAsync(result);
-
       return result;
-    }
-
-    private static void SetAsync(object? result)
-    {
-      if (result is IRdReactive activatedBindable)
-      {
-        //foreach (var _ in mi.GetCustomAttributes(typeof(RdAsyncAttribute), false))
-        activatedBindable.Async = true;
-      }
     }
 
     private SerializerPair GetProperSerializer(Type type)
