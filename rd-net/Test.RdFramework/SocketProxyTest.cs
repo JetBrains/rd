@@ -26,19 +26,19 @@ namespace Test.RdFramework
         {
           SynchronousScheduler.Instance.SetActive(lifetime);
 
-          var serverProtocol = SocketWireTest.Server(lifetime);
+          var (serverProtocol, _) = SocketWireIpEndpointTest.CreateServer(lifetime);
 
           var proxy = new SocketProxy("TestProxy", proxyLifetime, serverProtocol).With(socketProxy =>
             socketProxy.Start());
-          Thread.Sleep(SocketWireTest.DefaultTimeout);
+          Thread.Sleep(SocketWireIpEndpointTest.DefaultTimeout);
 
-          var clientProtocol = SocketWireTest.Client(lifetime, proxy.Port);
+          var clientProtocol = SocketWireIpEndpointTest.CreateClient(lifetime, proxy.Port);
 
           var sp = NewRdSignal<int>().Static(1);
-          sp.BindTopLevel(lifetime, serverProtocol, SocketWireTest.Top);
+          sp.BindTopLevel(lifetime, serverProtocol, SocketWireIpEndpointTest.Top);
 
           var cp = NewRdSignal<int>().Static(1);
-          cp.BindTopLevel(lifetime, clientProtocol, SocketWireTest.Top);
+          cp.BindTopLevel(lifetime, clientProtocol, SocketWireIpEndpointTest.Top);
 
           var serverLog = new List<int>();
           var clientLog = new List<int>();

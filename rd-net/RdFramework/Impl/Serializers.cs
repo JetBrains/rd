@@ -257,7 +257,7 @@ namespace JetBrains.Rd.Impl
       bool TryGetReader(RdId rdId, out CtxReadDelegate<object?> readDelegate)
       {
         lock (myLock)
-          return myReaders.TryGetValue(rdId, out readDelegate);
+          return myReaders.TryGetValue(rdId, out readDelegate!);
       }
 #if !NET35
       myBackgroundRegistrar.Join();

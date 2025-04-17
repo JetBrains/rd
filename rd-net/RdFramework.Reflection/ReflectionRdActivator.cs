@@ -148,7 +148,7 @@ namespace JetBrains.Rd.Reflection
       object instance;
       try
       {
-        instance = Activator.CreateInstance(implementingType);
+        instance = Activator.CreateInstance(implementingType)!;
       }
       catch (MissingMethodException e)
       {
@@ -451,10 +451,10 @@ namespace JetBrains.Rd.Reflection
       {
         var rpcInterface = ReflectionSerializerVerifier.GetRpcInterface(type.GetTypeInfo());
         if (rpcInterface != null)
-          return rpcInterface.AssemblyQualifiedName;
+          return rpcInterface.AssemblyQualifiedName!;
       }
 
-      return typename;
+      return typename!;
     }
   }
 }

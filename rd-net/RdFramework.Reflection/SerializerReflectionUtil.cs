@@ -74,8 +74,9 @@ namespace JetBrains.Rd.Reflection
         yield return field;
 
       // private fields only being returned for the current type
-      while ((type = type.BaseType) != baseType && type != null)
+      while (type.BaseType != baseType && type.BaseType != null)
       {
+        type = type.BaseType;
         // but protected fields are returned in first step
         foreach (var baseField in type.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
           if (baseField.IsPrivate)
@@ -85,7 +86,7 @@ namespace JetBrains.Rd.Reflection
 
     internal static SerializerPair ConvertPair(SerializerPair serializers, Type desiredType)
     {
-      return (SerializerPair)ourConvertSerializerPair.MakeGenericMethod(serializers.Writer.GetType().GetGenericArguments()[0], desiredType).Invoke(null, new object[] { serializers });
+      return (SerializerPair)ourConvertSerializerPair.MakeGenericMethod(serializers.Writer.GetType().GetGenericArguments()[0], desiredType).Invoke(null, new object[] { serializers })!;
     }
 
     private static readonly MethodInfo ourConvertSerializerPair = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(ConvertPairGeneric), BindingFlags.Static | BindingFlags.NonPublic)!;
@@ -113,7 +114,7 @@ namespace JetBrains.Rd.Reflection
 
       var genericTypedRead = ourConvertTypedCtxRead.MakeGenericMethod(reader.GetType().GetGenericArguments()[0], typeof(object));
       var result = genericTypedRead.Invoke(null, new[] { reader });
-      return (CtxReadDelegate<TOut>)result;
+      return (CtxReadDelegate<TOut>)result!;
     }
 
     internal static CtxWriteDelegate<TOut> ConvertWriter<TOut>(object writer)
@@ -121,7 +122,7 @@ namespace JetBrains.Rd.Reflection
       if (writer is CtxWriteDelegate<TOut> objWriter)
         return objWriter;
 
-      return (CtxWriteDelegate<TOut>)ourConvertTypedCtxWrite.MakeGenericMethod(writer.GetType().GetGenericArguments()[0], typeof(TOut)).Invoke(null, new[] { writer });
+      return (CtxWriteDelegate<TOut>)ourConvertTypedCtxWrite.MakeGenericMethod(writer.GetType().GetGenericArguments()[0], typeof(TOut)).Invoke(null, new[] { writer })!;
     }
 
     private static readonly MethodInfo ourConvertTypedCtxRead = typeof(SerializerReflectionUtil).GetTypeInfo().GetMethod(nameof(CtxReadTypedToObject), BindingFlags.Static | BindingFlags.NonPublic)!;
