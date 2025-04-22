@@ -19,7 +19,14 @@ namespace JetBrains.Rd.Tasks
     {
       ReasonTypeFqn = inner.GetType().FullName;
       ReasonMessage = inner.Message;
-      ReasonText = inner.ToString(); //todo Use system capabilities, stack traces, etc
+      try
+      {
+        ReasonText = inner.ToString(); //todo Use system capabilities, stack traces, etc
+      }
+      catch (Exception e)
+      {
+        ReasonText = $"An error occurred while attempting to render the full exception: {e.Message}";
+      }
     }
 
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
