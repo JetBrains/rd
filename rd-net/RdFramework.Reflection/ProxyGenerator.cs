@@ -83,7 +83,7 @@ namespace JetBrains.Rd.Reflection
     public ProxyGenerator(bool allowSave = false)
     {
       myAllowSave = allowSave;
-#if NETSTANDARD
+#if NETSTANDARD || NETCOREAPP
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.Run));
      myModuleBuilder = new Lazy<ModuleBuilder>(() => myAssemblyBuilder.Value.DefineDynamicModule(DynamicAssemblyName));
 #else
@@ -325,14 +325,15 @@ namespace JetBrains.Rd.Reflection
         throw new Exception("Setter for properties in proxy interface is prohibited due to unclear semantic");
       }
 
-      if (propertyInfo.GetGetMethod() != null)
+      var methodInfo = propertyInfo.GetGetMethod();
+      if (methodInfo != null)
       {
-        var getMethod = typebuilder.DefineMethod(propertyInfo.GetGetMethod().Name, MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.Private, type, EmptyArray<Type>.Instance);
+        var getMethod = typebuilder.DefineMethod(methodInfo.Name, MethodAttributes.Final | MethodAttributes.Virtual | MethodAttributes.Private, type, EmptyArray<Type>.Instance);
         var il = getMethod.GetILGenerator();
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldfld, field);
         il.Emit(OpCodes.Ret);
-        typebuilder.DefineMethodOverride(getMethod, propertyInfo.GetGetMethod());
+        typebuilder.DefineMethodOverride(getMethod, methodInfo);
       }
     }
 
@@ -636,7 +637,7 @@ namespace JetBrains.Rd.Reflection
 
     // ReSharper disable once PossibleNullReferenceException
     public readonly MethodInfo EternalLifetimeGet = typeof(Lifetime)
-      .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)
+      .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)!
       .GetGetMethod()
       .NotNull(nameof(EternalLifetimeGet));
 
