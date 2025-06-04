@@ -76,6 +76,8 @@ private:
 
 	void add_data(std::vector<Buffer::ByteArray>&& new_data);
 
+	void cleanup_pending_queue();
+
 	bool reprocess();
 
 	void process();
