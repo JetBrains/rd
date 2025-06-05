@@ -24,7 +24,7 @@ namespace JetBrains.Rd.Base
   {
     public static IProtocol GetProtoOrThrow(this IRdDynamic dynamic)
     {
-      return dynamic.TryGetProto() ?? throw new ProtocolNotBoundException(dynamic.ToString());
+      return dynamic.TryGetProto() ?? throw new ProtocolNotBoundException(dynamic.ToString() ?? "'dynamic.ToString() was null'");
     }
   }
 
@@ -322,7 +322,7 @@ namespace JetBrains.Rd.Base
           break;
         }
         default:
-          printer.Print(me.ToString());
+          printer.Print(me.ToString() ?? "");
           break;
       }
     }
