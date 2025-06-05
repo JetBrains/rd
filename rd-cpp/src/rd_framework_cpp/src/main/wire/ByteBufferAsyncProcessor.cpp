@@ -165,11 +165,6 @@ void ByteBufferAsyncProcessor::ThreadProc()
 				}
 			}
 
-			{
-				std::lock_guard<decltype(queue_lock)> queue_guard(queue_lock);
-				cleanup_pending_queue();
-			}
-
 			if (!data.empty())
 			{
 				add_data(std::move(data));
@@ -270,6 +265,9 @@ void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seqn)
 	{
 		logger->trace("{}: new acknowledged seqn: {}", this->id, seqn);
 		acknowledged_seqn = seqn;
+
+		std::lock_guard<decltype(queue_lock)> queue_guard(queue_lock);
+		cleanup_pending_queue();
 	}
 	else
 	{
