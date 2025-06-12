@@ -92,7 +92,7 @@ bool SocketWire::Base::send0(Buffer::ByteArray const& msg, sequence_number_t seq
 																					 ": failed to send package over the network"
 																					 ", reason: " +
 																					 socket_sender->DescribeError());
-		logger->info("{}: were sent {} bytes", this->id, msglen);
+		logger->trace("{}: were sent {} bytes", this->id, msglen);
 		//        RD_ASSERT_MSG(socketProvider->Flush(), "{}: failed to flush");
 		return true;
 	}
@@ -212,7 +212,7 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 			{
 				hi = lo = receiver_buffer.begin();
 			}
-			logger->info("{}: receive started", this->id);
+			logger->trace("{}: receive started", this->id);
 			int32_t read = socket_provider->Receive(static_cast<int32_t>(receiver_buffer.end() - hi), &*hi);
 			if (read == -1)
 			{
@@ -233,7 +233,7 @@ bool SocketWire::Base::read_from_socket(Buffer::word_t* res, int32_t msglen) con
 			hi += read;
 			if (read > 0)
 			{
-				logger->info("{}: receive finished: {} bytes read", this->id, read);
+				logger->trace("{}: receive finished: {} bytes read", this->id, read);
 			}
 		}
 	}
@@ -333,7 +333,7 @@ int32_t SocketWire::Base::read_package() const
 	}
 	max_received_seqn = seqn;
 
-	logger->info("{}: was received package, bytes={}, seqn={}", this->id, len, seqn);
+	logger->trace("{}: was received package, bytes={}, seqn={}", this->id, len, seqn);
 	return len;
 }
 
