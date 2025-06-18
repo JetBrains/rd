@@ -12,6 +12,7 @@ import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.string.RName
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 
@@ -67,7 +68,8 @@ class Protocol internal constructor(
     private val extConfirmation: RdSignal<ExtCreationInfo>
     private val extIsLocal: ThreadLocal<Boolean>
 
-    private val extensions = mutableMapOf<KClass<*>, Any>()
+    private val extensionPerClassLocks = ConcurrentHashMap<KClass<*>, Any>()
+    private val extensions = ConcurrentHashMap<KClass<*>, Any>()
 
     init {
         wire.setupContexts(contexts)
@@ -122,7 +124,8 @@ class Protocol internal constructor(
             return it.getOrCreateExtension(clazz, create)
         }
 
-        Sync.lock(extensions) {
+        val lock = extensionPerClassLocks.getOrPut(clazz) { Any() }
+        Sync.lock(lock) {
             val res = extensions[clazz] ?: run {
                 val newExtension = create()
                 extensions[clazz] = newExtension
@@ -140,7 +143,8 @@ class Protocol internal constructor(
             return it.tryGetExtension(clazz)
         }
 
-        Sync.lock(extensions) {
+        val lock = extensionPerClassLocks.getOrPut(clazz) { Any() }
+        Sync.lock(lock) {
             val res = extensions[clazz] ?: return null
             return castExtension(res, clazz)
         }

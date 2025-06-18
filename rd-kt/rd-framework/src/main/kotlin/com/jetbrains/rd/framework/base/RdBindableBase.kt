@@ -13,6 +13,7 @@ import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.string.RName
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
@@ -113,7 +114,8 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         }
     }
 
-    private val extensions = mutableMapOf<String, Any>()
+    private val extensionPerNameLocks = ConcurrentHashMap<String, Any>()
+    private val extensions = ConcurrentHashMap<String, Any>()
 
     inline fun <reified T: Any> getOrCreateExtension(name: String, noinline create: () -> T) = getOrCreateExtension(name, T::class, create)
     internal inline fun <reified T: Any> getOrCreateHighPriorityExtension(name: String, noinline create: () -> T) = getOrCreateHighPriorityExtension(name, T::class, create)
@@ -122,12 +124,15 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     internal fun <T:Any> getOrCreateHighPriorityExtension(name: String, clazz: KClass<T>, create: () -> T) : T = getOrCreateExtension0(name, clazz, true, create)
 
     private fun <T:Any> getOrCreateExtension0(name: String, clazz: KClass<T>, highPriorityExtension: Boolean = false, create: () -> T) : T {
-        Sync.lock(extensions) {
+        val lock = extensionPerNameLocks.getOrPut(name) { Any() }
+        Sync.lock(lock) {
             val res = extensions[name] ?: run {
                 val newExtension = create()
                 extensions[name] = newExtension
                 if (newExtension is IRdBindable) {
-                    bindableChildren.add(if (highPriorityExtension) 0 else bindableChildren.size, name to newExtension)
+                    val pair = name to newExtension
+                    if (highPriorityExtension) bindableChildren.add(0, pair)
+                    else bindableChildren.add(pair)
                     val proto = protocol ?: return newExtension
 
                     val localBindLifetime = bindLifetime
@@ -236,10 +241,12 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         require (otherBindable::class == this::class) { "Can't synchronize ${this::class} with ${otherBindable::class}" }
 
         //todo so the trick is that exts can appear in different order and sometimes
-        val alreadySynchronized = hashSetOf<String>()
+        val alreadySynchronized = ConcurrentHashMap<String, Unit>().keySet(Unit)
 
 
         fun doOneWay(lifetime: Lifetime, me: RdBindableBase, counterpart: RdBindableBase) {
+            // generally it's not thread safe, because the callback can be called in parallel and some members can appear twice, but this handled by concurrent set + checks for the name
+            // I believe this code works on a wing and a prayer
             (me.bindableChildren as ViewableList).adviseAddRemove(lifetime) {addRemove, idx, (name, value) ->
                 require (addRemove == AddRemove.Add) {"No delete events for bindableChildren are permitted: ${this}"}
                 if (value == null)
