@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.InetAddress
+import java.net.UnixDomainSocketAddress
+import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
 
@@ -44,7 +46,7 @@ class SocketWireTest : TestBase() {
         internal fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
             return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime,
-                    TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
+                    TestScheduler, (serverProtocol.wire as SocketWire.Server).socketAddress, "TestClient"), lifetime
             )
         }
 
@@ -286,7 +288,14 @@ class SocketWireTest : TestBase() {
         assertTrue(spinUntil(60000L) { clientSocket.connected.value })
     }
 
+    @Test
+    fun testUnixDomainSocket() {
+        val endpoint = UnixDomainSocketAddress.of("socket_${UUID.randomUUID()}")
+        val serverSocket = SocketWire.Server(lifetime, TestScheduler, endpoint)
+        val clientSocket = SocketWire.Client(lifetime, TestScheduler, endpoint)
 
+        assertTrue(spinUntil(60000L) { clientSocket.connected.value })
+    }
 
     @Test
     fun testSocketFactory() {
