@@ -6,7 +6,12 @@ using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using NUnit.Framework;
 
+#if !NET35
+using System.Collections.Immutable;
+#endif
+
 namespace Test.RdFramework.Util;
+
 
 [TestFixture]
 public class RdBindableExUtilTest
@@ -34,6 +39,11 @@ public class RdBindableExUtilTest
     Assert.IsFalse(new[] { i }.IsBindable());
     Assert.IsFalse(new List<int> { i }.IsBindable());
     Assert.IsFalse(new List<object> { i }.IsBindable());
+
+#if !NET35
+    Assert.IsFalse(new ImmutableArray<int>().IsBindable());
+    Assert.IsFalse(ImmutableArray.Create(1).IsBindable());
+#endif
   } 
   
   [Test]

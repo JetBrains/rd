@@ -165,7 +165,7 @@ namespace JetBrains.Rd.Base
       {
         case IRdBindable _:
           return true;
-        case IEnumerable enumerable:
+        case IEnumerable enumerable when !(typeof(T).IsValueType && obj.Equals(default)):
         {
           foreach (var item in enumerable)
             return item is IRdBindable;
