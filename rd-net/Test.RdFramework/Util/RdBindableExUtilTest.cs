@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
@@ -5,7 +6,6 @@ using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using NUnit.Framework;
-
 #if !NET35
 using System.Collections.Immutable;
 #endif
@@ -41,7 +41,7 @@ public class RdBindableExUtilTest
     Assert.IsFalse(new List<object> { i }.IsBindable());
 
 #if !NET35
-    Assert.IsFalse(new ImmutableArray<int>().IsBindable());
+    Assert.IsFalse(ImmutableArray.Create<int>().IsBindable());
     Assert.IsFalse(ImmutableArray.Create(1).IsBindable());
 #endif
   } 
@@ -70,17 +70,17 @@ public class RdBindableExUtilTest
   private class RdBindableTestClass : IRdBindable
   {
     public RName Location { get; }
-    public IProtocol TryGetProto() { throw new System.NotImplementedException(); }
+    public IProtocol TryGetProto() { throw new NotImplementedException(); }
 
-    public bool TryGetSerializationContext(out SerializationCtx ctx) { throw new System.NotImplementedException(); }
+    public bool TryGetSerializationContext(out SerializationCtx ctx) { throw new NotImplementedException(); }
 
-    public void Print(PrettyPrinter printer) { throw new System.NotImplementedException(); }
+    public void Print(PrettyPrinter printer) { throw new NotImplementedException(); }
 
     public RdId RdId { get; set; }
-    public void PreBind(Lifetime lf, IRdDynamic parent, string name) { throw new System.NotImplementedException(); }
+    public void PreBind(Lifetime lf, IRdDynamic parent, string name) { throw new NotImplementedException(); }
 
-    public void Bind() { throw new System.NotImplementedException(); }
+    public void Bind() { throw new NotImplementedException(); }
 
-    public void Identify(IIdentities identities, RdId id) { throw new System.NotImplementedException(); }
+    public void Identify(IIdentities identities, RdId id) { throw new NotImplementedException(); }
   }
 }
