@@ -20,6 +20,11 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '7.0.x'
+    - name: Set up Mono on Linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install mono-devel
     - name: Restore
       run: cd rd-net && dotnet restore
     - name: Compile
