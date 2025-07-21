@@ -296,7 +296,11 @@ class SocketWire {
                 synchronized(socketSendLock) {
                     output.write(ackPkgHeader.getArray(), 0, pkg_header_len)
                 }
-            } catch (ex: SocketException) {
+            }
+            catch(ex: ClosedChannelException) {
+                logger.warn { "$id: Exception raised during ACK, seqn = $seqn" }
+            }
+            catch (ex: SocketException) {
                 logger.warn { "$id: Exception raised during ACK, seqn = $seqn" }
             }
         }
@@ -342,7 +346,9 @@ class SocketWire {
                 }
             } catch (ex: SocketException) {
                 sendBuffer.pause(disconnectedPauseReason)
-
+            }
+            catch (ex: IOException) {
+                sendBuffer.pause(disconnectedPauseReason)
             }
         }
 
@@ -453,7 +459,11 @@ class SocketWire {
 
                 } catch (ex: SocketException) {
                     logger.info {"$id: closed with exception: $ex"}
-                } catch (ex: Throwable) {
+                }
+                catch (ex: ClosedChannelException) {
+                    logger.info {"$id: closed with exception: $ex"}
+                }
+                catch (ex: Throwable) {
                     logger.error("$id: unhandled exception.", ex)
                 } finally {
                     logger.debug { "$id: terminated." }
