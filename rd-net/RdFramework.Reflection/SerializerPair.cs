@@ -95,10 +95,10 @@ public sealed class SerializerPair
     void WriterDelegateStatic(SerializationCtx ctx, UnsafeWriter writer, T value) =>
       writeMethod.Invoke(null, new object?[] { ctx, writer, value, });
 
-    T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
-      (T) readMethod.Invoke(null, new object?[] { ctx, reader });
+    T? ReaderDelegate(SerializationCtx ctx, UnsafeReader reader) =>
+      (T?) readMethod.Invoke(null, new object?[] { ctx, reader });
 
-    CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+    CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;
     CtxWriteDelegate<T> ctxWriteDelegate = writeMethod.IsStatic ? WriterDelegateStatic : WriterDelegate;
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
   }
@@ -111,13 +111,13 @@ public sealed class SerializerPair
     void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) => 
       writeMethod.Invoke(null, new object?[] {ctx, writer, value});
 
-    T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
+    T? ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
     {
-      return (T)readMethod.Invoke(null,
+      return (T?)readMethod.Invoke(null,
         new[] {ctx, reader, ctxKeyReadDelegate, ctxKeyWriteDelegate});
     }
 
-    CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+    CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;
     CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
   }
@@ -133,13 +133,13 @@ public sealed class SerializerPair
     void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value) => 
       writeMethod.Invoke(null, new object?[] {ctx, writer, value});
 
-    T ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
+    T? ReaderDelegate(SerializationCtx ctx, UnsafeReader reader)
     {
-      return (T)readMethod.Invoke(null,
+      return (T?)readMethod.Invoke(null,
         new[] {ctx, reader, ctxKeyReadDelegate, ctxKeyWriteDelegate, ctxValueReadDelegate, ctxValueWriteDelegate});
     }
 
-    CtxReadDelegate<T> ctxReadDelegate = ReaderDelegate;
+    CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;
     CtxWriteDelegate<T> ctxWriteDelegate = WriterDelegate;
     return new SerializerPair(ctxReadDelegate, ctxWriteDelegate);
   }
@@ -153,7 +153,7 @@ public sealed class SerializerPair
 
   private static SerializerPair CreateFromNonProtocolMethodsT<T>(MethodInfo readMethod, MethodInfo writeMethod)
   {
-    Assertion.Require(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType.ToString(true)})");
+    Assertion.Require(readMethod.IsStatic, $"Read method should be static ({readMethod.DeclaringType?.ToString(true)})");
 
     void WriterDelegate(SerializationCtx ctx, UnsafeWriter writer, T value)
     {
@@ -174,7 +174,7 @@ public sealed class SerializerPair
       if (!typeof(T).IsValueType && !reader.ReadNullness())
         return default;
 
-      return (T) readMethod.Invoke(null, new object[] {reader});
+      return (T?) readMethod.Invoke(null, new object[] {reader});
     }
 
     CtxReadDelegate<T?> ctxReadDelegate = ReaderDelegate;

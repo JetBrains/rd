@@ -244,8 +244,8 @@ namespace JetBrains.Rd.Reflection
         Assertion.Fail($"Invalid BuiltIn serializer for type {typeInfo}. Static field 'Read' with type {typeof(CtxReadDelegate<>).ToString(true)} not found");
       if (writeField == null)
         Assertion.Fail($"Invalid BuiltIn serializer for type {typeInfo}. Static field 'Write' with type {typeof(CtxWriteDelegate<>).ToString(true)} not found");
-      var reader = readField.GetValue(null);
-      var writer = writeField.GetValue(null);
+      var reader = readField.GetValue(null)!;
+      var writer = writeField.GetValue(null)!;
       return new SerializerPair(reader, writer);
     }
 

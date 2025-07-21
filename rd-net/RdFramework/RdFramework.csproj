@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;net35;net472</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;net35;net472;net8.0</TargetFrameworks>
         <AssemblyName>JetBrains.RdFramework</AssemblyName>
         <RootNamespace>JetBrains.Rd</RootNamespace>
         

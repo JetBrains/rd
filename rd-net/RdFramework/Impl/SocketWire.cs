@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -113,7 +114,7 @@ namespace JetBrains.Rd.Impl
       private Timer StartHeartbeat()
       {
         var timer = new Timer(HeartBeatInterval.TotalMilliseconds) { AutoReset = false };
-        void OnTimedEvent(object sender, ElapsedEventArgs e)
+        void OnTimedEvent(object? sender, ElapsedEventArgs e)
         {
           Ping();
           timer.Start();
@@ -458,7 +459,7 @@ namespace JetBrains.Rd.Impl
       //It's a kind of magic...
       protected static void SetSocketOptions(Socket s)
       {
-        s.NoDelay = true;
+        if (s.ProtocolType == ProtocolType.Tcp) s.NoDelay = true;
 
 //        if (!TimeoutForbidden())
 //          s.ReceiveTimeout = TimeoutMs; //sometimes shutdown and close doesn't lead Receive to throw exception
@@ -509,7 +510,7 @@ namespace JetBrains.Rd.Impl
         );
       }
 
-      public int Port { get; protected set; }
+      public int? Port { get; protected set; }
 
 
       protected virtual bool AcceptHandshake(Socket socket)
@@ -522,9 +523,14 @@ namespace JetBrains.Rd.Impl
     public class Client : Base
     {
       public Client(Lifetime lifetime, IScheduler scheduler, int port, string? optId = null) :
-        this(lifetime, scheduler, new IPEndPoint(IPAddress.Loopback, port), optId) {}
+        this(lifetime, scheduler, EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, port), optId) {}
+      
+#if NET8_0_OR_GREATER
+      public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper.UnixSocketConnectionParams connectionParams, string? optId = null) :
+        this(lifetime, scheduler, EndPointWrapper.CreateUnixEndPoint(connectionParams), optId) {}
+#endif
 
-      public Client(Lifetime lifetime, IScheduler scheduler, IPEndPoint endPoint, string? optId = null) :
+      public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper endPointWrapper, string? optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
         var thread = new Thread(() =>
@@ -538,12 +544,12 @@ namespace JetBrains.Rd.Impl
             {
               try
               {
-                var s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                var s = new Socket(endPointWrapper.AddressFamily, endPointWrapper.SocketType, endPointWrapper.ProtocolType);
                 Socket = s;
 
                 SetSocketOptions(s);
-                Log.Verbose("{0}: connecting to {1}.", Id, endPoint);
-                s.Connect(endPoint);
+                Log.Verbose("{0}: connecting to {1}.", Id, endPointWrapper.EndPointImpl);
+                s.Connect(endPointWrapper.EndPointImpl);
 
                 lock (Lock)
                 {
@@ -569,11 +575,11 @@ namespace JetBrains.Rd.Impl
                 {
                   lastReportedErrorHash = errorHashCode;
                   if (Log.IsVersboseEnabled())
-                    Log.Verbose(ex, $"{Id}: connection error for endpoint \"{endPoint}\".");
+                    Log.Verbose(ex, $"{Id}: connection error for endpoint \"{endPointWrapper.EndPointImpl}\".");
                 }
                 else
                 {
-                  Log.Verbose("{0}: connection error for endpoint \"{1}\" ({2}).", Id, endPoint, ex.Message);
+                  Log.Verbose("{0}: connection error for endpoint \"{1}\" ({2}).", Id, endPointWrapper.EndPointImpl, ex.Message);
                 }
 
                 lock (Lock)
@@ -613,9 +619,9 @@ namespace JetBrains.Rd.Impl
 
     public class Server : Base
     {
-      public Server(Lifetime lifetime, IScheduler scheduler, IPEndPoint? endPoint = null, string? optId = null) : this(lifetime, scheduler, optId)
+      public Server(Lifetime lifetime, IScheduler scheduler, EndPointWrapper? endPointWrapper = null, string? optId = null) : this(lifetime, scheduler, optId)
       {
-        var serverSocket = CreateServerSocket(endPoint);
+        var serverSocket = CreateServerSocket(endPointWrapper);
 
         StartServerSocket(lifetime, serverSocket);
 
@@ -639,17 +645,22 @@ namespace JetBrains.Rd.Impl
       private Server(Lifetime lifetime, IScheduler scheduler, string? optId = null) : base("ServerSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {}
 
-      public static Socket CreateServerSocket(IPEndPoint? endPoint)
+      public static Socket CreateServerSocket(EndPointWrapper? endPointWrapper)
       {
-        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPoint);
+        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPointWrapper?.EndPointImpl);
+        // by default we will use IPEndpoint
+        endPointWrapper ??= EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, 0);
 
-        var serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        var serverSocket = new Socket(endPointWrapper.AddressFamily, endPointWrapper.SocketType, endPointWrapper.ProtocolType);
         SetSocketOptions(serverSocket);
 
-        endPoint = endPoint ?? new IPEndPoint(IPAddress.Loopback, 0);
-        serverSocket.Bind(endPoint);
+        if (endPointWrapper.LocalPath != null)
+        {
+          if (File.Exists(endPointWrapper.LocalPath)) File.Delete(endPointWrapper.LocalPath);
+        }
+        serverSocket.Bind(endPointWrapper.EndPointImpl);
         serverSocket.Listen(1);
-        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPoint);
+        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPointWrapper.EndPointImpl);
 
         return serverSocket;
       }
@@ -657,19 +668,29 @@ namespace JetBrains.Rd.Impl
       private void StartServerSocket(Lifetime lifetime, Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
-        Port = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+        Port = serverSocket.LocalEndPoint is IPEndPoint ipEndPoint ? ipEndPoint.Port : null;
+        // TODO do we want to store Path from Unix here? Only via reflection.
+
         Log.Verbose("{0} : started, port: {1}", Id, Port);
 
         var thread = new Thread(() =>
         {
+#if NET8_0_OR_GREATER
+          Log.Catch(async () =>
+#else
           Log.Catch(() =>
+#endif
           {
             while (lifetime.IsAlive)
             {
               try
               {
                 Log.Verbose("{0} : accepting, port: {1}", Id, Port);
+#if NET8_0_OR_GREATER
+                var s = await serverSocket.AcceptAsync(lifetime);
+#else
                 var s = serverSocket.Accept();
+#endif
                 lock (Lock)
                 {
                   if (!lifetime.IsAlive)
@@ -700,6 +721,10 @@ namespace JetBrains.Rd.Impl
               catch (ObjectDisposedException e)
               {
                 Log.Verbose("{0}: ObjectDisposedException with message {1}", Id, e.Message);
+              }
+              catch (OperationCanceledException e)
+              {
+                Log.Verbose("{0} : OperationCanceledException with message {1}", Id, e.Message);
               }
               catch (Exception e)
               {
@@ -736,33 +761,36 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-
-
-
     public class ServerFactory
     {
-      [PublicAPI] public readonly int LocalPort;
+      [PublicAPI] public readonly int? LocalPort;
+#if NET8_0_OR_GREATER
+      [PublicAPI] public readonly string? LocalPath;
+#endif
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
 
-      public ServerFactory(Lifetime lifetime, IScheduler scheduler, IPEndPoint? endpoint = null)
-        : this(lifetime, () => new WireParameters(scheduler, null), endpoint) {}
+      public ServerFactory(Lifetime lifetime, IScheduler scheduler, EndPointWrapper? endpointWrapper = null)
+        : this(lifetime, () => new WireParameters(scheduler, null), endpointWrapper) {}
 
 
       public ServerFactory(
         Lifetime lifetime,
         Func<WireParameters> wireParametersFactory,
-        IPEndPoint? endpoint = null
+        EndPointWrapper? endpointWrapper = null
       )
       {
-        var serverSocket = Server.CreateServerSocket(endpoint);
+        var serverSocket = Server.CreateServerSocket(endpointWrapper);
         var serverSocketLifetimeDef = new LifetimeDefinition(lifetime);
         serverSocketLifetimeDef.Lifetime.OnTermination(() =>
         {
           ourStaticLog.Verbose("closing server socket");
           Base.CloseSocket(serverSocket);
         });
-        LocalPort = ((IPEndPoint) serverSocket.LocalEndPoint).Port;
+        LocalPort = (serverSocket.LocalEndPoint as IPEndPoint)?.Port;
+#if NET8_0_OR_GREATER
+        LocalPath = endpointWrapper?.EndPointImpl is UnixDomainSocketEndPoint ? endpointWrapper.LocalPath : null;
+#endif
 
         void Rec()
         {

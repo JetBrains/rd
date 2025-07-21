@@ -226,11 +226,13 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
       object instance;
       if (isScalar)
       {
+#pragma warning disable SYSLIB0050
         instance = FormatterServices.GetUninitializedObject(type);
+#pragma warning restore SYSLIB0050
       }
       else
       {
-        instance = Activator.CreateInstance(type);
+        instance = Activator.CreateInstance(type)!;
       }
 
       var bindableInstance = instance as IRdBindable;
