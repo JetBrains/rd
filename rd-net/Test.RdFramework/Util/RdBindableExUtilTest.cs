@@ -41,7 +41,7 @@ public class RdBindableExUtilTest
     Assert.IsFalse(new List<object> { i }.IsBindable());
 
 #if !NET35
-    Assert.IsFalse(ImmutableArray.Create<int>().IsBindable());
+    Assert.IsFalse(((ImmutableArray<int>)default).IsBindable()); // cannot be enumerated, but should not throw exception
     Assert.IsFalse(ImmutableArray.Create(1).IsBindable());
 #endif
   } 
