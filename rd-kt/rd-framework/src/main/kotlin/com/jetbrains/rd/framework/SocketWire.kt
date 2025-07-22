@@ -267,7 +267,10 @@ class SocketWire {
 
                         pkg = ByteArray(len)
                         pos = 0
-                        stream.readByteArray(pkg)
+                        if (!stream.readByteArray(pkg)) {
+                            pkg = ByteArray(0)
+                            return -1
+                        }
 
                         if (seqn > maxReceivedSeqn) {
                             maxReceivedSeqn = seqn
