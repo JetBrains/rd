@@ -184,11 +184,6 @@ class SocketWire {
         private fun receiverProc(socket: SocketChannel) {
             while (lifetime.isAlive) {
                 try {
-                    if (!socket.isConnected) {
-                        logger.debug { "Stop receive messages because socket disconnected" }
-                        break
-                    }
-
                     if (!readMsg()) {
                         logger.debug { "$id: Connection was gracefully shutdown" }
                         break
