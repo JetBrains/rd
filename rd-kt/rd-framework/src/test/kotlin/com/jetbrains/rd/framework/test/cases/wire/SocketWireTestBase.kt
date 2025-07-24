@@ -17,15 +17,18 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.SocketAddress
 import java.net.UnixDomainSocketAddress
-import java.util.UUID
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeoutException
+import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteIfExists
 
 
-class SocketWireTest : TestBase() {
+abstract class SocketWireTestBase : TestBase() {
 
-    private fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
+    protected fun <T : Any> RdOptionalProperty<T>.waitAndAssert(expected: T, prev: T? = null) {
         val start = System.currentTimeMillis()
         while ((System.currentTimeMillis() - start) < timeoutToWaitConditionMs && valueOrNull != expected) Thread.sleep(100)
 
@@ -36,23 +39,29 @@ class SocketWireTest : TestBase() {
     companion object {
         internal const val top = "top"
 
-        internal fun server(lifetime: Lifetime, port: Int? = null): Protocol {
-            return Protocol("Server", Serializers(), Identities(IdKind.Server), TestScheduler,
+        internal fun server(lifetime: Lifetime, port: Int): Protocol {
+            return Protocol("Server", Serializers(MarshallersProvider.Dummy), Identities(IdKind.Server), TestScheduler,
                 SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
             )
         }
 
 
         internal fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
-            return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
+            return Protocol("Client", Serializers(MarshallersProvider.Dummy), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime,
                     TestScheduler, (serverProtocol.wire as SocketWire.Server).socketAddress, "TestClient"), lifetime
             )
         }
 
         internal fun client(lifetime: Lifetime, port: Int): Protocol {
-            return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
+            return Protocol("Client", Serializers(MarshallersProvider.Dummy), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
+            )
+        }
+
+        internal fun server(lifetime: Lifetime, address: SocketAddress): Protocol {
+            return Protocol("Server", Serializers(MarshallersProvider.Dummy), Identities(IdKind.Server), TestScheduler,
+                SocketWire.Server(lifetime, TestScheduler, address, "TestServer"), lifetime
             )
         }
     }
@@ -65,9 +74,11 @@ class SocketWireTest : TestBase() {
 //        ConsoleLoggerFactory.minLevelToLog = LogLevel.Trace
     }
 
+    abstract protected fun serverProvider(lifetime: Lifetime): Protocol
+
     @Test
     fun TestBasicRun() {
-        val serverProtocol = server(socketLifetime)
+        val serverProtocol = serverProvider(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
         val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
@@ -82,7 +93,7 @@ class SocketWireTest : TestBase() {
 
     @Test
     fun TestOrdering() {
-        val serverProtocol = server(socketLifetime)
+        val serverProtocol = serverProvider(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
         val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
@@ -104,7 +115,7 @@ class SocketWireTest : TestBase() {
     @Disabled
     @Test
     fun TestDisconnect() {
-        val serverProtocol = server(socketLifetime)
+        val serverProtocol = serverProvider(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
         val sp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
@@ -149,7 +160,7 @@ class SocketWireTest : TestBase() {
 
     @Test
     fun TestDdos() {
-        val serverProtocol = server(socketLifetime)
+        val serverProtocol = serverProvider(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
         val sp = RdSignal<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
@@ -174,7 +185,7 @@ class SocketWireTest : TestBase() {
 
     @Test
     fun TestBigBuffer() {
-        val serverProtocol = server(socketLifetime)
+        val serverProtocol = serverProvider(socketLifetime)
         val clientProtocol = client(socketLifetime, serverProtocol)
 
         val sp = RdOptionalProperty<String>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
@@ -187,69 +198,25 @@ class SocketWireTest : TestBase() {
         cp.waitAndAssert("".padStart(100000, '3'), "1")
     }
 
-
-    @Test
-    fun TestRunWithSlowpokeServer() {
-
-        val port = NetUtils.findFreePort(0)
-        val clientProtocol = client(socketLifetime, port)
-
-
-        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
-
-        cp.set(1)
-
-        Thread.sleep(2000)
-
-        val serverProtocol = server(socketLifetime, port)
-        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
-
-        val prev = sp.valueOrNull
-        cp.set(4)
-        sp.waitAndAssert(4, prev)
-    }
-
     @Test
     fun TestServerWithoutClient() {
-        server(socketLifetime)
+        serverProvider(socketLifetime)
     }
 
     @Test
     fun TestServerWithoutClientWithDelay() {
-        server(socketLifetime)
+        serverProvider(socketLifetime)
         Thread.sleep(100)
     }
 
     @Test
     fun TestServerWithoutClientWithDelayAndMessages() {
-        val protocol = server(socketLifetime)
+        val protocol = serverProvider(socketLifetime)
         Thread.sleep(100)
         val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, protocol, top) }
 
         sp.set(1)
         sp.set(2)
-        Thread.sleep(50)
-    }
-
-    @Test
-    fun TestClientWithoutServer() {
-        client(socketLifetime, NetUtils.findFreePort(0))
-    }
-
-    @Test
-    fun TestClientWithoutServerWithDelay() {
-        client(socketLifetime, NetUtils.findFreePort(0))
-        Thread.sleep(100)
-    }
-
-    @Test
-    fun TestClientWithoutServerWithDelayAndMessages() {
-        val clientProtocol = client(socketLifetime, NetUtils.findFreePort(0))
-
-        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
-
-        cp.set(1)
-        cp.set(2)
         Thread.sleep(50)
     }
 
@@ -283,16 +250,7 @@ class SocketWireTest : TestBase() {
     @Test
     fun testRemoteSocket() {
         val serverSocket = SocketWire.Server(lifetime, TestScheduler, 0, allowRemoteConnections = true)
-        val clientSocket = SocketWire.Client(lifetime, TestScheduler, serverSocket.port, hostAddress = InetAddress.getLocalHost())
-
-        assertTrue(spinUntil(60000L) { clientSocket.connected.value })
-    }
-
-    @Test
-    fun testUnixDomainSocket() {
-        val endpoint = UnixDomainSocketAddress.of("socket_${UUID.randomUUID()}")
-        val serverSocket = SocketWire.Server(lifetime, TestScheduler, endpoint)
-        val clientSocket = SocketWire.Client(lifetime, TestScheduler, endpoint)
+        val clientSocket = SocketWire.Client(lifetime, TestScheduler, (serverSocket.socketAddress as InetSocketAddress).port, hostAddress = InetAddress.getLocalHost())
 
         assertTrue(spinUntil(60000L) { clientSocket.connected.value })
     }
@@ -324,11 +282,89 @@ class SocketWireTest : TestBase() {
         spinUntil { factory.size == 0 }
     }
 
+//    @BeforeClass
+//    fun beforeClass() {
+//         setupLogHandler {
+//        if (it.getLevel() == Level.ERROR) {
+//            System.err.println(it.message)
+//            it.throwableInformation?.throwable?.printStackTrace()
+//        }
+//         }
+//    }
+//
+//    private fun setupLogHandler(name: String = "default", action: (LoggingEvent) -> Unit) {
+//         val rootLogger = org.apache.log4j.Logger.getRootLogger()
+//         rootLogger.removeAppender("default")
+//         rootLogger.addAppender(object : AppenderSkeleton() {
+//        init {
+//            setName(name)
+//        }
+//
+//        override fun append(event: LoggingEvent) {
+//            action(event)
+//        }
+//
+//        override fun close() {}
+//
+//        override fun requiresLayout(): Boolean {
+//            return false
+//        }
+//         })
+//    }
+}
+
+
+class SocketWireTcpTest: SocketWireTestBase() {
+    override fun serverProvider(lifetime: Lifetime): Protocol = server(lifetime, 0)
+
+    @Test
+    fun TestClientWithoutServerWithDelayAndMessages() {
+        val clientProtocol = client(socketLifetime, NetUtils.findFreePort(0))
+
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
+
+        cp.set(1)
+        cp.set(2)
+        Thread.sleep(50)
+    }
+
+    @Test
+    fun TestRunWithSlowpokeServer() {
+
+        val port = NetUtils.findFreePort(0)
+        val clientProtocol = client(socketLifetime, port)
+
+
+        val cp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, clientProtocol, top) }
+
+        cp.set(1)
+
+        Thread.sleep(2000)
+
+        val serverProtocol = server(socketLifetime, port)
+        val sp = RdOptionalProperty<Int>().static(1).apply { bindTopLevel(lifetime, serverProtocol, top) }
+
+        val prev = sp.valueOrNull
+        cp.set(4)
+        sp.waitAndAssert(4, prev)
+    }
+
+    @Test
+    fun TestClientWithoutServer() {
+        client(socketLifetime, NetUtils.findFreePort(0))
+    }
+
+    @Test
+    fun TestClientWithoutServerWithDelay() {
+        client(socketLifetime, NetUtils.findFreePort(0))
+        Thread.sleep(100)
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun testPacketLoss(isClientToServer: Boolean) {
         Lifetime.using { lifetime ->
-            val serverProtocol = server(lifetime)
+            val serverProtocol = serverProvider(lifetime)
             val serverWire = serverProtocol.wire
 
             val proxy = SocketProxy("TestProxy", lifetime, serverProtocol)
@@ -369,35 +405,23 @@ class SocketWireTest : TestBase() {
             assertTrue(clientWire.heartbeatAlive.value)
         }
     }
+}
 
+class SocketWireUnixDomainSocketTest: SocketWireTestBase() {
 
-//    @BeforeClass
-//    fun beforeClass() {
-//         setupLogHandler {
-//        if (it.getLevel() == Level.ERROR) {
-//            System.err.println(it.message)
-//            it.throwableInformation?.throwable?.printStackTrace()
-//        }
-//         }
-//    }
-//
-//    private fun setupLogHandler(name: String = "default", action: (LoggingEvent) -> Unit) {
-//         val rootLogger = org.apache.log4j.Logger.getRootLogger()
-//         rootLogger.removeAppender("default")
-//         rootLogger.addAppender(object : AppenderSkeleton() {
-//        init {
-//            setName(name)
-//        }
-//
-//        override fun append(event: LoggingEvent) {
-//            action(event)
-//        }
-//
-//        override fun close() {}
-//
-//        override fun requiresLayout(): Boolean {
-//            return false
-//        }
-//         })
-//    }
+    private fun createRandomUnixSocketAddress() = createTempFile("rd_test_socket_").let {
+        it.deleteIfExists()
+        UnixDomainSocketAddress.of(it)
+    }
+
+    override fun serverProvider(lifetime: Lifetime): Protocol = server(lifetime, createRandomUnixSocketAddress())
+
+    @Test
+    fun testUnixDomainSocket() {
+        val endpoint = createRandomUnixSocketAddress()
+        SocketWire.Server(lifetime, TestScheduler, endpoint)
+        val clientSocket = SocketWire.Client(lifetime, TestScheduler, endpoint)
+
+        assertTrue(spinUntil(60000L) { clientSocket.connected.value })
+    }
 }
