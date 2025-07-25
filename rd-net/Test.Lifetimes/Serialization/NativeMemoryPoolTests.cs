@@ -86,6 +86,24 @@ namespace Test.Lifetimes.Serialization
       Console.WriteLine(sw.ElapsedMilliseconds);
     }
 
+    [Test]
+    public void TestLargeAllocations1()
+    {
+      const int moreThanAllowed = unchecked(NativeMemoryPool.MaxAllocSize + 3);
+      using var memory = new NativeMemoryPool.ThreadMemoryHolder();
+      Assert.Throws<ArgumentException>(() => { _ = memory.Realloc(moreThanAllowed); });
+    }
+
+    // .Net Framework 3.5 can allocate a maximum 512 MB. It throws OOM when trying to allocate 1 GB.
+#if !NET35
+    [Test]
+    public void TestLargeAllocations2()
+    {
+      using var memory = new NativeMemoryPool.ThreadMemoryHolder();
+      Assert.DoesNotThrow(() => { _ = memory.Realloc(NativeMemoryPool.MaxAllocSize); });
+    }
+#endif
+
 #if NET472
     [Test, Explicit("Scientifically measure performance")]
     public void Bdn()

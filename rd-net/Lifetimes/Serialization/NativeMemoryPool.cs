@@ -12,7 +12,7 @@ namespace JetBrains.Serialization
   public static class NativeMemoryPool
   {
     public const int AllocSize = 1 << 20;
-    public const int MaxAllocSize = 1 << 30;
+    public const int MaxAllocSize = int.MaxValue;
 
     private const string LogCategory = nameof(NativeMemoryPool);
 
@@ -265,8 +265,9 @@ namespace JetBrains.Serialization
 
       public IntPtr Realloc(int size)
       {
-        if (size > MaxAllocSize)
-          throw new ArgumentException($"Can't allocate more memory: {size:N0} bytes, max: {MaxAllocSize:N0}");
+        if (size <= 0)
+          throw new ArgumentException(
+            $"Requested non-positive size. Probably overflow? Requested: {size:N0} bytes, max: {MaxAllocSize:N0}");
 
         myPtr = Marshal.ReAllocHGlobal(myPtr, new IntPtr(size));
         if (myPtr == default)
