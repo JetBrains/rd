@@ -5,7 +5,8 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-SCRIPT_VERSION=dotnet-cmd-v2
+DOTNET_VERSION=7.0.410
+SCRIPT_VERSION=v2
 COMPANY_DIR="JetBrains"
 TARGET_DIR="${TEMPDIR:-$HOME/.local/share}/$COMPANY_DIR/dotnet-cmd"
 KEEP_ROSETTA2=false
@@ -35,70 +36,33 @@ is_linux_musl () {
   (ldd --version 2>&1 || true) | grep -q musl
 }
 
-# OS specific support (must be 'true' or 'false').
-cygwin=false
-msys=false
-darwin=false
-nonstop=false
-case "`uname`" in
-  CYGWIN* )
-    cygwin=true
-    ;;
-  Darwin* )
-    darwin=true
-    ;;
-  MINGW* )
-    msys=true
-    ;;
-  NONSTOP* )
-    nonstop=true
-    ;;
-esac
-
-DOTNET_TEMP_FILE=$TARGET_DIR/dotnet-sdk-temp.tar.gz
-if [ "$darwin" = "true" ]; then
-  DOTNET_ARCH=$(uname -m)
+case $(uname) in
+Darwin)
+  DOTNET_OS=osx
+  UNAME_ARCH=$(uname -m)
   if ! $KEEP_ROSETTA2 && [ "$(sysctl -n sysctl.proc_translated 2>/dev/null || true)" = "1" ]; then
     DOTNET_ARCH=arm64
   fi
-  case $DOTNET_ARCH in
-    x86_64)
-      DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/62f78047-71de-460e-85ca-254f1fa848de/ecabeefdca2902f3f06819612cd9d45c/dotnet-sdk-6.0.100-osx-x64.tar.gz
-      DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-osx-x64-$SCRIPT_VERSION
-      ;;
-    arm64)
-      DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/7f1e67c2-11a4-416b-8421-786e47b82fdf/af56581d96e15ed911cf3a172f3c8802/dotnet-sdk-6.0.100-osx-arm64.tar.gz
-      DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-osx-arm64-$SCRIPT_VERSION
-      ;;
-    *)
-      echo "Unknown architecture $(uname -m)" >&2; exit 1
-      ;;
-  esac
-else
-  case $(uname -m) in
-    x86_64)
-      if is_linux_musl; then
-        DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/bb523fba-7eb0-49ff-8214-c78c65dae090/7e7f9798ee57bf93649ada3eb13a79ae/dotnet-sdk-6.0.100-linux-musl-x64.tar.gz
-        DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-linux-musl-x64-$SCRIPT_VERSION
-      else
-        DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/17b6759f-1af0-41bc-ab12-209ba0377779/e8d02195dbf1434b940e0f05ae086453/dotnet-sdk-6.0.100-linux-x64.tar.gz
-        DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-linux-x64-$SCRIPT_VERSION
-      fi
-      ;;
-    aarch64)
-      if is_linux_musl; then
-        DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/464717f7-cd60-49d3-9658-f471262dc3b8/d5c97064d0bdd7bf82eb7b96cc2bab7d/dotnet-sdk-6.0.100-linux-musl-arm64.tar.gz
-        DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-linux-musl-arm64-$SCRIPT_VERSION
-      else
-        DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/adcd9310-5072-4179-9b8b-16563b897995/15a7595966f488c74909e4a9273c0e24/dotnet-sdk-6.0.100-linux-arm64.tar.gz
-        DOTNET_TARGET_DIR=$TARGET_DIR/dotnet-sdk-6.0.100-linux-arm64-$SCRIPT_VERSION
-      fi
-      ;;
-    *)
-      echo "Unknown architecture $(uname -m)" >&2; exit 1
-      ;;
-  esac
-fi
+  case $UNAME_ARCH in
+  arm64)  DOTNET_ARCH=arm64;;
+  x86_64) DOTNET_ARCH=x64;;
+  *) echo "Unknown architecture $UNAME_ARCH" >&2; exit 1;;
+  esac;;
+Linux)
+  DOTNET_OS=linux
+  UNAME_ARCH=$(linux$(getconf LONG_BIT) uname -m)
+  case $UNAME_ARCH in
+  armv7l | armv8l) is_linux_musl && DOTNET_ARCH=musl-arm   || DOTNET_ARCH=arm;;
+  aarch64)         is_linux_musl && DOTNET_ARCH=musl-arm64 || DOTNET_ARCH=arm64;;
+  x86_64)          is_linux_musl && DOTNET_ARCH=musl-x64   || DOTNET_ARCH=x64;;
+  *) echo "Unknown architecture $UNAME_ARCH" >&2; exit 1;;
+  esac;;
+*) echo "Unknown platform: $(uname)" >&2; exit 1;;
+esac
+
+DOTNET_URL=https://builds.dotnet.microsoft.com/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-$DOTNET_OS-$DOTNET_ARCH.tar.gz
+DOTNET_TARGET_DIR=$TARGET_DIR/sdk-$DOTNET_VERSION-$DOTNET_ARCH-$SCRIPT_VERSION
+DOTNET_TEMP_FILE=$TARGET_DIR/temp-$SCRIPT_VERSION.tar.gz
 
 if grep -q -x "$DOTNET_URL" "$DOTNET_TARGET_DIR/.flag" 2>/dev/null; then
   # Everything is up-to-date in $DOTNET_TARGET_DIR, do nothing
@@ -170,12 +134,26 @@ exec "$DOTNET_TARGET_DIR/dotnet" "$@"
 :CMDSCRIPT
 
 setlocal
+set DOTNET_VERSION=7.0.410
 set SCRIPT_VERSION=v2
 set COMPANY_NAME=JetBrains
 set TARGET_DIR=%LOCALAPPDATA%\%COMPANY_NAME%\dotnet-cmd\
-set DOTNET_TARGET_DIR=%TARGET_DIR%netcoresdk6_%SCRIPT_VERSION%\
-set DOTNET_TEMP_FILE=%TARGET_DIR%dotnet-sdk-temp.zip
-set DOTNET_URL=https://cache-redirector.jetbrains.com/download.visualstudio.microsoft.com/download/pr/ca65b248-9750-4c2d-89e6-ef27073d5e95/05c682ca5498bfabc95985a4c72ac635/dotnet-sdk-6.0.100-win-x64.zip
+
+for /f "tokens=3 delims= " %%a in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v "PROCESSOR_ARCHITECTURE"') do set ARCH=%%a
+
+if "%ARCH%"=="ARM"   (set DOTNET_ARCH=arm)   else (
+if "%ARCH%"=="ARM64" (set DOTNET_ARCH=arm64) else (
+if "%ARCH%"=="AMD64" (set DOTNET_ARCH=x64)   else (
+if "%ARCH%"=="x86"   (set DOTNET_ARCH=x86)   else (
+
+echo Unknown Windows architecture
+goto fail
+
+))))
+
+set DOTNET_URL=https://builds.dotnet.microsoft.com/dotnet/Sdk/%DOTNET_VERSION%/dotnet-sdk-%DOTNET_VERSION%-win-%DOTNET_ARCH%.zip
+set DOTNET_TARGET_DIR=%TARGET_DIR%sdk-%DOTNET_VERSION%-%DOTNET_ARCH%-%SCRIPT_VERSION%\
+set DOTNET_TEMP_FILE=%TARGET_DIR%temp-%SCRIPT_VERSION%.zip
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
 
