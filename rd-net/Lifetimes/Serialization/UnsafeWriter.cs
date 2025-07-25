@@ -314,6 +314,10 @@ namespace JetBrains.Serialization
       while (newCount > reallocSize)
       {
         reallocSize <<= 1;
+        if (reallocSize <= 0)
+        {
+          reallocSize = NativeMemoryPool.MaxAllocSize;
+        }
       }
 
       try
