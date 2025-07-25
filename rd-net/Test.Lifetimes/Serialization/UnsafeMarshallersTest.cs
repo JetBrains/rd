@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using JetBrains.Annotations;
 using JetBrains.Serialization;
 using NUnit.Framework;
@@ -181,6 +182,30 @@ namespace Test.Lifetimes.Serialization
         new string('c', 10000),
         new string('ю', 10000),
       };
+    }
+
+    [Test]
+    public void TestLargeAllocations()
+    {
+      TestWithTimeout(() =>
+      {
+        const int moreThanGb = (1 << 30) | 3;
+        using var cookie = UnsafeWriter.NewThreadLocalWriter();
+        _ = cookie.Writer.Alloc(moreThanGb);
+      });
+    }
+
+    private static void TestWithTimeout(Action action)
+    {
+      var thread = new Thread(() => { action(); })
+      {
+        IsBackground = true
+      };
+
+      thread.Start();
+      var timeout = TimeSpan.FromSeconds(15);
+      var isCompleted = thread.Join(timeout);
+      Assert.IsTrue(isCompleted, "Action didn't complete in specified amount of time.");
     }
 
 #if NET472
