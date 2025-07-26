@@ -10,7 +10,11 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import test.synchronization.*
+import test.synchronization.Clazz
+import test.synchronization.SyncModelExt
+import test.synchronization.extToClazz
+import test.synchronization.syncModelExt
+import java.util.concurrent.atomic.AtomicInteger
 
 private val serverId = AtomicInteger()
 
