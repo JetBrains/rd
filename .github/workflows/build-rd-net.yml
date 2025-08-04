@@ -16,21 +16,23 @@ jobs:
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v4
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v4
+
+    - name: dotnet.cmd cache
+      uses: actions/cache@v4
       with:
-        dotnet-version: '7.0.x'
+        path: ${{ runner.os == 'Windows' && '~/AppData/Local/JetBrains/dotnet-cmd' || '~/.local/share/JetBrains/dotnet-cmd' }}
+        key: ${{ runner.os }}-dotnet-${{ hashFiles('dotnet.cmd') }}
     - name: Set up Mono on Linux
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install mono-devel
     - name: Restore
-      run: cd rd-net && dotnet restore
+      run: cd rd-net && ./dotnet.cmd restore
     - name: Compile
-      run: cd rd-net && dotnet build --configuration Release --no-restore
+      run: cd rd-net && ./dotnet.cmd build --configuration Release --no-restore
     - name: Tests
-      run: cd rd-net && dotnet test --no-restore --verbosity quiet --logger trx
+      run: cd rd-net && ./dotnet.cmd test --no-restore --verbosity quiet --logger trx
     - uses: actions/upload-artifact@v4
       if: failure()
       with:
