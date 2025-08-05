@@ -1,6 +1,7 @@
 package com.jetbrains.rd.framework.test.cases.wire
 
 import com.jetbrains.rd.framework.*
+import com.jetbrains.rd.framework.WireAddress.Companion.toSocketAddress
 import com.jetbrains.rd.framework.base.bindTopLevel
 import com.jetbrains.rd.framework.base.static
 import com.jetbrains.rd.framework.impl.RdOptionalProperty
@@ -49,7 +50,7 @@ abstract class SocketWireTestBase : TestBase() {
         internal fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
             return Protocol("Client", Serializers(MarshallersProvider.Dummy), Identities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime,
-                    TestScheduler, (serverProtocol.wire as SocketWire.Server).socketAddress, "TestClient"), lifetime
+                    TestScheduler, (serverProtocol.wire as SocketWire.Server).wireAddress.toSocketAddress(), "TestClient"), lifetime
             )
         }
 
@@ -250,7 +251,7 @@ abstract class SocketWireTestBase : TestBase() {
     @Test
     fun testRemoteSocket() {
         val serverSocket = SocketWire.Server(lifetime, TestScheduler, 0, allowRemoteConnections = true)
-        val clientSocket = SocketWire.Client(lifetime, TestScheduler, (serverSocket.socketAddress as InetSocketAddress).port, hostAddress = InetAddress.getLocalHost())
+        val clientSocket = SocketWire.Client(lifetime, TestScheduler, (serverSocket.wireAddress as WireAddress.TcpAddress).port, hostAddress = InetAddress.getLocalHost())
 
         assertTrue(spinUntil(60000L) { clientSocket.connected.value })
     }

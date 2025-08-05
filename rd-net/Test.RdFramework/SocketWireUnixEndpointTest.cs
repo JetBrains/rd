@@ -33,8 +33,7 @@ public class SocketWireUnixEndpointTest : SocketWireTestBase<string>
 
   internal override EndPointWrapper CreateEndpointWrapper()
   {
-    var connectionsParams = new EndPointWrapper.UnixSocketConnectionParams { Path = null };
-    return EndPointWrapper.CreateUnixEndPoint(connectionsParams);
+    return EndPointWrapper.CreateUnixEndPoint(null);
   }
 
   // internal IProtocol Client(Lifetime lifetime, IProtocol serverProtocol)
