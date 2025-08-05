@@ -1,56 +1,73 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
 namespace JetBrains.Rd.Impl;
 
-public class EndPointWrapper
+public abstract class EndPointWrapper
 {
-  public EndPoint EndPointImpl { get; }
-  public IPAddress? LocalAddress { get; private set; }
-  public int? LocalPort { get; private set; }
-  public string? LocalPath { get; private set; }
+  public abstract EndPoint EndPointImpl { get; }
   public AddressFamily AddressFamily { get; private set; }
   public SocketType SocketType { get; private set; }
   public ProtocolType ProtocolType { get; private set; }
 
-  private EndPointWrapper(EndPoint endPoint)
+  public class IPEndpointWrapper : EndPointWrapper
   {
-    EndPointImpl = endPoint;
+    public override EndPoint EndPointImpl => IPEndPointImpl;
+    public IPEndPoint IPEndPointImpl { get; }
+    public IPAddress LocalAddress { get; }
+    public int LocalPort { get; }
+    
+    public IPEndpointWrapper(IPEndPoint endPoint)
+    {
+      IPEndPointImpl = endPoint;
+      AddressFamily = AddressFamily.InterNetwork;
+      SocketType = SocketType.Stream;
+      ProtocolType = ProtocolType.Tcp;
+      LocalAddress = endPoint.Address;
+      LocalPort = endPoint.Port;
+    }
+  }
+  
+  public class UnixEndpointWrapper : EndPointWrapper
+  {
+    public string LocalPath { get; private set; }
+    
+#if NET8_0_OR_GREATER
+    public override EndPoint EndPointImpl => UnixEndPoint;
+    public UnixDomainSocketEndPoint UnixEndPoint { get; }
+#else
+    public override EndPoint EndPointImpl =>
+      throw new NotSupportedException("Unix Sockets are supported on NET8.0 and greater");
+#endif
+    
+    public UnixEndpointWrapper(UnixSocketConnectionParams connectionParams)
+    {
+      LocalPath = connectionParams.Path;
+#if NET8_0_OR_GREATER
+      UnixEndPoint = new UnixDomainSocketEndPoint(connectionParams.Path);
+      AddressFamily = AddressFamily.Unix;
+      SocketType = SocketType.Stream;
+      ProtocolType = ProtocolType.Unspecified;
+#else
+      throw new NotSupportedException("Unix Sockets are supported on NET8.0 and greater");
+#endif
+    }
   }
 
-  public static EndPointWrapper CreateIpEndPoint(IPAddress? address = null, int? port = null)
+
+  public static IPEndpointWrapper CreateIpEndPoint(IPAddress? address = null, int? port = null)
   {
     var address1 = address ?? IPAddress.Loopback;
     var port1 = port ?? 0;
-    return new EndPointWrapper(new IPEndPoint(address1, port1))
-    {
-      AddressFamily = AddressFamily.InterNetwork,
-      SocketType = SocketType.Stream,
-      ProtocolType = ProtocolType.Tcp,
-      LocalAddress = address1,
-      LocalPort = port1,
-      LocalPath = null,
-    };
+    return new IPEndpointWrapper(new IPEndPoint(address1, port1));
   }
 
-#if NET8_0_OR_GREATER
-  public static EndPointWrapper CreateUnixEndPoint(UnixSocketConnectionParams connectionParams)
-  {
-    var path1 = connectionParams.Path ?? Path.GetTempFileName();
-    return new EndPointWrapper(new UnixDomainSocketEndPoint(path1)) {
-      AddressFamily = AddressFamily.Unix,
-      SocketType = SocketType.Stream,
-      ProtocolType = ProtocolType.Unspecified,
-      LocalAddress = null,
-      LocalPort = null,
-      LocalPath = path1,
-    };
+  public static UnixEndpointWrapper CreateUnixEndPoint(UnixSocketConnectionParams? connectionParams)
+  { 
+    return new UnixEndpointWrapper(connectionParams ?? new UnixSocketConnectionParams(Path.GetTempFileName()));
   }
   
-  public struct UnixSocketConnectionParams
-  {
-    public string? Path { get; set; }
-  }
-#endif
+  public record struct UnixSocketConnectionParams(string Path);
 }

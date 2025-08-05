@@ -654,9 +654,9 @@ namespace JetBrains.Rd.Impl
         var serverSocket = new Socket(endPointWrapper.AddressFamily, endPointWrapper.SocketType, endPointWrapper.ProtocolType);
         SetSocketOptions(serverSocket);
 
-        if (endPointWrapper.LocalPath != null)
+        if (endPointWrapper is EndPointWrapper.UnixEndpointWrapper unixEndpointWrapper)
         {
-          if (File.Exists(endPointWrapper.LocalPath)) File.Delete(endPointWrapper.LocalPath);
+          if (File.Exists(unixEndpointWrapper.LocalPath)) File.Delete(unixEndpointWrapper.LocalPath);
         }
         serverSocket.Bind(endPointWrapper.EndPointImpl);
         serverSocket.Listen(1);
@@ -789,7 +789,7 @@ namespace JetBrains.Rd.Impl
         });
         LocalPort = (serverSocket.LocalEndPoint as IPEndPoint)?.Port;
 #if NET8_0_OR_GREATER
-        LocalPath = endpointWrapper?.EndPointImpl is UnixDomainSocketEndPoint ? endpointWrapper.LocalPath : null;
+        LocalPath = (endpointWrapper as EndPointWrapper.UnixEndpointWrapper)?.LocalPath;
 #endif
 
         void Rec()

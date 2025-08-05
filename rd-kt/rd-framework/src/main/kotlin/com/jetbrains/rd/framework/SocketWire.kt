@@ -1,5 +1,6 @@
 package com.jetbrains.rd.framework
 
+import com.jetbrains.rd.framework.WireAddress.Companion.toSocketAddress
 import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.util.getInputStream
 import com.jetbrains.rd.framework.util.getOutputStream
@@ -21,6 +22,7 @@ import java.nio.channels.AsynchronousCloseException
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -391,7 +393,9 @@ class SocketWire {
     }
 
 
-    class Client(lifetime : Lifetime, scheduler: IScheduler, endpoint: SocketAddress, optId: String? = null) : Base(optId ?:"ClientSocket", lifetime, scheduler) {
+    class Client internal constructor(lifetime : Lifetime, scheduler: IScheduler, endpoint: SocketAddress, optId: String? = null) : Base(optId ?:"ClientSocket", lifetime, scheduler) {
+
+        constructor(lifetime : Lifetime, scheduler: IScheduler, wireAddress: WireAddress, optId: String? = null) : this(lifetime, scheduler, wireAddress.toSocketAddress(), optId)
 
         constructor(
             lifetime: Lifetime,
@@ -505,9 +509,10 @@ class SocketWire {
 
 
     class Server internal constructor(lifetime : Lifetime, scheduler: IScheduler, ss: ServerSocketChannel, optId: String? = null, allowReconnect: Boolean) : Base(optId ?:"ServerSocket", lifetime, scheduler) {
-        val socketAddress: SocketAddress = ss.localAddress
-        @Deprecated("Use socketAddress instead")
-        val port : Int = (socketAddress as? InetSocketAddress)?.port ?: -1
+        val wireAddress: WireAddress = WireAddress.fromSocketAddress(ss.localAddress)
+
+        @Deprecated("Use wireAddress instead")
+        val port : Int = (wireAddress as? WireAddress.TcpAddress)?.port ?: -1
 
         companion object {
             internal fun createServerSocket(lifetime: Lifetime, port : Int?, allowRemoteConnections: Boolean) : ServerSocketChannel {
@@ -537,7 +542,9 @@ class SocketWire {
         }
 
         constructor (lifetime : Lifetime, scheduler: IScheduler, port : Int?, optId: String? = null, allowRemoteConnections: Boolean = false) : this(lifetime, scheduler, createServerSocket(lifetime, port, allowRemoteConnections), optId, allowReconnect = true)
-        constructor (lifetime : Lifetime, scheduler: IScheduler, endpoint: SocketAddress, optId: String? = null) : this(lifetime, scheduler, createServerSocket(lifetime, endpoint), optId, allowReconnect = true)
+        constructor (lifetime : Lifetime, scheduler: IScheduler, wireAddress: WireAddress, optId: String? = null) : this(lifetime, scheduler, wireAddress.toSocketAddress(), optId)
+
+        internal constructor (lifetime : Lifetime, scheduler: IScheduler, endpoint: SocketAddress, optId: String? = null) : this(lifetime, scheduler, createServerSocket(lifetime, endpoint), optId, allowReconnect = true)
 
         init {
             var socket : SocketChannel? = null
@@ -545,7 +552,7 @@ class SocketWire {
                 logger.catch {
                     while (lifetime.isAlive) {
                         try {
-                            logger.debug { "$id: listening ${socketAddress}" }
+                            logger.debug { "$id: listening ${wireAddress}" }
                             val s = ss.accept() //could be terminated by close
                             if(s.localAddress is InetSocketAddress)
                                 s.setOption(StandardSocketOptions.TCP_NODELAY, true)
@@ -559,7 +566,6 @@ class SocketWire {
                                     socket = s
                             }
 
-
                             socketProvider.set(s)
                         }
                         catch (ex: Exception) {
@@ -569,14 +575,13 @@ class SocketWire {
                                 }
                                 else -> logger.error("$id closed with exception", ex)
                             }
-
                         }
 
                         if (!allowReconnect) {
-                            logger.debug { "$id: finished listening on ${socketAddress}." }
+                            logger.debug { "$id: finished listening on ${wireAddress}." }
                             break
                         } else {
-                            logger.debug { "$id: waiting for reconnection on ${socketAddress}." }
+                            logger.debug { "$id: waiting for reconnection on ${wireAddress}." }
                         }
                     }
                 }
@@ -639,8 +644,23 @@ class SocketWire {
 
             rec()
         }
-
-
     }
+}
 
+sealed class WireAddress {
+    data class TcpAddress(val address: InetAddress, val port: Int): WireAddress()
+    data class UnixAddress(val path: Path): WireAddress()
+
+    internal companion object {
+        fun fromSocketAddress(socketAddress: SocketAddress): WireAddress = when (socketAddress) {
+            is InetSocketAddress -> TcpAddress(socketAddress.address, socketAddress.port)
+            is UnixDomainSocketAddress -> UnixAddress(socketAddress.path)
+            else -> error("Unknown socket address type: $socketAddress")
+        }
+
+        fun WireAddress.toSocketAddress() = when (this) {
+            is TcpAddress -> InetSocketAddress(address, port)
+            is UnixAddress -> UnixDomainSocketAddress.of(path)
+        }
+    }
 }
