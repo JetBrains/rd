@@ -68,6 +68,17 @@ public abstract class EndPointWrapper
   { 
     return new UnixEndpointWrapper(connectionParams ?? new UnixSocketConnectionParams(Path.GetTempFileName()));
   }
+
+  public static EndPointWrapper FromEndPoint(EndPoint endPoint)
+  {
+    if (endPoint is IPEndPoint ipEndPoint)
+      return new IPEndpointWrapper(ipEndPoint);
+#if NET8_0_OR_GREATER
+    if (endPoint is UnixDomainSocketEndPoint unixEndPoint)
+      return new UnixEndpointWrapper(new UnixSocketConnectionParams(unixEndPoint.ToString()));
+#endif
+    throw new NotSupportedException($"Unknown endpoint type: {endPoint.GetType()}");
+  }
   
   public record struct UnixSocketConnectionParams(string Path);
 }

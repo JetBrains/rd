@@ -510,8 +510,9 @@ namespace JetBrains.Rd.Impl
         );
       }
 
-      public int? Port { get; protected set; }
 
+      public EndPointWrapper? ConnectionEndPoint { get; protected set; }
+      public int? Port => (ConnectionEndPoint as EndPointWrapper.IPEndpointWrapper)?.LocalPort;
 
       protected virtual bool AcceptHandshake(Socket socket)
       {
@@ -533,6 +534,7 @@ namespace JetBrains.Rd.Impl
       public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper endPointWrapper, string? optId = null) :
         base("ClientSocket-"+(optId ?? "<noname>"), lifetime, scheduler)
       {
+        ConnectionEndPoint = endPointWrapper;
         var thread = new Thread(() =>
         {
           try
@@ -668,7 +670,7 @@ namespace JetBrains.Rd.Impl
       private void StartServerSocket(Lifetime lifetime, Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
-        Port = serverSocket.LocalEndPoint is IPEndPoint ipEndPoint ? ipEndPoint.Port : null;
+        ConnectionEndPoint = serverSocket.LocalEndPoint is {} endPoint ? EndPointWrapper.FromEndPoint(endPoint) : null;
         // TODO do we want to store Path from Unix here? Only via reflection.
 
         Log.Verbose("{0} : started, port: {1}", Id, Port);
@@ -764,9 +766,9 @@ namespace JetBrains.Rd.Impl
     public class ServerFactory
     {
       [PublicAPI] public readonly int? LocalPort;
-#if NET8_0_OR_GREATER
-      [PublicAPI] public readonly string? LocalPath;
-#endif
+
+      public readonly EndPointWrapper ConnectionEndPoint;
+      
       [PublicAPI] public readonly IViewableSet<Server> Connected = new ViewableSet<Server>();
 
 
@@ -788,9 +790,7 @@ namespace JetBrains.Rd.Impl
           Base.CloseSocket(serverSocket);
         });
         LocalPort = (serverSocket.LocalEndPoint as IPEndPoint)?.Port;
-#if NET8_0_OR_GREATER
-        LocalPath = (endpointWrapper as EndPointWrapper.UnixEndpointWrapper)?.LocalPath;
-#endif
+        ConnectionEndPoint = endpointWrapper ?? EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, LocalPort ?? 0);
 
         void Rec()
         {
