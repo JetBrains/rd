@@ -5,7 +5,6 @@ import com.jetbrains.rd.framework.AbstractBuffer
 import com.jetbrains.rd.framework.RdMessage
 import com.jetbrains.rd.framework.base.WireBase
 import com.jetbrains.rd.framework.createAbstractBuffer
-import com.jetbrains.rd.util.Queue
 import com.jetbrains.rd.util.reactive.IScheduler
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -34,7 +33,7 @@ class TestWire(val scheduler : IScheduler) : WireBase() {
 
         ostream.position = 0
 
-        msgQ.offer(RdMessage(id, ostream))
+        msgQ.offer(RdMessage(id, ostream, null))
         if (autoFlush) {
             processAllMessages()
         }
@@ -58,6 +57,6 @@ class TestWire(val scheduler : IScheduler) : WireBase() {
 
     fun processOneMessage() {
         val msg = msgQ.poll() ?: return
-        counterpart.messageBroker.dispatch(msg.id, msg.istream)
+        counterpart.messageBroker.dispatch(msg.id, msg.istream, null)
     }
 }
