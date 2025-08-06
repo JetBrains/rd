@@ -9,7 +9,6 @@ import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.blockingPutUnique
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.intersect
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.IScheduler
@@ -17,7 +16,7 @@ import com.jetbrains.rd.util.string.IPrintable
 import com.jetbrains.rd.util.string.PrettyPrinter
 import com.jetbrains.rd.util.trace
 
-class RdMessage (val id : RdId, val istream : AbstractBuffer)
+class RdMessage (val id: RdId, val istream: AbstractBuffer, val tooBigMessage: String?)
 class MessageBroker(queueMessages: Boolean = false) : IPrintable {
 
     companion object {
@@ -46,7 +45,7 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
             }
 
             for (rdMessage in queue) {
-                dispatchImpl(rdMessage.id, rdMessage.istream)
+                dispatchImpl(rdMessage.id, rdMessage.istream, rdMessage.tooBigMessage)
             }
         }
     }
@@ -61,21 +60,21 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
     }
 
     //only on poller thread
-    fun dispatch(id: RdId, buffer: AbstractBuffer) {
+    fun dispatch(id: RdId, buffer: AbstractBuffer, tooBigMessage: String?) {
         require(!id.isNull) { "id mustn't be null" }
 
         if (unprocessedMessages != null) {
             Sync.lock(lock) {
                 val queue = unprocessedMessages ?: return@lock
-                queue.add(RdMessage(id, buffer))
+                queue.add(RdMessage(id, buffer, tooBigMessage))
                 return
             }
         }
 
-        dispatchImpl(id, buffer)
+        dispatchImpl(id, buffer, tooBigMessage)
     }
 
-    private fun dispatchImpl(id: RdId, buffer: AbstractBuffer) {
+    private fun dispatchImpl(id: RdId, buffer: AbstractBuffer, tooBigMessage: String?) {
         val entry = tryGetEntryById(id)
         if (entry == null) {
             log.trace { "handler is not found for $id" }
@@ -92,7 +91,11 @@ class MessageBroker(queueMessages: Boolean = false) : IPrintable {
             AllowBindingCookie.allowBind {
                 val messageContext = protocol.contexts.readContext(buffer)
                 val helper = RdWireableDispatchHelper(entry.lifetime, id, protocol, messageContext)
-                entry.subscription.onWireReceived(buffer, helper)
+                val subscription = entry.subscription
+                if (tooBigMessage != null) {
+                    log.error { tooBigMessage + " Location: " + subscription.location.toString() }
+                }
+                subscription.onWireReceived(buffer, helper)
             }
         } catch (e: Throwable) {
             log.error("Unexpected exception happened during processing a protocol event", e)

@@ -204,7 +204,7 @@ class SocketWire {
 
             val len = pkgInput.readInt32() ?: return false
             require(len > 0) {"len > 0: $len"}
-            require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)}), allowed_len=$maxMessageLength(0x${maxMessageLength.toString(16)})" }
+            val tooBigMessage = assertLength(len)
 
             val data = ByteArray(len)
             if (!pkgInput.readByteArray(data))
@@ -217,7 +217,7 @@ class SocketWire {
 
             val unsafeBuffer = UnsafeBuffer(data)
             val id = RdId.read(unsafeBuffer)
-            messageBroker.dispatch(id, unsafeBuffer)
+            messageBroker.dispatch(id, unsafeBuffer, tooBigMessage)
 
             return true
         }
@@ -263,7 +263,7 @@ class SocketWire {
                     }
                     else {
                         require(len > 0) {"len > 0: $len"}
-                        require (len < maxMessageLength) { "Possible OOM: array_len=$len(0x${len.toString(16)}), allowed_len=$maxMessageLength(0x${maxMessageLength.toString(16)})" }
+                        assertLength(len)
 
                         pkg = ByteArray(len)
                         pos = 0
@@ -279,6 +279,15 @@ class SocketWire {
                 }
             }
 
+        }
+
+        private fun assertLength(len: Int): String? {
+            if (len <= maxMessageLength) return null
+
+            val message = "Possible OOM: array_len=$len(0x${len.toString(16)}), allowed_len=$maxMessageLength(0x${maxMessageLength.toString(16)})"
+            logger.warn { message }
+
+            return message;
         }
 
         private fun sendAck0(seqn: Long) {
@@ -354,6 +363,11 @@ class SocketWire {
                 writer(unsafeBuffer) //write rest
 
                 val len = unsafeBuffer.position - initialPosition
+
+                if (len > maxMessageLength) {
+                    val entry = messageBroker.tryGetById(id)
+                    logger.error { "Too long message: $len. ${entry?.location?.toString() ?: "<NULL>"}" }
+                }
 
                 unsafeBuffer.position = initialPosition
                 unsafeBuffer.writeInt(len - 4)

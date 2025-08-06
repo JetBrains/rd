@@ -32,13 +32,24 @@ namespace JetBrains.Rd
   }
 
   public abstract class WireBase : IWireWithDelayedDelivery
-  {    
+  {
     protected readonly MessageBroker MessageBroker;
     private ProtocolContexts myContexts;
     
     private bool myBackwardsCompatibleWireFormat = false;
 
     public bool IsStub => false;
+    
+    // The same value as com.jetbrains.rd.framework.SocketWire#default_max_msg_len on the Kotlin Side
+    public static long DefaultMaxMsgLen = 300_000_000;
+    
+    private long myMaxMsgLen = DefaultMaxMsgLen;
+
+    public long MaxMsgLen
+    {
+      get => myMaxMsgLen;
+      set => myMaxMsgLen = value;
+    }
 
     public ProtocolContexts Contexts
     {
@@ -106,6 +117,12 @@ namespace JetBrains.Rd
         writer(param, cookie.Writer);
         bookmark.WriteIntLength();
 
+        if (cookie.Count > MaxMsgLen)
+        {
+          var subscription = TryGetById(id);
+          Log.Root.Error($"Too long message: {cookie.Count} bytes, Subscription: {subscription?.ToString() ?? "<NULL>"}");
+        }
+        
         SendPkg(cookie);
       }
     }
