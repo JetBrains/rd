@@ -351,7 +351,7 @@ public abstract class SocketWireTestBase<T> : LifetimesTestBase
       
     var lf1 = new LifetimeDefinition();
     // ReSharper disable once PossibleInvalidOperationException
-    if (endPointWrapper.EndPointImpl is IPEndPoint)
+    if (endPointWrapper is EndPointWrapper.IPEndpointWrapper)
     {
       new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, factory.LocalPort.Value);
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);

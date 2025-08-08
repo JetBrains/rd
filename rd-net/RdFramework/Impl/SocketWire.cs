@@ -550,8 +550,8 @@ namespace JetBrains.Rd.Impl
                 Socket = s;
 
                 SetSocketOptions(s);
-                Log.Verbose("{0}: connecting to {1}.", Id, endPointWrapper.EndPointImpl);
-                s.Connect(endPointWrapper.EndPointImpl);
+                Log.Verbose("{0}: connecting to {1}.", Id, endPointWrapper.ToEndPoint());
+                s.Connect(endPointWrapper.ToEndPoint());
 
                 lock (Lock)
                 {
@@ -577,11 +577,11 @@ namespace JetBrains.Rd.Impl
                 {
                   lastReportedErrorHash = errorHashCode;
                   if (Log.IsVersboseEnabled())
-                    Log.Verbose(ex, $"{Id}: connection error for endpoint \"{endPointWrapper.EndPointImpl}\".");
+                    Log.Verbose(ex, $"{Id}: connection error for endpoint \"{endPointWrapper.ToEndPoint()}\".");
                 }
                 else
                 {
-                  Log.Verbose("{0}: connection error for endpoint \"{1}\" ({2}).", Id, endPointWrapper.EndPointImpl, ex.Message);
+                  Log.Verbose("{0}: connection error for endpoint \"{1}\" ({2}).", Id, endPointWrapper.ToEndPoint(), ex.Message);
                 }
 
                 lock (Lock)
@@ -649,7 +649,7 @@ namespace JetBrains.Rd.Impl
 
       public static Socket CreateServerSocket(EndPointWrapper? endPointWrapper)
       {
-        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPointWrapper?.EndPointImpl);
+        Protocol.InitLogger.Verbose("Creating server socket on endpoint: {0}", endPointWrapper?.ToEndPoint());
         // by default we will use IPEndpoint
         endPointWrapper ??= EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, 0);
 
@@ -660,9 +660,9 @@ namespace JetBrains.Rd.Impl
         {
           if (File.Exists(unixEndpointWrapper.LocalPath)) File.Delete(unixEndpointWrapper.LocalPath);
         }
-        serverSocket.Bind(endPointWrapper.EndPointImpl);
+        serverSocket.Bind(endPointWrapper.ToEndPoint());
         serverSocket.Listen(1);
-        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPointWrapper.EndPointImpl);
+        Protocol.InitLogger.Verbose("Server socket created, listening started on endpoint: {0}", endPointWrapper.ToEndPoint());
 
         return serverSocket;
       }
