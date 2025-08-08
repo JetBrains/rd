@@ -344,7 +344,7 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static new CtxWriteDelegate<Derived> Write = (ctx, writer, value) => 
     {
-      writer.WriteString(value.String);
+      writer.Write(value.String);
     };
     
     //constants
@@ -425,7 +425,7 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static new CtxWriteDelegate<Open> Write = (ctx, writer, value) => 
     {
-      writer.WriteString(value.OpenString);
+      writer.Write(value.OpenString);
     };
     
     //constants
@@ -524,7 +524,7 @@ namespace Test.RdFramework.Reflection.Generated
     {
       value.RdId.Write(writer);
       RdProperty<string>.Write(ctx, writer, value._String);
-      writer.WriteString(value.Field);
+      writer.Write(value.Field);
     };
     
     //constants
@@ -592,7 +592,7 @@ namespace Test.RdFramework.Reflection.Generated
     {
       value.RdId.Write(writer);
       RdProperty<string>.Write(ctx, writer, value._String);
-      writer.WriteString(value.Field);
+      writer.Write(value.Field);
     };
     
     //constants
@@ -657,8 +657,8 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static new CtxWriteDelegate<OpenDerived> Write = (ctx, writer, value) => 
     {
-      writer.WriteString(value.OpenString);
-      writer.WriteString(value.OpenDerivedString);
+      writer.Write(value.OpenString);
+      writer.Write(value.OpenDerivedString);
     };
     
     //constants
@@ -739,8 +739,8 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static new CtxWriteDelegate<OpenDerived_Unknown> Write = (ctx, writer, value) => 
     {
-      writer.WriteString(value.OpenDerivedString);
-      writer.WriteString(value.OpenString);
+      writer.Write(value.OpenDerivedString);
+      writer.Write(value.OpenString);
     };
     
     //constants
@@ -818,7 +818,7 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static new CtxWriteDelegate<Open_Unknown> Write = (ctx, writer, value) => 
     {
-      writer.WriteString(value.OpenString);
+      writer.Write(value.OpenString);
     };
     
     //constants

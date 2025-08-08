@@ -124,7 +124,9 @@ namespace JetBrains.Rd.Reflection
         if (allowNullable && !unsafeReader.ReadNullness())
           return default;
 
+#pragma warning disable SYSLIB0050
         object instance = FormatterServices.GetUninitializedObject(typeof(T));
+#pragma warning restore SYSLIB0050
 
         try
         {
@@ -247,7 +249,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       var type = typeInfo.AsType();
-      CtxReadDelegate<T> readerDelegate = (ctx, unsafeReader) =>
+      CtxReadDelegate<T?> readerDelegate = (ctx, unsafeReader) =>
       {
         // todo: consider using IL emit
         var activatorArgs = new object[argumentTypes.Length];
@@ -258,7 +260,7 @@ namespace JetBrains.Rd.Reflection
         }
 
         var instance = Activator.CreateInstance(type, activatorArgs);
-        return (T) instance;
+        return (T?) instance;
       };
 
       CtxWriteDelegate<T> writerDelegate = (ctx, unsafeWriter, value) =>
