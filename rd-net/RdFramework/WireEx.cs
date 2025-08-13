@@ -11,7 +11,7 @@ namespace JetBrains.Rd
       var serverSocketWire = wire as SocketWire.Server;
       if (serverSocketWire == null)
         throw new ArgumentException("You must use SocketWire.Server to get server port");
-      var port = serverSocketWire.Port;
+      var port = (serverSocketWire.ConnectionEndPoint as EndPointWrapper.IPEndpointWrapper)?.LocalPort;
       if (!port.HasValue)
         throw new ArgumentException("You must use SocketWire.Server with connection over TCP to get server port");
       return port.Value;

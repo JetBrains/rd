@@ -512,6 +512,8 @@ namespace JetBrains.Rd.Impl
 
 
       public EndPointWrapper? ConnectionEndPoint { get; protected set; }
+      
+      [Obsolete("Use ConnectionEndPoint instead")]
       public int? Port => (ConnectionEndPoint as EndPointWrapper.IPEndpointWrapper)?.LocalPort;
 
       protected virtual bool AcceptHandshake(Socket socket)
@@ -526,7 +528,7 @@ namespace JetBrains.Rd.Impl
       public Client(Lifetime lifetime, IScheduler scheduler, int port, string? optId = null) :
         this(lifetime, scheduler, EndPointWrapper.CreateIpEndPoint(IPAddress.Loopback, port), optId) {}
       
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
       public Client(Lifetime lifetime, IScheduler scheduler, EndPointWrapper.UnixSocketConnectionParams connectionParams, string? optId = null) :
         this(lifetime, scheduler, EndPointWrapper.CreateUnixEndPoint(connectionParams), optId) {}
 #endif
@@ -629,7 +631,7 @@ namespace JetBrains.Rd.Impl
 
         lifetime.OnTermination(() =>
           {
-            ourStaticLog.Verbose("closing server socket");
+            ourStaticLog.Verbose("closing server socket.");
             CloseSocket(serverSocket);
           }
         );
@@ -670,14 +672,15 @@ namespace JetBrains.Rd.Impl
       private void StartServerSocket(Lifetime lifetime, Socket serverSocket)
       {
         if (serverSocket == null) throw new ArgumentNullException(nameof(serverSocket));
+        // To get the actual endpoint, we should take it from the socket,
+        // because it's possible to bind it to port = 0 and let the "service provider" to assign an available port.
         ConnectionEndPoint = serverSocket.LocalEndPoint is {} endPoint ? EndPointWrapper.FromEndPoint(endPoint) : null;
-        // TODO do we want to store Path from Unix here? Only via reflection.
 
-        Log.Verbose("{0} : started, port: {1}", Id, Port);
+        Log.Verbose("{0} : started, port: {1}", Id, ConnectionEndPoint);
 
         var thread = new Thread(() =>
         {
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
           Log.Catch(async () =>
 #else
           Log.Catch(() =>
@@ -687,8 +690,8 @@ namespace JetBrains.Rd.Impl
             {
               try
               {
-                Log.Verbose("{0} : accepting, port: {1}", Id, Port);
-#if NET8_0_OR_GREATER
+                Log.Verbose("{0} : accepting, port: {1}", Id, ConnectionEndPoint);
+#if NET6_0_OR_GREATER
                 var s = await serverSocket.AcceptAsync(lifetime);
 #else
                 var s = serverSocket.Accept();

@@ -362,7 +362,7 @@ public abstract class SocketWireTestBase<T> : LifetimesTestBase
     }
     else
     {
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
       var connectionParams = new EndPointWrapper.UnixSocketConnectionParams { Path = (factory.ConnectionEndPoint as EndPointWrapper.UnixEndpointWrapper)!.LocalPath };
       new SocketWire.Client(lf1.Lifetime, SynchronousScheduler.Instance, connectionParams);
       SpinWaitEx.SpinUntil(() => factory.Connected.Count == 1);

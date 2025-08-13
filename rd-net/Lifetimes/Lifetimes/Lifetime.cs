@@ -126,7 +126,7 @@ namespace JetBrains.Lifetimes
 
     internal void AssertInitialized()
     {
-      /*if (!Mode.IsAssertion) return;
+      /*if (!Mode.IsAssertion) return; // TODO: FIX THIS
       
       if (LogErrorIfLifetimeIsNotInitialized && IsUninitialized)
       {

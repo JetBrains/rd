@@ -41,7 +41,7 @@ public abstract class EndPointWrapper
   {
     public string LocalPath { get; private set; }
 
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
     public UnixDomainSocketEndPoint UnixEndPoint { get; }
 #endif
 
@@ -49,7 +49,7 @@ public abstract class EndPointWrapper
     
     public UnixEndpointWrapper(string path)
     {
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
       UnixEndPoint = new UnixDomainSocketEndPoint(path);
 #endif
       AddressFamily = AddressFamily.Unix;
@@ -60,7 +60,7 @@ public abstract class EndPointWrapper
 
     public override EndPoint ToEndPoint()
     {
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
       return UnixEndPoint;
 #else
       throw new NotSupportedException("Unix domain sockets are not supported on this platform");
@@ -90,14 +90,14 @@ public abstract class EndPointWrapper
   {
     if (endPoint is IPEndPoint ipEndPoint)
       return new IPEndpointWrapper(ipEndPoint);
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
     if (endPoint is UnixDomainSocketEndPoint unixEndPoint)
-      return new UnixEndpointWrapper(unixEndPoint.ToString());
+      return new UnixEndpointWrapper(unixEndPoint.ToString()!);
 #endif
     throw new NotSupportedException($"Unknown endpoint type: {endPoint.GetType()}");
   }
   
-#if NET8_0_OR_GREATER
+#if NET6_0_OR_GREATER
   public static bool AreUnixSocketsSupported => true;
 #else
   public static bool AreUnixSocketsSupported => false;
