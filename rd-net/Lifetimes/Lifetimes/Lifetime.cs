@@ -144,7 +144,7 @@ namespace JetBrains.Lifetimes
     }
 
     [PublicAPI]
-    public static bool LogErrorIfLifetimeIsNotInitialized = true;
+    public static bool LogErrorIfLifetimeIsNotInitialized = false;
 
 
     #if !NET35
