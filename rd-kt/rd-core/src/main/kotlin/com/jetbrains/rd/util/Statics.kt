@@ -1,5 +1,7 @@
 package com.jetbrains.rd.util
 
+import java.io.Closeable
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
 /**
