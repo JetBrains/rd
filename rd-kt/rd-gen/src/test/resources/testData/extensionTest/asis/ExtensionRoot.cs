@@ -181,7 +181,7 @@ namespace ExtensionRoot
   /// <summary>
   /// <p>Generated from: Extension.kt:29</p>
   /// </summary>
-  public sealed class StructWithStr : IPrintable, IEquatable<StructWithStr>
+  public struct StructWithStr : IPrintable, IEquatable<StructWithStr>
   {
     //fields
     //public fields

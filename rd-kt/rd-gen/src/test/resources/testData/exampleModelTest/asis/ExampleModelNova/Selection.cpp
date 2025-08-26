@@ -54,7 +54,7 @@ void Selection::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
 {
     buffer.write_integral(start_);
     buffer.write_integral(end_);
-    buffer.write_array<std::vector, int32_t, rd::allocator<int32_t>>(lst_,
+    buffer.write_array<std::vector, int32_t, rd::allocator<int32_t>>(lst_, 
     [&ctx, &buffer](int32_t const & it) mutable  -> void 
     { buffer.write_integral(it); }
     );

@@ -259,7 +259,7 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
   /// <summary>
   /// <p>Generated from: PerClientId.kt:24</p>
   /// </summary>
-  public sealed class PerClientIdSignal : IPrintable, IEquatable<PerClientIdSignal>
+  public struct PerClientIdSignal : IPrintable, IEquatable<PerClientIdSignal>
   {
     //fields
     //public fields
@@ -325,7 +325,7 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
   /// <summary>
   /// <p>Generated from: PerClientId.kt:23</p>
   /// </summary>
-  public sealed class PerClientIdStruct : IPrintable, IEquatable<PerClientIdStruct>
+  public struct PerClientIdStruct : IPrintable, IEquatable<PerClientIdStruct>
   {
     //fields
     //public fields

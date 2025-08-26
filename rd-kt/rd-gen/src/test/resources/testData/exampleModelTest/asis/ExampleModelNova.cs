@@ -2493,7 +2493,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: Example.kt:166</p>
   /// </summary>
-  public sealed class ScalarExample : IPrintable, IEquatable<ScalarExample>
+  public struct ScalarExample : IPrintable, IEquatable<ScalarExample>
   {
     //fields
     //public fields
@@ -2687,7 +2687,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: Example.kt:22</p>
   /// </summary>
-  public sealed class Selection : IPrintable, IEquatable<Selection>
+  public struct Selection : IPrintable, IEquatable<Selection>
   {
     //fields
     //public fields
@@ -2805,7 +2805,7 @@ namespace org.example
   /// <summary>
   /// <p>Generated from: Example.kt:89</p>
   /// </summary>
-  public sealed class Struct : IPrintable, IEquatable<Struct>
+  public struct Struct : IPrintable, IEquatable<Struct>
   {
     //fields
     //public fields

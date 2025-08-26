@@ -2265,7 +2265,7 @@ class OpenStruct_Unknown (
 /**
  * #### Generated from [Example.kt:166]
  */
-data class ScalarExample (
+@kotlin.jvm.JvmInline value class ScalarExample (
     val intfield: Int
 ) : IPrintable {
     //companion
@@ -2291,22 +2291,7 @@ data class ScalarExample (
     //initializer
     //secondary constructor
     //equals trait
-    override fun equals(other: Any?): Boolean  {
-        if (this === other) return true
-        if (other == null || other::class != this::class) return false
-        
-        other as ScalarExample
-        
-        if (intfield != other.intfield) return false
-        
-        return true
-    }
     //hash code trait
-    override fun hashCode(): Int  {
-        var __r = 0
-        __r = __r*31 + intfield.hashCode()
-        return __r
-    }
     //pretty print
     override fun print(printer: PrettyPrinter)  {
         printer.println("ScalarExample (")

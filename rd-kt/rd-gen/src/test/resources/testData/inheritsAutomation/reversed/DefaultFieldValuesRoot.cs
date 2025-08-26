@@ -208,7 +208,7 @@ namespace DefaultFieldValuesRoot
   /// <summary>
   /// <p>Generated from: DefaultFieldValuesTest.kt:18</p>
   /// </summary>
-  public sealed class TestStruct : IPrintable, IEquatable<TestStruct>
+  public struct TestStruct : IPrintable, IEquatable<TestStruct>
   {
     //fields
     //public fields
