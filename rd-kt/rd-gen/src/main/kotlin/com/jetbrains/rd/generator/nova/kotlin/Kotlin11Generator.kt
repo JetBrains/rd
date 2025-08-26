@@ -8,7 +8,6 @@ import com.jetbrains.rd.generator.nova.kotlin.KotlinSanitizer.sanitize
 import com.jetbrains.rd.generator.nova.util.capitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
-import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.hash.getPlatformIndependentHash
 import com.jetbrains.rd.util.string.Eol

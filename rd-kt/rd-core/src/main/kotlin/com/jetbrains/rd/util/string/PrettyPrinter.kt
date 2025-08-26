@@ -1,13 +1,13 @@
 package com.jetbrains.rd.util.string
 
-import com.jetbrains.rd.util.eol
+import com.jetbrains.rd.util.globalPlatformSpecificEndOfLine
 import kotlin.math.max
 
 enum class Eol(val value: String) {
     asIs (""),
     linux ("\n"),
     windows ("\r\n"),
-    osSpecified (eol),
+    osSpecified (globalPlatformSpecificEndOfLine),
     none(" ")
 }
 
@@ -17,6 +17,7 @@ class PrettyPrinter {
     var step = 2
 
     var eolKind = Eol.asIs
+    val eol: String get() = eolKind.value
     private val builder = StringBuilder()
     private var needIndent = true
     var indent: Int = 0

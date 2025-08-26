@@ -34,7 +34,7 @@ typealias ThreadLocal<T> = java.lang.ThreadLocal<T>
 
 fun <T> threadLocalWithInitial(initial: () -> T) : ThreadLocal<T> = ThreadLocal.withInitial(initial)
 
-val eol : String = System.lineSeparator()
+val globalPlatformSpecificEndOfLine : String = System.lineSeparator()
 
 @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 object Sync {

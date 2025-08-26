@@ -40,6 +40,7 @@ object ErrorAccumulatorLoggerFactory : ILoggerFactory {
     fun throwAndClear() {
         if (errors.isEmpty()) return
 
+        val eol = globalPlatformSpecificEndOfLine
         val text = "There are ${errors.size} exceptions:$eol" +
                 errors.joinToString("$eol$eol --------------------------- $eol$eol")
         errors.clear()

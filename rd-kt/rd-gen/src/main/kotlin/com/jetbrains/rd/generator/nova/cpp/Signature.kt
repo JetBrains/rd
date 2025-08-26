@@ -4,13 +4,12 @@ import com.jetbrains.rd.generator.nova.Declaration
 import com.jetbrains.rd.generator.nova.IType
 import com.jetbrains.rd.generator.nova.Member
 import com.jetbrains.rd.generator.nova.util.joinToOptString
-import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.string.condstr
 
 
 sealed class Signature {
-    abstract fun decl(): String
-    abstract fun def(): String
+    abstract fun decl(eol: String): String
+    abstract fun def(eol: String): String
 
 
     class MemberFunction(private val returnType: String, private val arguments: String, private val scope: String?, private var isAbstract: Boolean = false) : Signature() {
@@ -26,11 +25,11 @@ sealed class Signature {
             return toArray().joinToOptString(separator = " ", prefix = " ")
         }
 
-        override fun decl(): String {
+        override fun decl(eol: String): String {
             return "${declPrefix.front()}$returnType $arguments${commonPostfix.back()}${declPostfix.back()}" + isAbstract.condstr { " = 0" } + ";"
         }
 
-        override fun def(): String {
+        override fun def(eol: String): String {
             return "$returnType ${scope?.let { "$it::" }.orEmpty()}$arguments${commonPostfix.back()}"
         }
 
@@ -82,12 +81,12 @@ sealed class Signature {
 
         private val isExplicit get() = (arguments.count() == 1)
 
-        override fun decl(): String {
+        override fun decl(eol: String): String {
             return isExplicit.condstr { "explicit " } + "${decl.name}($params);"
         }
 
         class Default(generator: Cpp17Generator, decl: Declaration) : Constructor(generator, decl, emptyList()) {
-            override fun def(): String {
+            override fun def(eol: String): String {
                 return "$name::$name()"
             }
         }
@@ -101,7 +100,7 @@ sealed class Signature {
                 }
             }
 
-            override fun def(): String {
+            override fun def(eol: String): String {
                 val initBases = generator.bases(decl).joinToString(separator = ", ") {
                     val params = it.params.joinToString(separator = ",") { p -> "std::move(${p.name}_)" }
                     "${it.type.name}($params)"
@@ -126,7 +125,7 @@ sealed class Signature {
                 }
             }
 
-            override fun def(): String {
+            override fun def(eol: String): String {
                 val init = allArguments.otherArguments.map {
                     if (it == null) {
                         "{}"

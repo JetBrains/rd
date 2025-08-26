@@ -11,7 +11,6 @@ import com.jetbrains.rd.generator.nova.util.decapitalizeInvariant
 import com.jetbrains.rd.generator.nova.util.joinToOptString
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.PublicApi
-import com.jetbrains.rd.util.eol
 import com.jetbrains.rd.util.hash.IncrementalHash64
 import com.jetbrains.rd.util.string.Eol
 import com.jetbrains.rd.util.string.PrettyPrinter
@@ -282,7 +281,7 @@ open class Cpp17Generator(
 
     protected fun PrettyPrinter.declare(signature: Signature?) {
         signature?.let {
-            this.println(it.decl())
+            this.println(it.decl(eol))
         }
     }
 
@@ -294,7 +293,7 @@ open class Cpp17Generator(
 
     protected fun PrettyPrinter.define(signature: Signature?, body: PrettyPrinter.() -> Unit) {
         signature?.let {
-            this.println(it.def())
+            this.println(it.def(eol))
             braceBlock {
                 this.body()
             }
@@ -1932,7 +1931,7 @@ open class Cpp17Generator(
         }
     }
 
-    private fun lambda(args: String?, body: String, resultType: String? = null): String {
+    private fun PrettyPrinter.lambda(args: String?, body: String, resultType: String? = null): String {
         val typeHint = resultType?.let { " -> $resultType" } ?: ""
         return "$eol[&ctx, &buffer](${args ?: ""}) mutable $typeHint $eol{ $body; }$eol"
     }
@@ -2330,7 +2329,7 @@ open class Cpp17Generator(
     override fun unknown(it: Declaration): Declaration? = super.unknown(it)?.setting(PublicCtors)
 //endregion
 
-    protected fun docComment(doc: String?) = (doc != null).condstr {
+    protected fun PrettyPrinter.docComment(doc: String?) = (doc != null).condstr {
         "\n" +
             "/**" + eol +
             " * $doc" + eol +
