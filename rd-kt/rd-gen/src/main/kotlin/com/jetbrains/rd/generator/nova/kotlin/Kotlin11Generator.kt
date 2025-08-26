@@ -377,6 +377,10 @@ open class Kotlin11Generator(
         }
     }
 
+    protected fun IDeclaration.canBeValueClass(): Boolean {
+        return this is Struct.Concrete && base == null && !isUnknown && allMembers.size == 1
+    }
+
     protected open fun PrettyPrinter.typedef(decl: Declaration, collector: MarshallersCollector) {
         if (decl.getSetting(Intrinsic) != null || decl is Context) return
 
@@ -406,7 +410,7 @@ open class Kotlin11Generator(
         }
 
 
-        + "class ${decl.name} ${decl.primaryCtorVisibility}("
+        + "${if (decl.canBeValueClass()) "@kotlin.jvm.JvmInline value " else ""}class ${decl.name} ${decl.primaryCtorVisibility}("
         indent {
             primaryCtorParamsTrait(decl)
         }
@@ -446,6 +450,10 @@ open class Kotlin11Generator(
         if (decl.isToplevelExtension) {
             toplevelExtensionTrait(decl as Ext)
         }
+    }
+
+    override fun canBeDataClass(declaration: Declaration): Boolean {
+        return super.canBeDataClass(declaration) && !declaration.canBeValueClass()
     }
 
     protected fun PrettyPrinter.contextsTrait(decl: Declaration) {
@@ -925,7 +933,7 @@ open class Kotlin11Generator(
     }
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.canBeValueClass()) return
 
         fun IScalar.eq(v : String) = when (this) {
             is IArray ->
@@ -966,7 +974,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.canBeValueClass()) return
 
         fun IScalar.hc(v : String, m : Member) : String = when (this) {
             is IArray ->

@@ -74,11 +74,17 @@ open class CSharp50Generator(
     }
 
 
+    protected fun IDeclaration.canBeValueClass(): Boolean {
+        return this is Struct.Concrete && base == null && !isUnknown
+    }
+
     protected val IType.isValueType: Boolean
         get() =
             this is Enum
                     ||
                     this is PredefinedType.NativeIntegral
+                    ||
+                    this is IDeclaration && this.canBeValueClass()
                     ||
                     this is PredefinedType.UnsignedIntegral
                     ||
@@ -496,11 +502,11 @@ open class CSharp50Generator(
 
         if(decl !is Toplevel) {
             if (decl.isAbstract) p("abstract ")
-            if (decl.isSealed) p("sealed ")
+            if (decl.isSealed && !decl.canBeValueClass()) p("sealed ")
         }
         if (decl.getSetting(Partial) != null) p("partial ")
 
-        p("class ${decl.name}")
+        p("${(if (decl.canBeValueClass()) "struct" else "class")} ${decl.name}")
 
         baseClassTrait(decl)
 

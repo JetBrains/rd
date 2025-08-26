@@ -101,7 +101,9 @@ abstract class GeneratorBase(protected open val flowTransform: FlowTransform, pr
     protected val master get() = flowTransform != FlowTransform.Reversed
 
     protected val Declaration.isDataClass: Boolean
-        get() = this is Struct.Concrete && base == null && allMembers.isNotEmpty()
+        get() = canBeDataClass(this)
+
+    protected open fun canBeDataClass(declaration: Declaration): Boolean = declaration is Struct.Concrete && declaration.base == null && declaration.allMembers.isNotEmpty()
 }
 
 enum class Lang { Kotlin, CSharp, Cpp}
