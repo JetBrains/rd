@@ -500,7 +500,11 @@ open class CSharp50Generator(
         }
         if (decl.getSetting(Partial) != null) p("partial ")
 
-        p("class ${decl.name}")
+        if (decl.isValue) {
+            p("struct ${decl.name}")
+        } else {
+            p("class ${decl.name}")
+        }
 
         baseClassTrait(decl)
 

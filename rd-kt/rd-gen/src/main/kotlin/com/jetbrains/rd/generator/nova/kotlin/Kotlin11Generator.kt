@@ -407,7 +407,8 @@ open class Kotlin11Generator(
         }
 
 
-        + "class ${decl.name} ${decl.primaryCtorVisibility}("
+
+        + "${if (decl.isValue) "@kotlin.jvm.JvmInline value " else ""}class ${decl.name} ${decl.primaryCtorVisibility}("
         indent {
             primaryCtorParamsTrait(decl)
         }
@@ -926,7 +927,7 @@ open class Kotlin11Generator(
     }
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.isValue) return
 
         fun IScalar.eq(v : String) = when (this) {
             is IArray ->
@@ -967,7 +968,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.isValue) return
 
         fun IScalar.hc(v : String, m : Member) : String = when (this) {
             is IArray ->

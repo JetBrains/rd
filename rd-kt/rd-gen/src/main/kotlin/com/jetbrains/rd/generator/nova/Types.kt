@@ -93,7 +93,8 @@ class InternScope(pointcut: BindableDeclaration?, override val _name: String = "
 enum class Modifier{
     Abstract,
     Open,
-    Sealed
+    Sealed,
+    Value
 }
 
 sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declaration(pointcut) {
@@ -254,6 +255,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     val isAbstract: Boolean get() = modifier == Modifier.Abstract
     val isOpen: Boolean get() = modifier == Modifier.Open
     val isSealed: Boolean get() = modifier == Modifier.Sealed
+    val isValue: Boolean get() = modifier == Modifier.Value
 
     internal var lazyInitializer: (Declaration.() -> Unit)? = null
 
@@ -434,6 +436,12 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun openstruct(name: String) = openstruct(name) {}
     val openstruct get() = openstruct("")
 
+    private fun valuedef0(name : String, body: Struct.() -> Unit) = append(Struct.Value(name, this), body)
+    fun valuedef(name : String, body: Struct.() -> Unit) = valuedef0(name, body)
+    fun valuedef(body: Struct.() -> Unit) = valuedef0("", body)
+    fun valuedef(name : String) = valuedef(name) {}
+    val valuedef get() = valuedef("")
+
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("structdef(name) extends base (body)"))
     fun structdef(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = structdef0(name, base, body)
@@ -492,6 +500,10 @@ sealed class Struct(override val _name: String, override val pointcut : Toplevel
     class Open (name: String, pointcut : Toplevel, base: Struct?) : Struct(name, pointcut, base) {
         override val modifier: Modifier = Modifier.Open
         operator fun invoke(body: Struct.() -> Unit) = this to body //for extends
+    }
+
+    class Value(name: String, pointcut : Toplevel) : Struct(name, pointcut, null, false) {
+        override val modifier: Modifier = Modifier.Value
     }
 }
 operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T = this

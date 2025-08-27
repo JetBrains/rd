@@ -143,6 +143,10 @@ object ExampleModelNova : Ext(ExampleRootNova) {
         field("derivedField", PredefinedType.bool)
     }
 
+    val ValueStruct = valuedef {
+        field("value", PredefinedType.int)
+    }
+
     init {
         source("push", PredefinedType.int)
         property("version", PredefinedType.int).readonly
