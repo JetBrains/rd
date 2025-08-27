@@ -82,6 +82,8 @@ open class CSharp50Generator(
                     ||
                     this is PredefinedType.UnsignedIntegral
                     ||
+                    this is ValueClass
+                    ||
                     listOf(
                             PredefinedType.float,
                             PredefinedType.double,
@@ -500,7 +502,11 @@ open class CSharp50Generator(
         }
         if (decl.getSetting(Partial) != null) p("partial ")
 
-        p("class ${decl.name}")
+        if (decl.isValue) {
+            p("struct ${decl.name}")
+        } else {
+            p("class ${decl.name}")
+        }
 
         baseClassTrait(decl)
 
@@ -1041,7 +1047,7 @@ open class CSharp50Generator(
     }
 
     private fun PrettyPrinter.deconstructTrait(decl: Declaration) {
-        if (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct))) {
+        if (decl.isDataClass || decl.isValue || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct))) {
             val params = decl.ownMembers.joinToString {
                 "${it.nullAttr(false)}out ${it.implSubstitutedName(decl)} ${sanitize(it.name)}"
             }
@@ -1069,7 +1075,7 @@ open class CSharp50Generator(
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
         if (decl.isAbstract || decl !is IScalar) return
 
-        fun IType.eq(fieldName: String, member: Member) : String = when (this) {
+        fun IType.eq(fieldName: String, member: Member): String = when (this) {
             !is IScalar -> fail("Field $decl.`$member` must have scalar type but was $this")
             is IArray, is IImmutableList -> "$fieldName.SequenceEqual(other.$fieldName)"
             is Enum, is PredefinedType -> "$fieldName == other.$fieldName"
@@ -1092,14 +1098,17 @@ open class CSharp50Generator(
         +"public bool Equals(${decl.name} other)"
         +"{"
         indent {
-            +"if (ReferenceEquals(null, other)) return false;"
-            +"if (ReferenceEquals(this, other)) return true;"
+            if (!decl.isValue) {
+                +"if (ReferenceEquals(null, other)) return false;"
+                +"if (ReferenceEquals(this, other)) return true;"
+            }
             val res = decl.allMembers.mapNotNull { m ->
                 when (m) {
                     is Member.Field -> {
                         if (m.usedInEquals) Triple(m.encapsulatedName, m.type, m)
                         else null
                     }
+
                     is Member.Reactive.Stateful.Extension -> Triple(m.encapsulatedName, m.delegatedBy, m)
                     else -> fail("Must be field but was `$m`")
                 }
@@ -1109,6 +1118,22 @@ open class CSharp50Generator(
             +"return $res;"
         }
         +"}"
+
+        if (decl.isValue) {
+            +"public static bool operator ==(${decl.name} left, ${decl.name} right)"
+            +"{"
+            indent {
+                +"return left.Equals(right);"
+            }
+            +"}"
+
+            +"public static bool operator !=(${decl.name} left, ${decl.name} right)"
+            +"{"
+            indent {
+                +"return !left.Equals(right);"
+            }
+            +"}"
+        }
     }
 
 
@@ -1156,7 +1181,7 @@ open class CSharp50Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen || decl.isValue)) return
 
         fun Declaration.attributes() : String{
             if(decl !is Struct) return "override "
@@ -1287,7 +1312,7 @@ open class CSharp50Generator(
                     when (decl) {
                         is Toplevel -> "RdExtBase"
                         is BindableDeclaration -> "RdBindableBase"
-                        is Struct.Concrete -> "IPrintable, IEquatable<${decl.name}>"
+                        is Struct.Concrete, is ValueClass -> "IPrintable, IEquatable<${decl.name}>"
                         else -> "" //abstract struct doesn't implement these methods, enum must not reach this place
                     }
                 } else {

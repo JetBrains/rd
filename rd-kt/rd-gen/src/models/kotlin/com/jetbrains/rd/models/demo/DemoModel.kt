@@ -119,6 +119,10 @@ object DemoModel : Ext(DemoRoot) {
         })
     }
 
+    private var StructWithValueClassField = structdef {
+        field("inner", valuedef("ValueClassInField", "field", PredefinedType.int))
+    }
+
     private var complicatedPair = structdef {
         field("first", Derived)
         field("second", Derived)
