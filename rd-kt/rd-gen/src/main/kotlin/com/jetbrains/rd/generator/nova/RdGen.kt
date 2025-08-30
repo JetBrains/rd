@@ -41,10 +41,10 @@ class RdGen : Kli() {
 
     var compilerClassloader : ClassLoader? = null
 
-    val sources =       option_string('s',    "source", "Folders with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
+    val sources =       option_string('s',    "source", "[DEPRECATED] Folders with dsl .kt files. If not present, scan classpath for inheritors of '${Toplevel::class.java.name}'")
     val hashFolder =    option_path(  'h',    "hash-folder","Folder to store hash file '$hashFileName' for incremental generation", Paths.get("").toAbsolutePath())
-    val compiled =      option_path(  null,   "compiled", "Folder for compiled dsl. Temporary folder is created if option is not specified.")
-    val classpath =     option_string('c',    "compiler-classpath","Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
+    val compiled =      option_path(  null,   "compiled", "[DEPRECATED] Folder for compiled dsl. Temporary folder is created if option is not specified.")
+    val classpath =     option_string('c',    "compiler-classpath","[DEPRECATED] Classpath for kotlin compiler. You must specify it if you referenced something from your dsl" )
 
 
     val force =         option_flag(  'f',   "force", "Suppress incremental generation.")
@@ -156,6 +156,11 @@ class RdGen : Kli() {
     }
 
     fun compileDsl(src: List<File>) : ClassLoaderResource {
+        System.err.println("Warning: deprecated feature used.")
+        System.err.println("This build uses Kotlin compilation by rd-gen. In a future release of rd-gen, this feature will be removed.")
+        System.err.println("Please update your build system to pre-compile the artifacts using external Kotlin compiler.")
+        System.err.println("Pass the compiled classes via classpath of rd-gen.")
+
         var tempDirectory: Path? = null
         val dst = compiled.value?.apply {
             v("Compiling into specified folder: $this")
