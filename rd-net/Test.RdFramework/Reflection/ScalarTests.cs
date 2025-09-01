@@ -219,6 +219,12 @@ namespace Test.RdFramework.Reflection
     }
 #endif
 
+    [Test]
+    public void TestBoxing()
+    {
+      RunScalarTest<object>(true, (a, b) => Assert.AreEqual((bool)a, (bool)b));
+      RunScalarTest<object>(MyEnum.First, (a, b) => Assert.AreEqual((MyEnum)a, (MyEnum)b));
+    }
 
     [Test]
     public void TestCyclic()
