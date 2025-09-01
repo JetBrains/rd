@@ -386,7 +386,10 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     }
 
     var serializers = GetOrRegisterSerializerPair(type, false);
-
+    if (type.IsValueType && typeof(T) == typeof(object))
+    {
+      serializers = SerializerReflectionUtil.ConvertPair(serializers, typeof(object));
+    }
     var ctxReadDelegate = serializers.GetReader<T>();
     return ctxReadDelegate(ctx, reader);
   }

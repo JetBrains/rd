@@ -97,11 +97,14 @@ namespace JetBrains.Rd.Reflection
       var read = serializers.GetReader<TIn>();
       var write = serializers.GetWriter<TIn>();
 
-      if (typeof(TOut).IsAssignableFrom(typeof(TIn)))
-        return new SerializerPair(read, CtxWriteTypedToObject<TIn, TOut>(write));
+      if (typeof(TIn).IsClass && typeof(TOut).IsClass)
+      {
+        if (typeof(TOut).IsAssignableFrom(typeof(TIn)))
+          return new SerializerPair(read, CtxWriteTypedToObject<TIn, TOut>(write));
 
-      if (typeof(TIn).IsAssignableFrom(typeof(TOut)))
-        return new SerializerPair(CtxReadTypedToObject<TIn, TOut>(read), write);
+        if (typeof(TIn).IsAssignableFrom(typeof(TOut)))
+          return new SerializerPair(CtxReadTypedToObject<TIn, TOut>(read), write);
+      }
 
       return new SerializerPair(CtxReadTypedToObject<TIn, TOut>(read), CtxWriteTypedToObject<TIn, TOut>(write));
     }
