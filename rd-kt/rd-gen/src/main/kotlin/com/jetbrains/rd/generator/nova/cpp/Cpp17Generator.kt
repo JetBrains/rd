@@ -1376,6 +1376,7 @@ open class Cpp17Generator(
                 parseType(type.itemType, allowPredefined)
             }
             is Struct -> type
+            is ValueClass -> type
             is Class -> type
             is Enum -> type
             else -> {
