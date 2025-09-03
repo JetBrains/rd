@@ -1,6 +1,7 @@
 package com.jetbrains.rd.generator.test.cases.generator.testModels
 
 import com.jetbrains.rd.generator.nova.*
+import com.jetbrains.rd.generator.nova.csharp.CSharp50Generator
 import com.jetbrains.rd.generator.test.cases.generator.cpp.CppExampleModelTest
 import com.jetbrains.rd.generator.test.cases.generator.csharp.CSharpExampleModelTest
 import com.jetbrains.rd.generator.test.cases.generator.kotlin.KotlinExampleModelTest
@@ -145,6 +146,13 @@ object ExampleModelNova : Ext(ExampleRootNova) {
 
     val ValueStruct = valuedef("value", PredefinedType.int)
 
+    val UseStructTest = structdef {
+        field("testField", PredefinedType.int)
+        field("testField2", PredefinedType.string)
+
+        setting(CSharp50Generator.EmitStruct)
+    }
+
     init {
         source("push", PredefinedType.int)
         property("version", PredefinedType.int).readonly
@@ -175,5 +183,8 @@ object ExampleModelNova : Ext(ExampleRootNova) {
                 call("there1", PredefinedType.int, PredefinedType.string)
             }
         )
+
+        property("nonNullableStruct", UseStructTest)
+        property("nullableStruct", UseStructTest.nullable)
     }
 }

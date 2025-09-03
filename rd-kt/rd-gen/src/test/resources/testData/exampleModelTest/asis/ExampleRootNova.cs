@@ -36,7 +36,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:13</p>
+  /// <p>Generated from: Example.kt:14</p>
   /// </summary>
   public class ExampleRootNova : RdExtBase
   {

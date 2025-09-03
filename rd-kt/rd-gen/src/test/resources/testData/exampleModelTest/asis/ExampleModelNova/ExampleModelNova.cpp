@@ -17,6 +17,7 @@
 #include "ExampleModelNova/DerivedStruct.Generated.h"
 #include "ExampleModelNova/DerivedStructWith2Interfaces.Generated.h"
 #include "ExampleModelNova/ValueStruct.Generated.h"
+#include "ExampleModelNova/UseStructTest.Generated.h"
 #include "ExampleModelNova/Document.Generated.h"
 #include "ExampleModelNova/ScalarExample.Generated.h"
 #include "ExampleModelNova/TextControl.Generated.h"
@@ -65,6 +66,7 @@ void ExampleModelNova::ExampleModelNovaSerializersOwner::registerSerializersCore
     serializers.registry<DerivedStruct>();
     serializers.registry<DerivedStructWith2Interfaces>();
     serializers.registry<ValueStruct>();
+    serializers.registry<UseStructTest>();
     serializers.registry<Document>();
     serializers.registry<ScalarExample>();
     serializers.registry<TextControl>();
@@ -98,12 +100,14 @@ void ExampleModelNova::connect(rd::Lifetime lifetime, rd::IProtocol const * prot
 void ExampleModelNova::initialize()
 {
     version_.optimize_nested = true;
-    serializationHash = 7464981183252582066L;
+    nonNullableStruct_.optimize_nested = true;
+    nullableStruct_.optimize_nested = true;
+    serializationHash = -4242378315094463055L;
 }
 // primary ctor
-ExampleModelNova::ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_) :
+ExampleModelNova::ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_, rd::RdProperty<UseStructTest, rd::Polymorphic<UseStructTest>> nonNullableStruct_, rd::RdProperty<rd::Wrapper<UseStructTest>, ExampleModelNova::__UseStructTestNullableSerializer> nullableStruct_) :
 rd::RdExtBase()
-,push_(std::move(push_)), version_(std::move(version_)), documents_(std::move(documents_)), editors_(std::move(editors_))
+,push_(std::move(push_)), version_(std::move(version_)), documents_(std::move(documents_)), editors_(std::move(editors_)), nonNullableStruct_(std::move(nonNullableStruct_)), nullableStruct_(std::move(nullableStruct_))
 {
     initialize();
 }
@@ -123,6 +127,8 @@ void ExampleModelNova::init(rd::Lifetime lifetime) const
     bindPolymorphic(version_, lifetime, this, "version");
     bindPolymorphic(documents_, lifetime, this, "documents");
     bindPolymorphic(editors_, lifetime, this, "editors");
+    bindPolymorphic(nonNullableStruct_, lifetime, this, "nonNullableStruct");
+    bindPolymorphic(nullableStruct_, lifetime, this, "nullableStruct");
 }
 // identify
 void ExampleModelNova::identify(const rd::Identities &identities, rd::RdId const &id) const
@@ -132,6 +138,8 @@ void ExampleModelNova::identify(const rd::Identities &identities, rd::RdId const
     identifyPolymorphic(version_, identities, id.mix(".version"));
     identifyPolymorphic(documents_, identities, id.mix(".documents"));
     identifyPolymorphic(editors_, identities, id.mix(".editors"));
+    identifyPolymorphic(nonNullableStruct_, identities, id.mix(".nonNullableStruct"));
+    identifyPolymorphic(nullableStruct_, identities, id.mix(".nullableStruct"));
 }
 // getters
 rd::ISignal<int32_t> const & ExampleModelNova::get_push() const
@@ -149,6 +157,14 @@ rd::IViewableMap<int32_t, Document> const & ExampleModelNova::get_documents() co
 rd::IViewableMap<ScalarExample, TextControl> const & ExampleModelNova::get_editors() const
 {
     return editors_;
+}
+rd::IProperty<UseStructTest> const & ExampleModelNova::get_nonNullableStruct() const
+{
+    return nonNullableStruct_;
+}
+rd::IProperty<rd::Wrapper<UseStructTest>> const & ExampleModelNova::get_nullableStruct() const
+{
+    return nullableStruct_;
 }
 // intern
 // equals trait
@@ -177,6 +193,12 @@ std::string ExampleModelNova::toString() const
     res += '\n';
     res += "\teditors = ";
     res += rd::to_string(editors_);
+    res += '\n';
+    res += "\tnonNullableStruct = ";
+    res += rd::to_string(nonNullableStruct_);
+    res += '\n';
+    res += "\tnullableStruct = ";
+    res += rd::to_string(nullableStruct_);
     res += '\n';
     return res;
 }

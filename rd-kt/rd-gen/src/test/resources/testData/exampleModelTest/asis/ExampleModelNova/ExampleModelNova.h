@@ -47,6 +47,7 @@
 #include "ExampleModelNova/Document.Generated.h"
 #include "ExampleModelNova/ScalarExample.Generated.h"
 #include "ExampleModelNova/TextControl.Generated.h"
+#include "ExampleModelNova/UseStructTest.Generated.h"
 
 
 
@@ -60,7 +61,7 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: Example.kt:20</p>
+/// <p>Generated from: Example.kt:21</p>
 /// </summary>
 namespace org.example {
 
@@ -81,6 +82,7 @@ public:
 
 private:
     // custom serializers
+    using __UseStructTestNullableSerializer = rd::NullableSerializer<rd::Polymorphic<UseStructTest>>;
 
 public:
     // constants
@@ -91,6 +93,8 @@ protected:
     rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_;
     rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_;
     rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_;
+    rd::RdProperty<UseStructTest, rd::Polymorphic<UseStructTest>> nonNullableStruct_;
+    rd::RdProperty<rd::Wrapper<UseStructTest>, ExampleModelNova::__UseStructTestNullableSerializer> nullableStruct_;
     
 
 private:
@@ -99,7 +103,7 @@ private:
 
 public:
     // primary ctor
-    ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_);
+    ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_, rd::RdProperty<UseStructTest, rd::Polymorphic<UseStructTest>> nonNullableStruct_, rd::RdProperty<rd::Wrapper<UseStructTest>, ExampleModelNova::__UseStructTestNullableSerializer> nullableStruct_);
     
     // default ctors and dtors
     
@@ -126,6 +130,8 @@ public:
     rd::IProperty<int32_t> const & get_version() const;
     rd::IViewableMap<int32_t, Document> const & get_documents() const;
     rd::IViewableMap<ScalarExample, TextControl> const & get_editors() const;
+    rd::IProperty<UseStructTest> const & get_nonNullableStruct() const;
+    rd::IProperty<rd::Wrapper<UseStructTest>> const & get_nullableStruct() const;
     
     // intern
 
