@@ -123,6 +123,13 @@ object DemoModel : Ext(DemoRoot) {
         field("inner", valuedef("ValueClassInField", "field", PredefinedType.int))
     }
 
+    private var UseStructField = openclass {
+        field("field1", PredefinedType.string)
+        field("field2", PredefinedType.int)
+
+        setting(CSharp50Generator.EmitStruct)
+    }
+
     private var complicatedPair = structdef {
         field("first", Derived)
         field("second", Derived)

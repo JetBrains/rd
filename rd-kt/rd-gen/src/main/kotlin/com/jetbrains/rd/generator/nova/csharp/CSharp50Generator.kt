@@ -49,6 +49,7 @@ open class CSharp50Generator(
     object Intrinsic : SettingWithDefault<CSharpIntrinsicMarshaller, Declaration>(CSharpIntrinsicMarshaller.default)
     object PublicCtors : ISetting<Unit, Declaration>
     object Partial : ISetting<Unit, Declaration>
+    object EmitStruct : ISetting<Unit, Struct.Concrete>
     object DontRegisterAllSerializers : ISetting<Unit, Toplevel>
 
 
@@ -83,6 +84,8 @@ open class CSharp50Generator(
                     this is PredefinedType.UnsignedIntegral
                     ||
                     this is ValueClass
+                    ||
+                    this is Struct.Concrete && this.hasSetting(EmitStruct)
                     ||
                     listOf(
                             PredefinedType.float,
@@ -498,11 +501,11 @@ open class CSharp50Generator(
 
         if(decl !is Toplevel) {
             if (decl.isAbstract) p("abstract ")
-            if (decl.isSealed) p("sealed ")
+            if (decl.isSealed && !decl.hasSetting(EmitStruct)) p("sealed ")
         }
         if (decl.getSetting(Partial) != null) p("partial ")
 
-        if (decl.isValue) {
+        if (decl.isValue || decl.hasSetting(EmitStruct)) {
             p("struct ${decl.name}")
         } else {
             p("class ${decl.name}")
@@ -1098,7 +1101,7 @@ open class CSharp50Generator(
         +"public bool Equals(${decl.name} other)"
         +"{"
         indent {
-            if (!decl.isValue) {
+            if (!(decl.isValue || decl.hasSetting(EmitStruct))) {
                 +"if (ReferenceEquals(null, other)) return false;"
                 +"if (ReferenceEquals(this, other)) return true;"
             }
