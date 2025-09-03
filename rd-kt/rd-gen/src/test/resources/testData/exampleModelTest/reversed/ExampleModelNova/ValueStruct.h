@@ -6,8 +6,8 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-#ifndef TEXTCONTROL_GENERATED_H
-#define TEXTCONTROL_GENERATED_H
+#ifndef VALUESTRUCT_GENERATED_H
+#define VALUESTRUCT_GENERATED_H
 
 
 #include "protocol/Protocol.h"
@@ -44,8 +44,6 @@
 #include "thirdparty.hpp"
 #include "instantiations_ExampleRootNova.h"
 
-#include "ExampleModelNova/Selection.Generated.h"
-
 
 
 #ifdef _MSC_VER
@@ -58,11 +56,11 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: Example.kt:171</p>
+/// <p>Generated from: Example.kt:146</p>
 /// </summary>
 namespace org.example {
 
-class TextControl : public rd::IPolymorphicSerializable, public rd::RdBindableBase {
+class ValueStruct : public rd::IPolymorphicSerializable {
 
 private:
     // custom serializers
@@ -72,10 +70,7 @@ public:
 
 protected:
     // fields
-    rd::RdProperty<Selection, rd::Polymorphic<Selection>> selection_;
-    rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> vsink_;
-    rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> vsource_;
-    rd::RdEndpoint<int32_t, std::wstring, rd::Polymorphic<int32_t>, rd::Polymorphic<std::wstring>> there1_;
+    int32_t value_;
     
 
 private:
@@ -84,35 +79,44 @@ private:
 
 public:
     // primary ctor
-    TextControl(rd::RdProperty<Selection, rd::Polymorphic<Selection>> selection_, rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> vsink_, rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> vsource_, rd::RdEndpoint<int32_t, std::wstring, rd::Polymorphic<int32_t>, rd::Polymorphic<std::wstring>> there1_);
+    explicit ValueStruct(int32_t value_);
+    
+    // deconstruct trait
+    #ifdef __cpp_structured_bindings
+    template <size_t I>
+    decltype(auto) get() const
+    {
+        if constexpr (I < 0 || I >= 1) static_assert (I < 0 || I >= 1, "I < 0 || I >= 1");
+        else if constexpr (I==0)  return static_cast<const int32_t&>(get_value());
+    }
+    #endif
     
     // default ctors and dtors
     
-    TextControl();
+    ValueStruct() = delete;
     
-    TextControl(TextControl &&) = default;
+    ValueStruct(ValueStruct const &) = default;
     
-    TextControl& operator=(TextControl &&) = default;
+    ValueStruct& operator=(ValueStruct const &) = default;
     
-    virtual ~TextControl() = default;
+    ValueStruct(ValueStruct &&) = default;
+    
+    ValueStruct& operator=(ValueStruct &&) = default;
+    
+    virtual ~ValueStruct() = default;
     
     // reader
-    static TextControl read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
+    static ValueStruct read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
     
     // writer
     void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override;
     
     // virtual init
-    void init(rd::Lifetime lifetime) const override;
     
     // identify
-    void identify(const rd::Identities &identities, rd::RdId const &id) const override;
     
     // getters
-    rd::IProperty<Selection> const & get_selection() const;
-    rd::ISignal<rd::Void> const & get_vsink() const;
-    rd::ISource<rd::Void> const & get_vsource() const;
-    rd::RdEndpoint<int32_t, std::wstring, rd::Polymorphic<int32_t>, rd::Polymorphic<std::wstring>> const & get_there1() const;
+    int32_t const & get_value() const;
     
     // intern
 
@@ -122,9 +126,10 @@ private:
 
 public:
     // equality operators
-    friend bool operator==(const TextControl &lhs, const TextControl &rhs);
-    friend bool operator!=(const TextControl &lhs, const TextControl &rhs);
+    friend bool operator==(const ValueStruct &lhs, const ValueStruct &rhs);
+    friend bool operator!=(const ValueStruct &lhs, const ValueStruct &rhs);
     // hash code trait
+    size_t hashCode() const noexcept override;
     // type name trait
     std::string type_name() const override;
     // static type name trait
@@ -136,10 +141,38 @@ private:
 
 public:
     // external to string
-    friend std::string to_string(const TextControl & value);
+    friend std::string to_string(const ValueStruct & value);
 };
 
 }
+
+// hash code trait
+namespace rd {
+
+template <>
+struct hash<org.example::ValueStruct> {
+    size_t operator()(const org.example::ValueStruct & value) const noexcept {
+        return value.hashCode();
+    }
+};
+
+}
+
+#ifdef __cpp_structured_bindings
+// tuple trait
+namespace std {
+
+template <>
+class tuple_size<org.example::ValueStruct> : public integral_constant<size_t, 1> {};
+
+template <size_t I>
+class tuple_element<I, org.example::ValueStruct> {
+public:
+    using type = decltype (declval<org.example::ValueStruct>().get<I>());
+};
+
+}
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( pop )
@@ -147,4 +180,4 @@ public:
 
 
 
-#endif // TEXTCONTROL_GENERATED_H
+#endif // VALUESTRUCT_GENERATED_H

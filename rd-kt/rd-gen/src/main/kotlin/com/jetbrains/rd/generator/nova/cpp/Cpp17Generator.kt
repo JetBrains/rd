@@ -1376,6 +1376,7 @@ open class Cpp17Generator(
                 parseType(type.itemType, allowPredefined)
             }
             is Struct -> type
+            is ValueClass -> type
             is Class -> type
             is Enum -> type
             else -> {
@@ -1599,7 +1600,7 @@ open class Cpp17Generator(
     }
 
     private fun shouldGenerateDeconstruct(decl: Declaration) =
-        (decl.isDataClass || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct)))
+        (decl.isDataClass || decl.isValue || (decl.isConcrete && decl.base == null && decl.hasSetting(AllowDeconstruct)))
 
     fun Declaration.defaultCtor(): Constructor.Default? {
         return if (allMembers.asSequence().filter { !it.hasEmptyConstructor }.toList().isEmpty()) {
@@ -1639,7 +1640,7 @@ open class Cpp17Generator(
 
     private fun readerTraitDecl(decl: Declaration): Signature? {
         return when {
-            decl.isConcrete -> MemberFunction(decl.name, "read(rd::SerializationCtx& ctx, rd::Buffer & buffer)", decl.name).static()
+            decl.isConcrete || decl.isValue -> MemberFunction(decl.name, "read(rd::SerializationCtx& ctx, rd::Buffer & buffer)", decl.name).static()
             decl.isAbstract || decl.isOpen -> MemberFunction(decl.name.wrapper(), "readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size)", decl.name).static()
             else -> null
         }
@@ -1650,7 +1651,7 @@ open class Cpp17Generator(
 
         return when {
             decl is Toplevel -> return null
-            decl.isConcrete -> signature.override()
+            decl.isConcrete || decl.isValue -> signature.override()
             else -> signature.abstract().override()
         }
     }
@@ -1703,7 +1704,7 @@ open class Cpp17Generator(
         val signature = MemberFunction("size_t", "hashCode()", decl.name).const().noexcept()
         return when {
             decl is Toplevel -> return null
-            decl.isConcrete -> signature.override()
+            decl.isConcrete || decl.isValue -> signature.override()
             else -> signature.abstract().override()
         }
     }
@@ -1729,7 +1730,7 @@ open class Cpp17Generator(
         return when {
             decl is Toplevel -> signature.override()
             decl.isAbstract || decl.isOpen -> signature.override()
-            decl.isConcrete -> signature.override()
+            decl.isConcrete || decl.isValue -> signature.override()
             else -> signature
         }
     }
@@ -2014,7 +2015,7 @@ open class Cpp17Generator(
 
     protected fun PrettyPrinter.readerTraitDef(decl: Declaration) {
         define(readerTraitDecl(decl)) {
-            if (decl.isConcrete) {
+            if (decl.isConcrete || decl.isValue) {
                 if (isUnknown(decl)) {
                     +"""throw std::logic_error("Unknown instances should not be read via serializer");"""
                 } else {
@@ -2086,7 +2087,7 @@ open class Cpp17Generator(
             else -> fail("Unknown member: $this")
         }
 
-        if (decl.isConcrete) {
+        if (decl.isConcrete || decl.isValue) {
             define(writerTraitDecl(decl)) {
                 if (decl is Class || decl is Aggregate) {
                     +"this->rdid.write(buffer);"
@@ -2135,6 +2136,7 @@ open class Cpp17Generator(
                     member is Member.Reactive -> false
                     member is IBindable -> true
                     member is Member.Field && member.type is Struct && !member.type.isIntrinsic -> true
+                    member is Member.Field && member.type is ValueClass && !member.type.isIntrinsic -> true
                     member is Member.Field && member.type is Class && !member.type.isIntrinsic -> true
                     member is Member.Field && member.type is PredefinedType.string -> true
                     member is Member.Field && member.type is InternedScalar && member.type.itemType is PredefinedType.string -> true

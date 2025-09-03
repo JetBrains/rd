@@ -16,6 +16,7 @@
 #include "ExampleModelNova/DerivedClass.Generated.h"
 #include "ExampleModelNova/DerivedStruct.Generated.h"
 #include "ExampleModelNova/DerivedStructWith2Interfaces.Generated.h"
+#include "ExampleModelNova/ValueStruct.Generated.h"
 #include "ExampleModelNova/Document.Generated.h"
 #include "ExampleModelNova/ScalarExample.Generated.h"
 #include "ExampleModelNova/TextControl.Generated.h"
@@ -63,6 +64,7 @@ void ExampleModelNova::ExampleModelNovaSerializersOwner::registerSerializersCore
     serializers.registry<DerivedClass>();
     serializers.registry<DerivedStruct>();
     serializers.registry<DerivedStructWith2Interfaces>();
+    serializers.registry<ValueStruct>();
     serializers.registry<Document>();
     serializers.registry<ScalarExample>();
     serializers.registry<TextControl>();
@@ -96,7 +98,7 @@ void ExampleModelNova::connect(rd::Lifetime lifetime, rd::IProtocol const * prot
 void ExampleModelNova::initialize()
 {
     version_.optimize_nested = true;
-    serializationHash = -6982206461096110814L;
+    serializationHash = 7464981183252582066L;
 }
 // primary ctor
 ExampleModelNova::ExampleModelNova(rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> push_, rd::RdProperty<int32_t, rd::Polymorphic<int32_t>> version_, rd::RdMap<int32_t, Document, rd::Polymorphic<int32_t>, rd::Polymorphic<Document>> documents_, rd::RdMap<ScalarExample, TextControl, rd::Polymorphic<ScalarExample>, rd::Polymorphic<TextControl>> editors_) :

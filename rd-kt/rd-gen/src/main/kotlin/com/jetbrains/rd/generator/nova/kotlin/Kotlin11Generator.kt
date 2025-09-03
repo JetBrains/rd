@@ -407,7 +407,8 @@ open class Kotlin11Generator(
         }
 
 
-        + "class ${decl.name} ${decl.primaryCtorVisibility}("
+
+        + "${if (decl.isValue) "@kotlin.jvm.JvmInline value " else ""}class ${decl.name} ${decl.primaryCtorVisibility}("
         indent {
             primaryCtorParamsTrait(decl)
         }
@@ -519,7 +520,7 @@ open class Kotlin11Generator(
 
     protected fun PrettyPrinter.companionTrait(decl: Declaration, collector: MarshallersCollector) {
         val rdid = decl.marshallerRdid
-        if (decl.isConcrete) {
+        if (decl.isConcrete || decl.isValue) {
             println()
             collector.addMarshaller(decl.marshallerFqn, rdid)
             block("companion object : IMarshaller<${decl.name}>") {
@@ -734,7 +735,7 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.read${name.capitalizeInvariant()}()"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.read(ctx, buffer)"}
-                        ?: if (isSealed)
+                        ?: if (isSealed || isValue)
                             "${substitutedName(decl)}.read(ctx, buffer)"
                         else
                             "ctx.serializers.readPolymorphic<${substitutedName(decl)}>(ctx, buffer, ${substitutedName(decl)})"
@@ -802,7 +803,7 @@ open class Kotlin11Generator(
             is PredefinedType -> "buffer.write${name.capitalizeInvariant()}($field)"
             is Declaration ->
                 this.getSetting(Intrinsic)?.marshallerObjectFqn?.let {"$it.write(ctx,buffer, $field)"} ?:
-                    if (isSealed) "${substitutedName(decl)}.write(ctx, buffer, $field)"
+                    if (isSealed || isValue) "${substitutedName(decl)}.write(ctx, buffer, $field)"
                     else "ctx.serializers.writePolymorphic(ctx, buffer, $field)"
             is INullable -> "buffer.writeNullable($field) { ${itemType.writer("it")} }"
             is IArray ->
@@ -926,7 +927,7 @@ open class Kotlin11Generator(
     }
 
     private fun PrettyPrinter.equalsTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.isValue) return
 
         fun IScalar.eq(v : String) = when (this) {
             is IArray ->
@@ -967,7 +968,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.hashCodeTrait(decl: Declaration) {
-        if (decl.isAbstract || decl !is IScalar) return
+        if (decl.isAbstract || decl !is IScalar || decl.isValue) return
 
         fun IScalar.hc(v : String, m : Member) : String = when (this) {
             is IArray ->
@@ -1002,7 +1003,7 @@ open class Kotlin11Generator(
 
 
     private fun PrettyPrinter.prettyPrintTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen || decl.isValue)) return
 
         block("override fun print(printer: PrettyPrinter) ") {
             + "printer.println(\"${decl.name} (\")"
@@ -1084,7 +1085,7 @@ open class Kotlin11Generator(
             when (decl) {
                 is Toplevel -> p( " : RdExtBase()")
                 is Class, is Aggregate -> p(" : RdBindableBase()")
-                is Struct -> p(" : IPrintable")
+                is Struct, is ValueClass -> p(" : IPrintable")
             }
             interfacesTrait(decl)
             return

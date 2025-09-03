@@ -93,7 +93,8 @@ class InternScope(pointcut: BindableDeclaration?, override val _name: String = "
 enum class Modifier{
     Abstract,
     Open,
-    Sealed
+    Sealed,
+    Value
 }
 
 sealed class Context(pointcut: Toplevel, val type: INonNullableScalar): Declaration(pointcut) {
@@ -254,6 +255,7 @@ abstract class Declaration(open val pointcut: BindableDeclaration?) : SettingsHo
     val isAbstract: Boolean get() = modifier == Modifier.Abstract
     val isOpen: Boolean get() = modifier == Modifier.Open
     val isSealed: Boolean get() = modifier == Modifier.Sealed
+    val isValue: Boolean get() = modifier == Modifier.Value
 
     internal var lazyInitializer: (Declaration.() -> Unit)? = null
 
@@ -434,6 +436,9 @@ abstract class Toplevel(pointcut: BindableDeclaration?) : BindableDeclaration(po
     fun openstruct(name: String) = openstruct(name) {}
     val openstruct get() = openstruct("")
 
+    private fun valuedef0(name : String, body: ValueClass.() -> Unit) = append(ValueClass(name, this), body)
+    fun valuedef(name : String, fieldName : String, type: IType) = valuedef0(name) { this.append(Member.Field(fieldName, type)) }
+    fun valuedef(fieldName : String, type: IType) = valuedef("", fieldName, type)
 
     @Deprecated("Use infix function 'extends'.", ReplaceWith("structdef(name) extends base (body)"))
     fun structdef(name : String, base: Struct.Abstract?, body: Struct.() -> Unit) = structdef0(name, base, body)
@@ -495,6 +500,11 @@ sealed class Struct(override val _name: String, override val pointcut : Toplevel
     }
 }
 operator fun <T : Struct> T.getValue(thisRef: Any?, property: KProperty<*>): T = this
+
+class ValueClass(override val _name: String, override val pointcut : Toplevel) : Declaration(pointcut), INonNullableScalar, ITypeDeclaration {
+    override val cl_name = "${javaClass.simpleName.decapitalizeInvariant()}_value_class"
+    override val modifier: Modifier = Modifier.Value
+}
 
 sealed class Class(override val _name: String, override val pointcut : Toplevel, override var base: Class?, val isUnknown: Boolean = false) :
         BindableDeclaration(pointcut), INonNullableBindable, Extensible, ITypeDeclaration {
