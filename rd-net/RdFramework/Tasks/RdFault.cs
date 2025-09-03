@@ -11,9 +11,9 @@ namespace JetBrains.Rd.Tasks
   [Serializable]
   public class RdFault : Exception
   {
-    public string ReasonTypeFqn { get; private set; }
-    public string ReasonText { get; private set; }
-    public string ReasonMessage { get; private set; }
+    public string? ReasonTypeFqn { get; private set; }
+    public string? ReasonText { get; private set; }
+    public string? ReasonMessage { get; private set; }
 
     public RdFault(Exception inner) : base(inner.Message, inner)
     {
@@ -29,15 +29,18 @@ namespace JetBrains.Rd.Tasks
       }
     }
 
-    [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    // [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+    [Obsolete("Obsolete")]
     protected RdFault(SerializationInfo info, StreamingContext context) : base(info, context)
     {
       ReasonTypeFqn = info.GetString(nameof(ReasonTypeFqn));
       ReasonText = info.GetString(nameof(ReasonText));
       ReasonMessage = info.GetString(nameof(ReasonMessage));
     }
-
+    
+#if !NET6_0_OR_GREATER
     [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
+#endif
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
     {
       info.AddValue(nameof(ReasonTypeFqn), ReasonTypeFqn);

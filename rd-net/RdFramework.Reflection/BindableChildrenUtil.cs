@@ -24,7 +24,7 @@ namespace JetBrains.Rd.Reflection
 
     internal static void PrettyPrint(PrettyPrinter p, IReflectionBindable instance)
     {
-      Action<IReflectionBindable, PrettyPrinter> prettyPrinter;
+      Action<IReflectionBindable, PrettyPrinter>? prettyPrinter;
       lock (ourPrettyPrintersLock)
       {
         ourPrettyPrinters.TryGetValue(instance.GetType(), out prettyPrinter);
@@ -65,7 +65,7 @@ namespace JetBrains.Rd.Reflection
     internal static void FillBindableFields(IReflectionBindable instance)
     {
       var type = instance.GetType();
-      Action<IReflectionBindable> fillBindableFields;
+      Action<IReflectionBindable>? fillBindableFields;
       lock (ourFillBindableChildren)
       {
         ourFillBindableChildren.TryGetValue(type, out fillBindableFields);
