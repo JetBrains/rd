@@ -6,8 +6,8 @@
 //     the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-#ifndef DERIVEDCLASSWITH2INTERFACES_GENERATED_H
-#define DERIVEDCLASSWITH2INTERFACES_GENERATED_H
+#ifndef USESTRUCTTEST_GENERATED_H
+#define USESTRUCTTEST_GENERATED_H
 
 
 #include "protocol/Protocol.h"
@@ -44,8 +44,6 @@
 #include "thirdparty.hpp"
 #include "instantiations_ExampleRootNova.h"
 
-#include "BaseClass.Generated.h"
-
 
 
 #ifdef _MSC_VER
@@ -58,12 +56,12 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: Example.kt:139</p>
+/// <p>Generated from: Example.kt:149</p>
 /// </summary>
 namespace org.example {
 
-// abstract
-class DerivedClassWith2Interfaces : public BaseClass {
+// data
+class UseStructTest : public rd::IPolymorphicSerializable {
 
 private:
     // custom serializers
@@ -73,7 +71,8 @@ public:
 
 protected:
     // fields
-    bool derivedField_;
+    int32_t testField_;
+    rd::Wrapper<std::wstring> testField2_;
     
 
 private:
@@ -82,43 +81,59 @@ private:
 
 public:
     // primary ctor
-    DerivedClassWith2Interfaces(bool derivedField_, int32_t baseField_);
+    UseStructTest(int32_t testField_, rd::Wrapper<std::wstring> testField2_);
+    
+    // deconstruct trait
+    #ifdef __cpp_structured_bindings
+    template <size_t I>
+    decltype(auto) get() const
+    {
+        if constexpr (I < 0 || I >= 2) static_assert (I < 0 || I >= 2, "I < 0 || I >= 2");
+        else if constexpr (I==0)  return static_cast<const int32_t&>(get_testField());
+        else if constexpr (I==1)  return static_cast<const std::wstring&>(get_testField2());
+    }
+    #endif
     
     // default ctors and dtors
     
-    DerivedClassWith2Interfaces() = delete;
+    UseStructTest() = delete;
     
-    DerivedClassWith2Interfaces(DerivedClassWith2Interfaces &&) = default;
+    UseStructTest(UseStructTest const &) = default;
     
-    DerivedClassWith2Interfaces& operator=(DerivedClassWith2Interfaces &&) = default;
+    UseStructTest& operator=(UseStructTest const &) = default;
     
-    virtual ~DerivedClassWith2Interfaces() = default;
+    UseStructTest(UseStructTest &&) = default;
+    
+    UseStructTest& operator=(UseStructTest &&) = default;
+    
+    virtual ~UseStructTest() = default;
     
     // reader
-    static rd::Wrapper<DerivedClassWith2Interfaces> readUnknownInstance(rd::SerializationCtx& ctx, rd::Buffer & buffer, rd::RdId const& unknownId, int32_t size);
+    static UseStructTest read(rd::SerializationCtx& ctx, rd::Buffer & buffer);
     
     // writer
-    virtual void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override = 0;
+    void write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const override;
     
     // virtual init
-    void init(rd::Lifetime lifetime) const override;
     
     // identify
-    void identify(const rd::Identities &identities, rd::RdId const &id) const override;
     
     // getters
-    bool const & get_derivedField() const;
+    int32_t const & get_testField() const;
+    std::wstring const & get_testField2() const;
     
     // intern
 
 private:
     // equals trait
+    bool equals(rd::ISerializable const& object) const override;
 
 public:
     // equality operators
-    friend bool operator==(const DerivedClassWith2Interfaces &lhs, const DerivedClassWith2Interfaces &rhs);
-    friend bool operator!=(const DerivedClassWith2Interfaces &lhs, const DerivedClassWith2Interfaces &rhs);
+    friend bool operator==(const UseStructTest &lhs, const UseStructTest &rhs);
+    friend bool operator!=(const UseStructTest &lhs, const UseStructTest &rhs);
     // hash code trait
+    size_t hashCode() const noexcept override;
     // type name trait
     std::string type_name() const override;
     // static type name trait
@@ -130,10 +145,38 @@ private:
 
 public:
     // external to string
-    friend std::string to_string(const DerivedClassWith2Interfaces & value);
+    friend std::string to_string(const UseStructTest & value);
 };
 
 }
+
+// hash code trait
+namespace rd {
+
+template <>
+struct hash<org.example::UseStructTest> {
+    size_t operator()(const org.example::UseStructTest & value) const noexcept {
+        return value.hashCode();
+    }
+};
+
+}
+
+#ifdef __cpp_structured_bindings
+// tuple trait
+namespace std {
+
+template <>
+class tuple_size<org.example::UseStructTest> : public integral_constant<size_t, 2> {};
+
+template <size_t I>
+class tuple_element<I, org.example::UseStructTest> {
+public:
+    using type = decltype (declval<org.example::UseStructTest>().get<I>());
+};
+
+}
+#endif
 
 #ifdef _MSC_VER
 #pragma warning( pop )
@@ -141,4 +184,4 @@ public:
 
 
 
-#endif // DERIVEDCLASSWITH2INTERFACES_GENERATED_H
+#endif // USESTRUCTTEST_GENERATED_H
