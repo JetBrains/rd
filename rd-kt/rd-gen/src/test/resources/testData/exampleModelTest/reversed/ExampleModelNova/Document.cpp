@@ -77,13 +77,13 @@ void Document::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     );
     andBackAgain_.write(ctx, buffer);
     rd::Polymorphic<std::decay_t<decltype(completion_)>>::write(ctx, buffer, completion_);
-    buffer.write_array<std::vector, uint8_t, rd::allocator<uint8_t>>(arr1_,
+    buffer.write_array<std::vector, uint8_t, rd::allocator<uint8_t>>(arr1_, 
     [&ctx, &buffer](uint8_t const & it) mutable  -> void 
     { buffer.write_integral(it); }
     );
-    buffer.write_array<std::vector, std::vector<bool>, rd::allocator<std::vector<bool>>>(arr2_,
+    buffer.write_array<std::vector, std::vector<bool>, rd::allocator<std::vector<bool>>>(arr2_, 
     [&ctx, &buffer](std::vector<bool> const & it) mutable  -> void 
-    { buffer.write_array<std::vector, bool, rd::allocator<bool>>(it,
+    { buffer.write_array<std::vector, bool, rd::allocator<bool>>(it, 
     [&ctx, &buffer](bool const & it) mutable  -> void 
     { buffer.write_bool(it); }
     ); }

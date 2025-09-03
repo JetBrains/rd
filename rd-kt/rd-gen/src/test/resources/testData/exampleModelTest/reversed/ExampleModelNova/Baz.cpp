@@ -103,11 +103,11 @@ void Baz::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     z_.write(ctx, buffer);
     buffer.write_integral(x_);
     sdf_.write(ctx, buffer);
-    buffer.write_array<std::vector, Foo, rd::allocator<rd::Wrapper<Foo>>>(foo_,
+    buffer.write_array<std::vector, Foo, rd::allocator<rd::Wrapper<Foo>>>(foo_, 
     [&ctx, &buffer](Foo const & it) mutable  -> void 
     { ctx.get_serializers().writePolymorphic<Foo>(ctx, buffer, it); }
     );
-    buffer.write_array<std::vector, rd::Wrapper<A>, rd::allocator<rd::Wrapper<A>>>(bar_,
+    buffer.write_array<std::vector, rd::Wrapper<A>, rd::allocator<rd::Wrapper<A>>>(bar_, 
     [&ctx, &buffer](rd::Wrapper<A> const & it) mutable  -> void 
     { buffer.write_nullable<A>(it, 
     [&ctx, &buffer](rd::Wrapper<A> const & it) mutable  -> void 
@@ -119,11 +119,11 @@ void Baz::write(rd::SerializationCtx& ctx, rd::Buffer& buffer) const
     [&ctx, &buffer](rd::Wrapper<std::wstring> const & it) mutable  -> void 
     { buffer.write_wstring(it); }
     );
-    buffer.write_array<std::vector, std::wstring, rd::allocator<rd::Wrapper<std::wstring>>>(string_list_field_,
+    buffer.write_array<std::vector, std::wstring, rd::allocator<rd::Wrapper<std::wstring>>>(string_list_field_, 
     [&ctx, &buffer](std::wstring const & it) mutable  -> void 
     { buffer.write_wstring(it); }
     );
-    buffer.write_array<std::vector, std::wstring, rd::allocator<rd::Wrapper<std::wstring>>>(nls_list_field_,
+    buffer.write_array<std::vector, std::wstring, rd::allocator<rd::Wrapper<std::wstring>>>(nls_list_field_, 
     [&ctx, &buffer](std::wstring const & it) mutable  -> void 
     { buffer.write_wstring(it); }
     );

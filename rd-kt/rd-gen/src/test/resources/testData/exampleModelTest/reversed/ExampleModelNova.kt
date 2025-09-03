@@ -42,6 +42,7 @@ class ExampleModelNova private constructor(
             serializers.register(LazyCompanionMarshaller(RdId(-5037012260488689180), classLoader, "org.example.DerivedOpenClass"))
             serializers.register(LazyCompanionMarshaller(RdId(-8573427485006989079), classLoader, "org.example.DerivedOpenStruct"))
             serializers.register(LazyCompanionMarshaller(RdId(4287876202302424743), classLoader, "org.example.DerivedStructWith2Interfaces"))
+            serializers.register(LazyCompanionMarshaller(RdId(555909160394251923), classLoader, "org.example.ValueStruct"))
             serializers.register(LazyCompanionMarshaller(RdId(18177246065230), classLoader, "org.example.Document"))
             serializers.register(LazyCompanionMarshaller(RdId(-3048302864262156661), classLoader, "org.example.ScalarExample"))
             serializers.register(LazyCompanionMarshaller(RdId(554385840109775197), classLoader, "org.example.TextControl"))
@@ -82,7 +83,7 @@ class ExampleModelNova private constructor(
         }
         
         
-        const val serializationHash = -6982206461096110814L
+        const val serializationHash = 7464981183252582066L
         
     }
     override val serializersOwner: ISerializersOwner get() = ExampleModelNova
@@ -891,7 +892,7 @@ class Class (
 
 
 /**
- * #### Generated from [Example.kt:157]
+ * #### Generated from [Example.kt:159]
  */
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
@@ -1716,7 +1717,7 @@ class DerivedStructWith2Interfaces (
 
 
 /**
- * #### Generated from [Example.kt:152]
+ * #### Generated from [Example.kt:154]
  */
 class Document private constructor(
     val moniker: FooBar,
@@ -2263,7 +2264,7 @@ class OpenStruct_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:166]
+ * #### Generated from [Example.kt:168]
  */
 data class ScalarExample (
     val intfield: Int
@@ -2550,7 +2551,7 @@ class Struct (
 
 
 /**
- * #### Generated from [Example.kt:169]
+ * #### Generated from [Example.kt:171]
  */
 class TextControl private constructor(
     private val _selection: RdOptionalProperty<Selection>,
@@ -2633,6 +2634,50 @@ class TextControl private constructor(
             _there1.deepClonePolymorphic()
         )
     }
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [Example.kt:146]
+ */
+@kotlin.jvm.JvmInline value class ValueStruct (
+    val value: Int
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<ValueStruct> {
+        override val _type: KClass<ValueStruct> = ValueStruct::class
+        override val id: RdId get() = RdId(555909160394251923)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): ValueStruct  {
+            val value = buffer.readInt()
+            return ValueStruct(value)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ValueStruct)  {
+            buffer.writeInt(value.value)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    //hash code trait
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("ValueStruct (")
+        printer.indent {
+            print("value = "); value.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
     //contexts
     //threading
 }

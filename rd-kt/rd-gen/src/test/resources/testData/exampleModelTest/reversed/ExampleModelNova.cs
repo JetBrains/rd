@@ -89,7 +89,7 @@ namespace org.example
     
     
     
-    protected override long SerializationHash => -6982206461096110814L;
+    protected override long SerializationHash => 7464981183252582066L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -974,7 +974,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:157</p>
+  /// <p>Generated from: Example.kt:159</p>
   /// </summary>
   public sealed class Completion : RdBindableBase
   {
@@ -1901,7 +1901,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:152</p>
+  /// <p>Generated from: Example.kt:154</p>
   /// </summary>
   public sealed class Document : RdBindableBase
   {
@@ -2491,7 +2491,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:166</p>
+  /// <p>Generated from: Example.kt:168</p>
   /// </summary>
   public sealed class ScalarExample : IPrintable, IEquatable<ScalarExample>
   {
@@ -2869,7 +2869,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:169</p>
+  /// <p>Generated from: Example.kt:171</p>
   /// </summary>
   public sealed class TextControl : RdBindableBase
   {
@@ -2965,6 +2965,79 @@ namespace org.example
       Print(printer);
       return printer.ToString();
     }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:146</p>
+  /// </summary>
+  public struct ValueStruct : IPrintable, IEquatable<ValueStruct>
+  {
+    //fields
+    //public fields
+    public int Value {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public ValueStruct(
+      int value
+    )
+    {
+      Value = value;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct(out int value)
+    {
+      value = Value;
+    }
+    //statics
+    
+    
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((ValueStruct) obj);
+    }
+    public bool Equals(ValueStruct other)
+    {
+      return Value == other.Value;
+    }
+    public static bool operator ==(ValueStruct left, ValueStruct right)
+    {
+      return left.Equals(right);
+    }
+    public static bool operator !=(ValueStruct left, ValueStruct right)
+    {
+      return !left.Equals(right);
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + Value.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public override void Print(PrettyPrinter printer)
+    {
+      printer.Println("ValueStruct (");
+      using (printer.IndentCookie()) {
+        printer.Print("value = "); Value.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
   }
   
   
