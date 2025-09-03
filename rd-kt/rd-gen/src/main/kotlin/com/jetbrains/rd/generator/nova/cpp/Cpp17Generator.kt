@@ -2136,6 +2136,7 @@ open class Cpp17Generator(
                     member is Member.Reactive -> false
                     member is IBindable -> true
                     member is Member.Field && member.type is Struct && !member.type.isIntrinsic -> true
+                    member is Member.Field && member.type is ValueClass && !member.type.isIntrinsic -> true
                     member is Member.Field && member.type is Class && !member.type.isIntrinsic -> true
                     member is Member.Field && member.type is PredefinedType.string -> true
                     member is Member.Field && member.type is InternedScalar && member.type.itemType is PredefinedType.string -> true
