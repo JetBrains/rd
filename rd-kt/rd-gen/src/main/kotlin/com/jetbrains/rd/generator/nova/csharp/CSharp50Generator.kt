@@ -759,7 +759,7 @@ open class CSharp50Generator(
         }
 
 
-        if (decl is Struct || decl is Class || decl is Aggregate) {
+        if (decl is Struct || decl is ValueClass || decl is Class || decl is Aggregate) {
             +"$modifiers CtxReadDelegate<${decl.name}> Read = (ctx, reader) => "
             +"{"
             indent {
@@ -846,7 +846,7 @@ open class CSharp50Generator(
         }
 
 
-        if (decl is Struct || decl is Class || decl is Aggregate) {
+        if (decl is Struct || decl is ValueClass || decl is Class || decl is Aggregate) {
             +"$modifiers CtxWriteDelegate<${decl.name}> Write = (ctx, writer, value) => "
             +"{"
             indent {
@@ -1184,7 +1184,7 @@ open class CSharp50Generator(
         if (!(decl is Toplevel || decl.isConcrete || decl.isOpen || decl.isValue)) return
 
         fun Declaration.attributes() : String{
-            if(decl !is Struct) return "override "
+            if(decl !is Struct && decl !is ValueClass) return "override "
 
             var currentDecl = this
             while (currentDecl.base != null){
@@ -1208,7 +1208,7 @@ open class CSharp50Generator(
     }
 
     private fun PrettyPrinter.toStringTrait(decl: Declaration) {
-        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen)) return
+        if (!(decl is Toplevel || decl.isConcrete || decl.isOpen || decl.isValue)) return
 
         +"public override string ToString()"
         +"{"

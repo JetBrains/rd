@@ -2993,7 +2993,17 @@ namespace org.example
     }
     //statics
     
+    public static CtxReadDelegate<ValueStruct> Read = (ctx, reader) => 
+    {
+      var value = reader.ReadInt();
+      var _result = new ValueStruct(value);
+      return _result;
+    };
     
+    public static CtxWriteDelegate<ValueStruct> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.Value);
+    };
     
     //constants
     
@@ -3029,7 +3039,7 @@ namespace org.example
       }
     }
     //pretty print
-    public override void Print(PrettyPrinter printer)
+    public void Print(PrettyPrinter printer)
     {
       printer.Println("ValueStruct (");
       using (printer.IndentCookie()) {
@@ -3038,6 +3048,12 @@ namespace org.example
       printer.Print(")");
     }
     //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
   }
   
   
