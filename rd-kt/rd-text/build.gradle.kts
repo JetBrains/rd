@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     implementation(project(":rd-framework"))
-    testImplementation("org.jetbrains:jetCheck:0.2.2")
+    testImplementation("org.jetbrains:jetCheck:0.2.3")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:${com.jetbrains.rd.gradle.dependencies.kotlinVersion}")
 }
 
