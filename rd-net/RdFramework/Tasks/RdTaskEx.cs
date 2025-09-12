@@ -16,7 +16,32 @@ namespace JetBrains.Rd.Tasks
     [PublicAPI] public static bool IsCanceled<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Canceled;
     [PublicAPI] public static bool IsFaulted<T>(this IRdTask<T> task) => task.Result.HasValue() && task.Result.Value.Status == RdTaskStatus.Faulted;
 
-    public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout) => SpinWaitEx.SpinUntil(Lifetime.Eternal, timeout, () => task.Result.HasValue());
+    public static bool Wait<T>(this IRdTask<T> task, TimeSpan timeout)
+    {
+      if (task.Result.HasValue())
+        return true;
+
+      var spinWait = new SpinWait();
+      do
+      {
+        spinWait.SpinOnce();
+        
+        if (task.Result.HasValue())
+          return true;
+      } while (!spinWait.NextSpinWillYield); // to avoid Thread.Sleep(1)
+      
+      Thread.Sleep(0);
+      
+      if (task.Result.HasValue())
+        return true;
+
+      // Do not use the slim version, as it will spin and may cause Thread.Sleep(1) in the .NET Framework, which may result in a 16 ms wait, and besides, we have already covered this above.
+      var mre = new ManualResetEvent(false);
+      using var def = Lifetime.Define();
+      task.Result.AdviseOnce(def.Lifetime, _ => mre.Set());
+      mre.WaitOne(timeout);
+      return task.Result.HasValue();
+    }
 
 
     public static RdTask<T> ToRdTask<T>(this Task<T> task)
