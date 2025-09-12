@@ -36,7 +36,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:20</p>
+  /// <p>Generated from: Example.kt:21</p>
   /// </summary>
   public class ExampleModelNova : RdExtBase
   {
@@ -46,35 +46,50 @@ namespace org.example
     [NotNull] public IReadonlyProperty<int> Version => _Version;
     [NotNull] public IViewableMap<int, Document> Documents => _Documents;
     [NotNull] public IViewableMap<ScalarExample, TextControl> Editors => _Editors;
+    [NotNull] public IViewableProperty<UseStructTest> NonNullableStruct => _NonNullableStruct;
+    [NotNull] public IViewableProperty<UseStructTest?> NullableStruct => _NullableStruct;
     
     //private fields
     [NotNull] private readonly RdSignal<int> _Push;
     [NotNull] private readonly RdProperty<int> _Version;
     [NotNull] private readonly RdMap<int, Document> _Documents;
     [NotNull] private readonly RdMap<ScalarExample, TextControl> _Editors;
+    [NotNull] private readonly RdProperty<UseStructTest> _NonNullableStruct;
+    [NotNull] private readonly RdProperty<UseStructTest?> _NullableStruct;
     
     //primary constructor
     private ExampleModelNova(
       [NotNull] RdSignal<int> push,
       [NotNull] RdProperty<int> version,
       [NotNull] RdMap<int, Document> documents,
-      [NotNull] RdMap<ScalarExample, TextControl> editors
+      [NotNull] RdMap<ScalarExample, TextControl> editors,
+      [NotNull] RdProperty<UseStructTest> nonNullableStruct,
+      [NotNull] RdProperty<UseStructTest?> nullableStruct
     )
     {
       if (push == null) throw new ArgumentNullException("push");
       if (version == null) throw new ArgumentNullException("version");
       if (documents == null) throw new ArgumentNullException("documents");
       if (editors == null) throw new ArgumentNullException("editors");
+      if (nonNullableStruct == null) throw new ArgumentNullException("nonNullableStruct");
+      if (nullableStruct == null) throw new ArgumentNullException("nullableStruct");
       
       _Push = push;
       _Version = version;
       _Documents = documents;
       _Editors = editors;
+      _NonNullableStruct = nonNullableStruct;
+      _NullableStruct = nullableStruct;
       _Version.OptimizeNested = true;
+      _NonNullableStruct.OptimizeNested = true;
+      _NullableStruct.OptimizeNested = true;
+      _NullableStruct.ValueCanBeNull = true;
       BindableChildren.Add(new KeyValuePair<string, object>("push", _Push));
       BindableChildren.Add(new KeyValuePair<string, object>("version", _Version));
       BindableChildren.Add(new KeyValuePair<string, object>("documents", _Documents));
       BindableChildren.Add(new KeyValuePair<string, object>("editors", _Editors));
+      BindableChildren.Add(new KeyValuePair<string, object>("nonNullableStruct", _NonNullableStruct));
+      BindableChildren.Add(new KeyValuePair<string, object>("nullableStruct", _NullableStruct));
     }
     //secondary constructor
     private ExampleModelNova (
@@ -82,14 +97,18 @@ namespace org.example
       new RdSignal<int>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt),
       new RdProperty<int>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt),
       new RdMap<int, Document>(JetBrains.Rd.Impl.Serializers.ReadInt, JetBrains.Rd.Impl.Serializers.WriteInt, Document.Read, Document.Write),
-      new RdMap<ScalarExample, TextControl>(ScalarExample.Read, ScalarExample.Write, TextControl.Read, TextControl.Write)
+      new RdMap<ScalarExample, TextControl>(ScalarExample.Read, ScalarExample.Write, TextControl.Read, TextControl.Write),
+      new RdProperty<UseStructTest>(UseStructTest.Read, UseStructTest.Write),
+      new RdProperty<UseStructTest?>(ReadUseStructTestNullable, WriteUseStructTestNullable)
     ) {}
     //deconstruct trait
     //statics
     
+    public static CtxReadDelegate<UseStructTest?> ReadUseStructTestNullable = UseStructTest.Read.NullableStruct();
     
+    public static  CtxWriteDelegate<UseStructTest?> WriteUseStructTestNullable = UseStructTest.Write.NullableStruct();
     
-    protected override long SerializationHash => 7464981183252582066L;
+    protected override long SerializationHash => -4242378315094463055L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
@@ -141,6 +160,8 @@ namespace org.example
         printer.Print("version = "); _Version.PrintEx(printer); printer.Println();
         printer.Print("documents = "); _Documents.PrintEx(printer); printer.Println();
         printer.Print("editors = "); _Editors.PrintEx(printer); printer.Println();
+        printer.Print("nonNullableStruct = "); _NonNullableStruct.PrintEx(printer); printer.Println();
+        printer.Print("nullableStruct = "); _NullableStruct.PrintEx(printer); printer.Println();
       }
       printer.Print(")");
     }
@@ -155,7 +176,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:43</p>
+  /// <p>Generated from: Example.kt:44</p>
   /// </summary>
   public abstract class A : Foo
   {
@@ -291,7 +312,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:92</p>
+  /// <p>Generated from: Example.kt:93</p>
   /// </summary>
   public abstract class BaseClass : RdBindableBase
   {
@@ -327,7 +348,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:132</p>
+  /// <p>Generated from: Example.kt:133</p>
   /// </summary>
   public abstract class BaseClassWithInterface : RdBindableBase, Interface
   {
@@ -458,7 +479,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:96</p>
+  /// <p>Generated from: Example.kt:97</p>
   /// </summary>
   public abstract class BaseStruct{
     //fields
@@ -493,7 +514,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:135</p>
+  /// <p>Generated from: Example.kt:136</p>
   /// </summary>
   public abstract class BaseStructWithInterface : Interface
   {
@@ -661,7 +682,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:51</p>
+  /// <p>Generated from: Example.kt:52</p>
   /// </summary>
   public sealed class Baz : A
   {
@@ -926,7 +947,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:86</p>
+  /// <p>Generated from: Example.kt:87</p>
   /// </summary>
   public sealed class Class : RdBindableBase
   {
@@ -974,7 +995,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:159</p>
+  /// <p>Generated from: Example.kt:167</p>
   /// </summary>
   public sealed class Completion : RdBindableBase
   {
@@ -1044,7 +1065,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:124</p>
+  /// <p>Generated from: Example.kt:125</p>
   /// </summary>
   public abstract class DerivedBaseClass : BaseClass
   {
@@ -1145,7 +1166,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:128</p>
+  /// <p>Generated from: Example.kt:129</p>
   /// </summary>
   public abstract class DerivedBaseStruct : BaseStruct
   {
@@ -1266,7 +1287,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:108</p>
+  /// <p>Generated from: Example.kt:109</p>
   /// </summary>
   public sealed class DerivedClass : BaseClass
   {
@@ -1332,7 +1353,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:138</p>
+  /// <p>Generated from: Example.kt:139</p>
   /// </summary>
   public abstract class DerivedClassWith2Interfaces : BaseClass, Interface, Interface2
   {
@@ -1433,7 +1454,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:116</p>
+  /// <p>Generated from: Example.kt:117</p>
   /// </summary>
   public class DerivedOpenClass : OpenClass
   {
@@ -1561,7 +1582,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:120</p>
+  /// <p>Generated from: Example.kt:121</p>
   /// </summary>
   public class DerivedOpenStruct : OpenStruct
   {
@@ -1729,7 +1750,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:112</p>
+  /// <p>Generated from: Example.kt:113</p>
   /// </summary>
   public sealed class DerivedStruct : BaseStruct
   {
@@ -1815,7 +1836,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:142</p>
+  /// <p>Generated from: Example.kt:143</p>
   /// </summary>
   public sealed class DerivedStructWith2Interfaces : BaseStruct, Interface, Interface2
   {
@@ -1901,7 +1922,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:154</p>
+  /// <p>Generated from: Example.kt:162</p>
   /// </summary>
   public sealed class Document : RdBindableBase
   {
@@ -2019,7 +2040,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:26</p>
+  /// <p>Generated from: Example.kt:27</p>
   /// </summary>
   [Flags]
   public enum EnumSetTest {
@@ -2030,7 +2051,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:34</p>
+  /// <p>Generated from: Example.kt:35</p>
   /// </summary>
   public abstract class Foo : RdBindableBase
   {
@@ -2075,7 +2096,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:75</p>
+  /// <p>Generated from: Example.kt:76</p>
   /// </summary>
   public sealed class FooBar : RdBindableBase
   {
@@ -2206,21 +2227,21 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:80</p>
+  /// <p>Generated from: Example.kt:81</p>
   /// </summary>
   public interface Interface
   {
   }
   
   /// <summary>
-  /// <p>Generated from: Example.kt:83</p>
+  /// <p>Generated from: Example.kt:84</p>
   /// </summary>
   public interface Interface2
   {
   }
   
   /// <summary>
-  /// <p>Generated from: Example.kt:100</p>
+  /// <p>Generated from: Example.kt:101</p>
   /// </summary>
   public class OpenClass : RdBindableBase
   {
@@ -2337,7 +2358,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:104</p>
+  /// <p>Generated from: Example.kt:105</p>
   /// </summary>
   public class OpenStruct{
     //fields
@@ -2491,7 +2512,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:168</p>
+  /// <p>Generated from: Example.kt:176</p>
   /// </summary>
   public sealed class ScalarExample : IPrintable, IEquatable<ScalarExample>
   {
@@ -2574,7 +2595,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:39</p>
+  /// <p>Generated from: Example.kt:40</p>
   /// </summary>
   public abstract class ScalarPrimer{
     //fields
@@ -2685,7 +2706,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:22</p>
+  /// <p>Generated from: Example.kt:23</p>
   /// </summary>
   public sealed class Selection : IPrintable, IEquatable<Selection>
   {
@@ -2803,7 +2824,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:89</p>
+  /// <p>Generated from: Example.kt:90</p>
   /// </summary>
   public sealed class Struct : IPrintable, IEquatable<Struct>
   {
@@ -2869,7 +2890,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:171</p>
+  /// <p>Generated from: Example.kt:179</p>
   /// </summary>
   public sealed class TextControl : RdBindableBase
   {
@@ -2969,7 +2990,98 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:146</p>
+  /// <p>Generated from: Example.kt:149</p>
+  /// </summary>
+  public struct UseStructTest : IPrintable, IEquatable<UseStructTest>
+  {
+    //fields
+    //public fields
+    public int TestField {get; private set;}
+    [NotNull] public string TestField2 {get; private set;}
+    
+    //private fields
+    //primary constructor
+    public UseStructTest(
+      int testField,
+      [NotNull] string testField2
+    )
+    {
+      if (testField2 == null) throw new ArgumentNullException("testField2");
+      
+      TestField = testField;
+      TestField2 = testField2;
+    }
+    //secondary constructor
+    //deconstruct trait
+    public void Deconstruct(out int testField, [NotNull] out string testField2)
+    {
+      testField = TestField;
+      testField2 = TestField2;
+    }
+    //statics
+    
+    public static CtxReadDelegate<UseStructTest> Read = (ctx, reader) => 
+    {
+      var testField = reader.ReadInt();
+      var testField2 = reader.ReadString();
+      var _result = new UseStructTest(testField, testField2);
+      return _result;
+    };
+    
+    public static CtxWriteDelegate<UseStructTest> Write = (ctx, writer, value) => 
+    {
+      writer.Write(value.TestField);
+      writer.Write(value.TestField2);
+    };
+    
+    //constants
+    
+    //custom body
+    //methods
+    //equals trait
+    public override bool Equals(object obj)
+    {
+      if (ReferenceEquals(null, obj)) return false;
+      if (ReferenceEquals(this, obj)) return true;
+      if (obj.GetType() != GetType()) return false;
+      return Equals((UseStructTest) obj);
+    }
+    public bool Equals(UseStructTest other)
+    {
+      return TestField == other.TestField && TestField2 == other.TestField2;
+    }
+    //hash code trait
+    public override int GetHashCode()
+    {
+      unchecked {
+        var hash = 0;
+        hash = hash * 31 + TestField.GetHashCode();
+        hash = hash * 31 + TestField2.GetHashCode();
+        return hash;
+      }
+    }
+    //pretty print
+    public void Print(PrettyPrinter printer)
+    {
+      printer.Println("UseStructTest (");
+      using (printer.IndentCookie()) {
+        printer.Print("testField = "); TestField.PrintEx(printer); printer.Println();
+        printer.Print("testField2 = "); TestField2.PrintEx(printer); printer.Println();
+      }
+      printer.Print(")");
+    }
+    //toString
+    public override string ToString()
+    {
+      var printer = new SingleLinePrettyPrinter();
+      Print(printer);
+      return printer.ToString();
+    }
+  }
+  
+  
+  /// <summary>
+  /// <p>Generated from: Example.kt:147</p>
   /// </summary>
   public struct ValueStruct : IPrintable, IEquatable<ValueStruct>
   {
@@ -3058,7 +3170,7 @@ namespace org.example
   
   
   /// <summary>
-  /// <p>Generated from: Example.kt:45</p>
+  /// <p>Generated from: Example.kt:46</p>
   /// </summary>
   public enum Z {
     Bar,

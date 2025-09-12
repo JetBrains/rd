@@ -16,13 +16,15 @@ import kotlin.jvm.JvmStatic
 
 
 /**
- * #### Generated from [Example.kt:20]
+ * #### Generated from [Example.kt:21]
  */
 class ExampleModelNova private constructor(
     private val _push: RdSignal<Int>,
     private val _version: RdOptionalProperty<Int>,
     private val _documents: RdMap<Int, Document>,
-    private val _editors: RdMap<ScalarExample, TextControl>
+    private val _editors: RdMap<ScalarExample, TextControl>,
+    private val _nonNullableStruct: RdOptionalProperty<UseStructTest>,
+    private val _nullableStruct: RdProperty<UseStructTest?>
 ) : RdExtBase() {
     //companion
     
@@ -43,6 +45,7 @@ class ExampleModelNova private constructor(
             serializers.register(LazyCompanionMarshaller(RdId(-8573427485006989079), classLoader, "org.example.DerivedOpenStruct"))
             serializers.register(LazyCompanionMarshaller(RdId(4287876202302424743), classLoader, "org.example.DerivedStructWith2Interfaces"))
             serializers.register(LazyCompanionMarshaller(RdId(555909160394251923), classLoader, "org.example.ValueStruct"))
+            serializers.register(LazyCompanionMarshaller(RdId(-1063807896803205733), classLoader, "org.example.UseStructTest"))
             serializers.register(LazyCompanionMarshaller(RdId(18177246065230), classLoader, "org.example.Document"))
             serializers.register(LazyCompanionMarshaller(RdId(-3048302864262156661), classLoader, "org.example.ScalarExample"))
             serializers.register(LazyCompanionMarshaller(RdId(554385840109775197), classLoader, "org.example.TextControl"))
@@ -82,8 +85,9 @@ class ExampleModelNova private constructor(
             return ExampleModelNova()
         }
         
+        private val __UseStructTestNullableSerializer = UseStructTest.nullable()
         
-        const val serializationHash = 7464981183252582066L
+        const val serializationHash = -4242378315094463055L
         
     }
     override val serializersOwner: ISerializersOwner get() = ExampleModelNova
@@ -94,10 +98,14 @@ class ExampleModelNova private constructor(
     val version: IOptPropertyView<Int> get() = _version
     val documents: IMutableViewableMap<Int, Document> get() = _documents
     val editors: IMutableViewableMap<ScalarExample, TextControl> get() = _editors
+    val nonNullableStruct: IOptProperty<UseStructTest> get() = _nonNullableStruct
+    val nullableStruct: IProperty<UseStructTest?> get() = _nullableStruct
     //methods
     //initializer
     init {
         _version.optimizeNested = true
+        _nonNullableStruct.optimizeNested = true
+        _nullableStruct.optimizeNested = true
     }
     
     init {
@@ -105,6 +113,8 @@ class ExampleModelNova private constructor(
         bindableChildren.add("version" to _version)
         bindableChildren.add("documents" to _documents)
         bindableChildren.add("editors" to _editors)
+        bindableChildren.add("nonNullableStruct" to _nonNullableStruct)
+        bindableChildren.add("nullableStruct" to _nullableStruct)
     }
     
     //secondary constructor
@@ -113,7 +123,9 @@ class ExampleModelNova private constructor(
         RdSignal<Int>(FrameworkMarshallers.Int),
         RdOptionalProperty<Int>(FrameworkMarshallers.Int),
         RdMap<Int, Document>(FrameworkMarshallers.Int, Document),
-        RdMap<ScalarExample, TextControl>(ScalarExample, TextControl)
+        RdMap<ScalarExample, TextControl>(ScalarExample, TextControl),
+        RdOptionalProperty<UseStructTest>(UseStructTest),
+        RdProperty<UseStructTest?>(null, __UseStructTestNullableSerializer)
     )
     
     //equals trait
@@ -126,6 +138,8 @@ class ExampleModelNova private constructor(
             print("version = "); _version.print(printer); println()
             print("documents = "); _documents.print(printer); println()
             print("editors = "); _editors.print(printer); println()
+            print("nonNullableStruct = "); _nonNullableStruct.print(printer); println()
+            print("nullableStruct = "); _nullableStruct.print(printer); println()
         }
         printer.print(")")
     }
@@ -135,7 +149,9 @@ class ExampleModelNova private constructor(
             _push.deepClonePolymorphic(),
             _version.deepClonePolymorphic(),
             _documents.deepClonePolymorphic(),
-            _editors.deepClonePolymorphic()
+            _editors.deepClonePolymorphic(),
+            _nonNullableStruct.deepClonePolymorphic(),
+            _nullableStruct.deepClonePolymorphic()
         )
     }
     //contexts
@@ -147,7 +163,7 @@ val IProtocol.exampleModelNova get() = getOrCreateExtension(ExampleModelNova::cl
 
 
 /**
- * #### Generated from [Example.kt:43]
+ * #### Generated from [Example.kt:44]
  */
 abstract class A (
     protected val _y: RdOptionalProperty<String>,
@@ -282,7 +298,7 @@ class A_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:92]
+ * #### Generated from [Example.kt:93]
  */
 abstract class BaseClass (
     val baseField: Int
@@ -315,7 +331,7 @@ abstract class BaseClass (
 
 
 /**
- * #### Generated from [Example.kt:132]
+ * #### Generated from [Example.kt:133]
  */
 abstract class BaseClassWithInterface (
 ) : RdBindableBase(), Interface {
@@ -445,7 +461,7 @@ class BaseClass_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:96]
+ * #### Generated from [Example.kt:97]
  */
 abstract class BaseStruct (
     val baseField: Int
@@ -477,7 +493,7 @@ abstract class BaseStruct (
 
 
 /**
- * #### Generated from [Example.kt:135]
+ * #### Generated from [Example.kt:136]
  */
 abstract class BaseStructWithInterface (
 ) : IPrintable, Interface {
@@ -623,7 +639,7 @@ class BaseStruct_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:51]
+ * #### Generated from [Example.kt:52]
  */
 class Baz private constructor(
     val foo: List<Foo>,
@@ -848,7 +864,7 @@ class Baz private constructor(
 
 
 /**
- * #### Generated from [Example.kt:86]
+ * #### Generated from [Example.kt:87]
  */
 class Class (
 ) : RdBindableBase() {
@@ -892,7 +908,7 @@ class Class (
 
 
 /**
- * #### Generated from [Example.kt:159]
+ * #### Generated from [Example.kt:167]
  */
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
@@ -957,7 +973,7 @@ class Completion private constructor(
 
 
 /**
- * #### Generated from [Example.kt:124]
+ * #### Generated from [Example.kt:125]
  */
 abstract class DerivedBaseClass (
     val derivedField: Boolean,
@@ -1052,7 +1068,7 @@ class DerivedBaseClass_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:128]
+ * #### Generated from [Example.kt:129]
  */
 abstract class DerivedBaseStruct (
     val derivedField: Boolean,
@@ -1156,7 +1172,7 @@ class DerivedBaseStruct_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:108]
+ * #### Generated from [Example.kt:109]
  */
 class DerivedClass (
     val derivedField: Boolean,
@@ -1214,7 +1230,7 @@ class DerivedClass (
 
 
 /**
- * #### Generated from [Example.kt:138]
+ * #### Generated from [Example.kt:139]
  */
 abstract class DerivedClassWith2Interfaces (
     val derivedField: Boolean,
@@ -1309,7 +1325,7 @@ class DerivedClassWith2Interfaces_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:116]
+ * #### Generated from [Example.kt:117]
  */
 open class DerivedOpenClass (
     val derivedField: Boolean,
@@ -1435,7 +1451,7 @@ class DerivedOpenClass_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:120]
+ * #### Generated from [Example.kt:121]
  */
 open class DerivedOpenStruct (
     val derivedField: Boolean,
@@ -1579,7 +1595,7 @@ class DerivedOpenStruct_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:112]
+ * #### Generated from [Example.kt:113]
  */
 class DerivedStruct (
     val derivedField: Boolean,
@@ -1648,7 +1664,7 @@ class DerivedStruct (
 
 
 /**
- * #### Generated from [Example.kt:142]
+ * #### Generated from [Example.kt:143]
  */
 class DerivedStructWith2Interfaces (
     val derivedField: Boolean,
@@ -1717,7 +1733,7 @@ class DerivedStructWith2Interfaces (
 
 
 /**
- * #### Generated from [Example.kt:154]
+ * #### Generated from [Example.kt:162]
  */
 class Document private constructor(
     val moniker: FooBar,
@@ -1814,7 +1830,7 @@ class Document private constructor(
 
 
 /**
- * #### Generated from [Example.kt:26]
+ * #### Generated from [Example.kt:27]
  */
 enum class EnumSetTest {
     a, 
@@ -1840,7 +1856,7 @@ enum class EnumSetTest {
 
 
 /**
- * #### Generated from [Example.kt:34]
+ * #### Generated from [Example.kt:35]
  */
 abstract class Foo (
     val x: Int,
@@ -1884,7 +1900,7 @@ abstract class Foo (
 
 
 /**
- * #### Generated from [Example.kt:75]
+ * #### Generated from [Example.kt:76]
  */
 class FooBar (
     val a: Baz
@@ -2008,21 +2024,21 @@ class Foo_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:80]
+ * #### Generated from [Example.kt:81]
  */
 interface Interface
 {
 }
 
 /**
- * #### Generated from [Example.kt:83]
+ * #### Generated from [Example.kt:84]
  */
 interface Interface2
 {
 }
 
 /**
- * #### Generated from [Example.kt:100]
+ * #### Generated from [Example.kt:101]
  */
 open class OpenClass (
     val baseField: Int
@@ -2135,7 +2151,7 @@ class OpenClass_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:104]
+ * #### Generated from [Example.kt:105]
  */
 open class OpenStruct (
     val baseField: Int
@@ -2264,7 +2280,7 @@ class OpenStruct_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:168]
+ * #### Generated from [Example.kt:176]
  */
 data class ScalarExample (
     val intfield: Int
@@ -2323,7 +2339,7 @@ data class ScalarExample (
 
 
 /**
- * #### Generated from [Example.kt:39]
+ * #### Generated from [Example.kt:40]
  */
 abstract class ScalarPrimer (
     val x: Int
@@ -2417,7 +2433,7 @@ class ScalarPrimer_Unknown (
 
 
 /**
- * #### Generated from [Example.kt:22]
+ * #### Generated from [Example.kt:23]
  */
 data class Selection (
     val start: Int,
@@ -2500,7 +2516,7 @@ data class Selection (
 
 
 /**
- * #### Generated from [Example.kt:89]
+ * #### Generated from [Example.kt:90]
  */
 class Struct (
 ) : IPrintable {
@@ -2551,7 +2567,7 @@ class Struct (
 
 
 /**
- * #### Generated from [Example.kt:171]
+ * #### Generated from [Example.kt:179]
  */
 class TextControl private constructor(
     private val _selection: RdOptionalProperty<Selection>,
@@ -2640,7 +2656,72 @@ class TextControl private constructor(
 
 
 /**
- * #### Generated from [Example.kt:146]
+ * #### Generated from [Example.kt:149]
+ */
+data class UseStructTest (
+    val testField: Int,
+    val testField2: String
+) : IPrintable {
+    //companion
+    
+    companion object : IMarshaller<UseStructTest> {
+        override val _type: KClass<UseStructTest> = UseStructTest::class
+        override val id: RdId get() = RdId(-1063807896803205733)
+        
+        @Suppress("UNCHECKED_CAST")
+        override fun read(ctx: SerializationCtx, buffer: AbstractBuffer): UseStructTest  {
+            val testField = buffer.readInt()
+            val testField2 = buffer.readString()
+            return UseStructTest(testField, testField2)
+        }
+        
+        override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: UseStructTest)  {
+            buffer.writeInt(value.testField)
+            buffer.writeString(value.testField2)
+        }
+        
+        
+    }
+    //fields
+    //methods
+    //initializer
+    //secondary constructor
+    //equals trait
+    override fun equals(other: Any?): Boolean  {
+        if (this === other) return true
+        if (other == null || other::class != this::class) return false
+        
+        other as UseStructTest
+        
+        if (testField != other.testField) return false
+        if (testField2 != other.testField2) return false
+        
+        return true
+    }
+    //hash code trait
+    override fun hashCode(): Int  {
+        var __r = 0
+        __r = __r*31 + testField.hashCode()
+        __r = __r*31 + testField2.hashCode()
+        return __r
+    }
+    //pretty print
+    override fun print(printer: PrettyPrinter)  {
+        printer.println("UseStructTest (")
+        printer.indent {
+            print("testField = "); testField.print(printer); println()
+            print("testField2 = "); testField2.print(printer); println()
+        }
+        printer.print(")")
+    }
+    //deepClone
+    //contexts
+    //threading
+}
+
+
+/**
+ * #### Generated from [Example.kt:147]
  */
 @kotlin.jvm.JvmInline value class ValueStruct (
     val value: Int
@@ -2684,7 +2765,7 @@ class TextControl private constructor(
 
 
 /**
- * #### Generated from [Example.kt:45]
+ * #### Generated from [Example.kt:46]
  */
 enum class Z {
     Bar, 

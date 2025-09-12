@@ -58,7 +58,7 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: Example.kt:124</p>
+/// <p>Generated from: Example.kt:125</p>
 /// </summary>
 namespace org.example {
 
