@@ -25,6 +25,6 @@ namespace JetBrains.Collections.Viewable
     new ICollection<V> Values { get; }
     new bool ContainsKey(K key);
     new V this[K key] { get; set; }
-    new bool TryGetValue(K key, out V value);
+    new bool TryGetValue(K key, [MaybeNullWhen(false)] out V value);
   }
 }

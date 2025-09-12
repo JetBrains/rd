@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
@@ -109,7 +110,12 @@ namespace JetBrains.Collections.Viewable
       return true;
     }
 
-    public bool TryGetValue(TK key, out TV value)
+    public bool TryGetValue(
+      TK key,
+      #if NETCOREAPP
+      [MaybeNullWhen(false)]
+      #endif
+      out TV value)
     {
       return myStorage.TryGetValue(key, out value);
     }

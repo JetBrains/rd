@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -135,7 +135,9 @@ namespace JetBrains.Core
     /// <param name="f">Function  to execute</param>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f() if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    [HandleProcessCorruptedStateExceptions]
+#if !NETCOREAPP
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     public static Result<TRes> Wrap<TRes>([NotNull] Func<TRes> f)
     {
       try
@@ -154,7 +156,9 @@ namespace JetBrains.Core
     /// </summary>
     /// <param name="f">Action to execute</param>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    [HandleProcessCorruptedStateExceptions]
+#if !NETCOREAPP
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     public static Result<Unit> Wrap([NotNull] Action f)
     {
       try
@@ -176,7 +180,9 @@ namespace JetBrains.Core
     /// <param name="param">function argument</param>
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-      [HandleProcessCorruptedStateExceptions]
+#if !NETCOREAPP
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     public static Result<Unit> Wrap<T>([NotNull] Action<T> f, T param)
     {
       try
@@ -198,7 +204,9 @@ namespace JetBrains.Core
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f(param) if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-    [HandleProcessCorruptedStateExceptions]
+#if !NETCOREAPP
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     public static Result<TRes> Wrap<T, TRes>([NotNull] Func<T, TRes> f, T param)
     {
       try

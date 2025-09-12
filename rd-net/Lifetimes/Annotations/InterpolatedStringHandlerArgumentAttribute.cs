@@ -4,6 +4,7 @@
 // This was copied from https://github.com/dotnet/runtime/blob/57bfe474518ab5b7cfe6bf7424a79ce3af9d6657/src/libraries/System.Private.CoreLib/src/System/Runtime/CompilerServices/InterpolatedStringHandlerArgumentAttribute.cs
 // and updated to have the scope of the attributes be internal.
 
+#if !NET8_0_OR_GREATER
 namespace System.Runtime.CompilerServices
 {
   /// <summary>Indicates which arguments to a method involving an interpolated string handler should be passed to that handler.</summary>
@@ -25,3 +26,4 @@ namespace System.Runtime.CompilerServices
     public string[] Arguments { get; }
   }
 }
+#endif

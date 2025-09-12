@@ -51,9 +51,9 @@ namespace JetBrains.Collections.Viewable
         myScheduler = scheduler;
       }
 
-      public override void Post(SendOrPostCallback d, object state)
+      public override void Post(SendOrPostCallback d, object? state)
       {
-        var action = new Action<object>(d);
+        var action = new Action<object?>(d);
         Task.Factory.StartNew(action, state, CancellationToken.None, TaskCreationOptions.None, myScheduler);
       }
     }
