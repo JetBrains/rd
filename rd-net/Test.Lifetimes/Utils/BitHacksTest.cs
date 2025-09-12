@@ -92,5 +92,60 @@ namespace Test.Lifetimes.Utils
       Assert.Throws<ArgumentException>(() => BitHacks.Log2Ceil(-1));
       Assert.Throws<ArgumentException>(() => BitHacks.Log2Ceil(-1L));
     }
+
+    [Test]
+    public static void NumberOfBitSet_Int32()
+    {
+      Assert.AreEqual(0, BitHacks.NumberOfBitSet(0));
+      Assert.AreEqual(1, BitHacks.NumberOfBitSet(1));
+      Assert.AreEqual(1, BitHacks.NumberOfBitSet(2));
+      Assert.AreEqual(2, BitHacks.NumberOfBitSet(3));
+      Assert.AreEqual(4, BitHacks.NumberOfBitSet(0b_1111));
+      Assert.AreEqual(16, BitHacks.NumberOfBitSet(0x0F0F0F0F)); // 00001111 pattern repeated
+      Assert.AreEqual(32, BitHacks.NumberOfBitSet(-1));
+      Assert.AreEqual(1, BitHacks.NumberOfBitSet(int.MinValue));
+    }
+
+    [Test]
+    public static void PopCount_UInt32()
+    {
+      Assert.AreEqual(0, BitHacks.PopCount(0u));
+      Assert.AreEqual(1, BitHacks.PopCount(1u));
+      Assert.AreEqual(1, BitHacks.PopCount(2u));
+      Assert.AreEqual(2, BitHacks.PopCount(3u));
+      Assert.AreEqual(16, BitHacks.PopCount(0xF0F0F0F0u));
+      Assert.AreEqual(32, BitHacks.PopCount(uint.MaxValue));
+    }
+
+    [Test]
+    public static void PopCount_UInt64()
+    {
+      Assert.AreEqual(0, BitHacks.PopCount(0ul));
+      Assert.AreEqual(1, BitHacks.PopCount(1ul));
+      Assert.AreEqual(1, BitHacks.PopCount(2ul));
+      Assert.AreEqual(2, BitHacks.PopCount(3ul));
+      Assert.AreEqual(32, BitHacks.PopCount(0xF0F0F0F0F0F0F0F0ul));
+      Assert.AreEqual(64, BitHacks.PopCount(ulong.MaxValue));
+    }
+
+    [Test]
+    public static void Log2Floor_UInt64_specific()
+    {
+      Assert.AreEqual(0, BitHacks.Log2Floor(0ul));
+      Assert.AreEqual(0, BitHacks.Log2Floor(1ul));
+      Assert.AreEqual(1, BitHacks.Log2Floor(2ul));
+      Assert.AreEqual(63, BitHacks.Log2Floor(1ul << 63));
+      Assert.AreEqual(63, BitHacks.Log2Floor(ulong.MaxValue));
+    }
+
+    [Test]
+    public static void Log2Ceil_UInt32_specific()
+    {
+      Assert.AreEqual(0, BitHacks.Log2Ceil(0u));
+      Assert.AreEqual(0, BitHacks.Log2Ceil(1u));
+      Assert.AreEqual(1, BitHacks.Log2Ceil(2u));
+      Assert.AreEqual(2, BitHacks.Log2Ceil(3u));
+      Assert.AreEqual(32, BitHacks.Log2Ceil(uint.MaxValue));
+    }
   }
 }
