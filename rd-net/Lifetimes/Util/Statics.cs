@@ -121,7 +121,7 @@ namespace JetBrains.Util.Util
       lock (ourPerTypeStatics)
       {
         StaticsForType<T> result;
-        object o;
+        object? o;
         if (!ourPerTypeStatics.TryGetValue(typeof(T), out o))
         {
           result = new StaticsForType<T>();

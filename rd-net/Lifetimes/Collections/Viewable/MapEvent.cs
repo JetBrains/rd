@@ -24,7 +24,7 @@ namespace JetBrains.Collections.Viewable
     [MemberNotNullWhen(true, nameof(OldValue))]
     public bool IsRemove => Kind == AddUpdateRemove.Remove;
 
-    private MapEvent(AddUpdateRemove kind, K key, V oldValue, V newValue)
+    private MapEvent(AddUpdateRemove kind, K key, V? oldValue, V? newValue)
       : this()
     {
       Kind = kind;
@@ -38,7 +38,7 @@ namespace JetBrains.Collections.Viewable
       return new MapEvent<K, V>(AddUpdateRemove.Add, key, default!, newValue);
     }
 
-    public static MapEvent<K, V> Update(K key, V oldValue, V newValue)
+    public static MapEvent<K, V> Update(K key, V? oldValue, V? newValue)
     {
       return new MapEvent<K, V>(AddUpdateRemove.Update, key, oldValue, newValue);
     }

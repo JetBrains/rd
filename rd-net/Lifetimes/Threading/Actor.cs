@@ -103,10 +103,9 @@ namespace JetBrains.Threading
         }, lifetime, TaskCreationOptions.None, scheduler ?? TaskScheduler.Default);
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-    
-    
-    
+#endif
     private async Task Process()
     {
       var receiveItemTask = myChannel.ReceiveAsync();

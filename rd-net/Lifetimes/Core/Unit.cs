@@ -16,7 +16,7 @@ namespace JetBrains.Core
 
     public override string ToString() => "<unit>";
 
-    public bool Equals(Unit other) => true;
+    public bool Equals(Unit? other) => true;
 
     public override bool Equals(object? obj)
     {

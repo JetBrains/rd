@@ -48,7 +48,7 @@ namespace JetBrains.Core
 
     public Maybe<TK> Select<TK>(Func<T, TK> map) => HasValue ? new Maybe<TK>(map(Value)) : Maybe<TK>.None; 
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (!(obj is Maybe<T>)) return false;
       return Equals((Maybe<T>)obj);
@@ -65,7 +65,7 @@ namespace JetBrains.Core
       unchecked
       {
         if (!HasValue) return -1;
-        return EqualityComparer<T>.Default.GetHashCode(myValue);
+        return EqualityComparer<T>.Default.GetHashCode(myValue!);
       }
     }
 

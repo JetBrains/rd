@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Collections.Synchronized;
 using JetBrains.Collections.Viewable;
@@ -137,7 +138,7 @@ namespace JetBrains.Rd.Impl
           }
         }
 
-        public bool TryGetValue(K key, out V value)
+        public bool TryGetValue(K key, [MaybeNullWhen(false)] out V value)
         {
           if (!IsBound)
           {
