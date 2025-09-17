@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -110,7 +110,6 @@ namespace Test.Lifetimes.Threading
     }
 
 
-#if !NET35
     [Test]
     public unsafe void StressTestWithAck()
     {
@@ -180,7 +179,6 @@ namespace Test.Lifetimes.Threading
 //      Console.WriteLine(next);
 //      Console.WriteLine(buffer.ChunkCount);
     }
-#endif
 
     [Test]
     public unsafe void TestReprocess()

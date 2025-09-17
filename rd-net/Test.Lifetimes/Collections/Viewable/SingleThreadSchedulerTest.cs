@@ -1,11 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
 
-#if !NET35
 namespace Test.Lifetimes.Collections.Viewable
 {
   public class SingleThreadSchedulerTest : LifetimesTestBase
@@ -102,4 +101,3 @@ namespace Test.Lifetimes.Collections.Viewable
     }
   }
 }
-#endif

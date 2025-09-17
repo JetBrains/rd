@@ -1,5 +1,4 @@
-﻿#if !NET35
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -114,4 +113,3 @@ internal struct JetDefaultInterpolatedStringHandler
     }
   }
 }
-#endif

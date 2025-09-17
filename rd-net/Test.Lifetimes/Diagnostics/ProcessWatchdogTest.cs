@@ -1,5 +1,4 @@
-﻿#if !NET35
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -97,4 +96,3 @@ public class ProcessWatchdogTest : LifetimesTestBase
     return process;
   }
 }
-#endif

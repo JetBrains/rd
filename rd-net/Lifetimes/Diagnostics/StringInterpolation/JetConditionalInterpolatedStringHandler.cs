@@ -1,4 +1,3 @@
-#if !NET35
 using System.Runtime.CompilerServices;
 
 namespace JetBrains.Diagnostics.StringInterpolation;
@@ -92,5 +91,3 @@ public ref struct JetConditionalInterpolatedStringHandler
     myHandler.AppendFormatted(value, alignment, format);
   }
 }
-
-#endif

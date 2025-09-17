@@ -5,11 +5,7 @@ using System.Collections.Generic;
 namespace JetBrains.Rd.Util
 {
   internal class ConcurrentSet<T> : 
-    #if NET35
-    ICollection<T>
-    #else
     ISet<T>
-    #endif
   {
     private readonly ConcurrentDictionary<T, bool> myDictionary = new ConcurrentDictionary<T, bool>();
 
@@ -51,7 +47,6 @@ namespace JetBrains.Rd.Util
     public int Count => myDictionary.Count;
     public bool IsReadOnly => false;
     
-    #if !NET35
     bool ISet<T>.Add(T item)
     {
       return myDictionary.TryAdd(item, false);
@@ -106,6 +101,5 @@ namespace JetBrains.Rd.Util
     {
       throw new System.NotImplementedException();
     }
-    #endif
   }
 }

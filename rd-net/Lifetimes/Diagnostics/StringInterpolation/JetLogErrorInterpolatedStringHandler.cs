@@ -1,4 +1,3 @@
-#if !NET35
 using System.Runtime.CompilerServices;
 
 namespace JetBrains.Diagnostics.StringInterpolation;
@@ -40,4 +39,3 @@ public ref struct JetLogErrorInterpolatedStringHandler
   
   public void AppendFormatted(object? value, int alignment = 0, string? format = null) => myHandler.AppendFormatted(value, alignment, format);
 }
-#endif

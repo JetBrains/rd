@@ -21,6 +21,7 @@ namespace JetBrains.Rd.Reflection
     private const String DynamicAssemblyName = "JetBrains.Rd.ProxyGenerator";
     private readonly bool myAllowSave;
 
+    // todo remove
     /*
      * ValueTuple package does not exist for net35
      */
@@ -161,11 +162,7 @@ namespace JetBrains.Rd.Reflection
         il.Emit(OpCodes.Ret);
       }
 
-#if NET35
-      return typebuilder.CreateType().NotNull("Unable to create type");
-#else
       return typebuilder.CreateTypeInfo().NotNull("Unable to create type");
-#endif
     }
 
 
@@ -261,7 +258,6 @@ namespace JetBrains.Rd.Reflection
 
       il.Emit(OpCodes.Ret);
 
-#if !NET35
 /*      if (myAllowSave)
       {
         // shadow methods are required only for reviewing dynamic methods bodies in dotpeek
@@ -275,7 +271,6 @@ namespace JetBrains.Rd.Reflection
 
         typeBuilder.CreateType();
       }*/
-#endif
 
       return methodBuilder;
     }

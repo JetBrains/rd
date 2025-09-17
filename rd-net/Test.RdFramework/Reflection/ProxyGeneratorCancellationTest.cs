@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
@@ -15,9 +15,6 @@ namespace Test.RdFramework.Reflection
   [TestFixture]
   public class ProxyGeneratorCancellationTest : ProxyGeneratorTestBase
   {
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
     protected override bool IsAsync => true;
 

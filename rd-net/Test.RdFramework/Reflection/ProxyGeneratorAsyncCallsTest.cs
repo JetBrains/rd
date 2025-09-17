@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -12,9 +12,6 @@ using JetBrains.Serialization;
 using JetBrains.Threading;
 using NUnit.Framework;
 
-#if NET35
-
-#endif
 
 namespace Test.RdFramework.Reflection
 {
@@ -55,9 +52,6 @@ namespace Test.RdFramework.Reflection
       public virtual void Server(int round) { }
     }
 
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
     [RdRpc]
     public interface IAsyncCallsTest
@@ -163,10 +157,6 @@ namespace Test.RdFramework.Reflection
         result = await model.GetStringAsync();
       });
 
-#if NET35
-      // it seems like ExecuteSynchronously does not work in NET35
-      SpinWaitEx.SpinUntil(TimeSpan.FromSeconds(1), () => result != null);
-#endif
       Assert.AreEqual(result, "result");
     }
 

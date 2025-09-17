@@ -12,7 +12,6 @@ using NUnit.Framework;
 
 namespace Test.Lifetimes.Threading
 {
-#if !NET35
   public class ActorTest : LifetimesTestBase
   {
     [Test]
@@ -177,7 +176,4 @@ namespace Test.Lifetimes.Threading
     }
     
   }
-  
-  
-#endif
 }

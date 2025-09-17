@@ -10,9 +10,7 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="T">type of event</typeparam>
   public interface ISource<
-#if !NET35
     out
-#endif
     T>
   {
     

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Collections.Viewable;
@@ -134,7 +134,6 @@ namespace Test.RdFramework.Reflection
       });
     }
 
-#if !NET35
     [Test]
     public void TestListInterface()
     {
@@ -171,7 +170,6 @@ namespace Test.RdFramework.Reflection
         public IEnumerable<int> EnumerableInts;
       }
     }
-#endif
 
     [Test]
     public void TestEventArgs()
@@ -211,13 +209,11 @@ namespace Test.RdFramework.Reflection
       RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IDictionary<string, string>, CollectionAssert.AreEqual);
     }
 
-#if !NET35
     [Test]
     public void TestReadOnlyDictionary()
     {
       RunScalarTest(new Dictionary<string, string>() { {"a", "b"}} as IReadOnlyDictionary<string, string>, CollectionAssert.AreEqual);
     }
-#endif
 
     [Test]
     public void TestBoxing()

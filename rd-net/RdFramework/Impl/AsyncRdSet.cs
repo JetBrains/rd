@@ -11,11 +11,7 @@ using JetBrains.Serialization;
 namespace JetBrains.Rd.Impl;
 
 public class AsyncRdSet<T> : IRdBindable, IAsyncSource<SetEvent<T>>, 
-#if NET35
-    ICollection<T>
-#else
   ISet<T>, IReadOnlyCollection<T>
-#endif 
   where T : notnull
 {
   private readonly RdSetBackend mySet;
@@ -103,7 +99,6 @@ public class AsyncRdSet<T> : IRdBindable, IAsyncSource<SetEvent<T>>,
   public int Count => mySet.Count;
   public bool IsReadOnly => mySet.IsReadOnly;
 
-#if !NET35
   bool ISet<T>.Add(T item)
   {
     lock (mySet)
@@ -163,7 +158,6 @@ public class AsyncRdSet<T> : IRdBindable, IAsyncSource<SetEvent<T>>,
   {
     return mySet.Overlaps(other);
   }
-#endif
 
   public void Add(T item)
   {

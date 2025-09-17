@@ -7,7 +7,6 @@ namespace Test.Lifetimes.Collections.Viewable;
 [TestFixture]
 public class ReactiveExTest : LifetimesTestBase
 {
-#if !NET35
   [Test]
   public void NextValueAsyncTest()
   {
@@ -31,7 +30,6 @@ public class ReactiveExTest : LifetimesTestBase
       Assert.IsTrue(task.IsCanceled);
     }
   }
-#endif
 
   [Test]
   public void AdviceOnceTest()

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net472;net35;net7.0</TargetFrameworks>
+        <TargetFrameworks>net472;net7.0</TargetFrameworks>
         <DebugType>Full</DebugType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <IsPackable>false</IsPackable>
@@ -17,6 +17,7 @@
         <PackageReference Include="NUnit3TestAdapter" Version="3.11.0" />        
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />        
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.17" />
+        <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.456101" />
     </ItemGroup>
 
     <ItemGroup>
@@ -26,9 +27,6 @@
       <PackageReference Include="BenchmarkDotNet">
         <Version>0.12.1</Version>
       </PackageReference>
-    </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)' != 'net35'">
-      <PackageReference Include="Microsoft.Diagnostics.Runtime" Version="3.1.456101" />
     </ItemGroup>
     
 </Project>

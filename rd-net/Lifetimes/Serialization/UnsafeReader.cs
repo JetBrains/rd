@@ -148,7 +148,6 @@ namespace JetBrains.Serialization
 
       var x = (double*)myPtr;
       myPtr = (byte*)(x + 1);
-#if !NET35
       if (!RuntimeInfo.IsUnalignedAccessAllowed)
       {
         double d = 0;
@@ -156,7 +155,6 @@ namespace JetBrains.Serialization
         return d;
       }
       else
-#endif
       {
         return *x;
       }
@@ -309,13 +307,7 @@ namespace JetBrains.Serialization
           var bytesCount = byteData == 0xFF ? ReadInt32() : byteData - 1;
           var startPtr = ReadRaw(bytesCount);
 
-#if NET35
-          var buffer = new byte[bytesCount]; // very unfortunate, .NET 3.5 only
-          Marshal.Copy((IntPtr) startPtr, buffer, 0, length: bytesCount);
-          var value = Encoding.UTF8.GetString(buffer);
-#else
           var value = Encoding.UTF8.GetString(startPtr, bytesCount);
-#endif
           return value;
         }
       }

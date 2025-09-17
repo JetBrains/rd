@@ -1,4 +1,3 @@
-#if !NET35
 using System;
 using System.IO;
 using System.Net;
@@ -207,4 +206,3 @@ namespace Test.RdFramework
     }
   }
 }
-#endif

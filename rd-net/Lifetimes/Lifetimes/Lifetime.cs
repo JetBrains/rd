@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -147,13 +147,11 @@ namespace JetBrains.Lifetimes
     public static bool LogErrorIfLifetimeIsNotInitialized = false;
 
 
-    #if !NET35
     /// <summary>
     /// Special "async-static" lifetime that is captured when you execute <see cref="ExecuteAsync"/> or <see cref="Start(System.Threading.Tasks.TaskScheduler,System.Action,System.Threading.Tasks.TaskCreationOptions)"/>
     /// and can be used by cooperative cancellation.
     /// </summary>
     public static readonly AsyncLocal<Lifetime> AsyncLocal = new AsyncLocal<Lifetime>();
-    #endif
 
     /// <summary>
     /// <para>A lifetime that never ends. Scheduling actions on such a lifetime has no effect.</para>
@@ -528,7 +526,6 @@ namespace JetBrains.Lifetimes
     
     
     
-    //#if !NET35
 
     /// <summary>
     ///   <para>Scopes your code in <paramref name="action" /> with a lifetime that is terminated automatically when <paramref name="action" /> completes execution, or when its execution is aborted by an exception.</para>
@@ -616,7 +613,6 @@ namespace JetBrains.Lifetimes
         await action(def.Lifetime);
     }
 
-   // #endif
     
     #endregion
     
@@ -917,7 +913,6 @@ namespace JetBrains.Lifetimes
     #endregion
     
 
-    #if !NET35
     #region Task API
     
     
@@ -1158,7 +1153,6 @@ namespace JetBrains.Lifetimes
     
     
     #endregion
-    #endif
 
 
     #region Equality
@@ -1241,7 +1235,6 @@ namespace JetBrains.Lifetimes
       return this;
     }
 
-    #if !NET35
     /// <summary>
     /// Log error if this lifetime hasn't been terminated in specified <paramref name="timeout"/> 
     /// </summary>
@@ -1260,7 +1253,6 @@ namespace JetBrains.Lifetimes
       
       LifetimeDefinition.Log.Error("{0} hasn't been terminated in {1} {2}", this, timeout, string.IsNullOrEmpty(comment) ? "" : comment);
     }
-    #endif
       
 
         

@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace JetBrains.Util.Internal
@@ -55,78 +55,44 @@ namespace JetBrains.Util.Internal
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void Barrier()
     {
-#if (NET35)
-  Thread.MemoryBarrier();
-#else
   Interlocked.MemoryBarrier();
-#endif
     }
 #nullable disable
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T VolatileRead<T>(ref T location) where T : class
     {
-#if (NET35)
-      var obj = location;
-      Thread.MemoryBarrier();
-      return obj;
-#else
       return Volatile.Read(ref location);
-#endif
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite<T>(ref T location, T value) where T : class
     {
-#if (NET35)
-      Thread.MemoryBarrier();
-      location = value;
-#else
       Volatile.Write(ref location, value);
-#endif
     }
 #nullable restore
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static int VolatileRead(ref int location)
     {
-#if (NET35)
-      return Thread.VolatileRead(ref location);
-#else
       return Volatile.Read(ref location);
-#endif
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref int location, int value)
     {
-#if (NET35)
-      Thread.VolatileWrite(ref location, value);
-#else
       Volatile.Write(ref location, value);
-#endif
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static bool VolatileRead(ref bool location)
     {
-#if (NET35)
-      var obj = location;
-      Thread.MemoryBarrier();
-      return obj;
-#else
       return Volatile.Read(ref location);
-#endif
     }
     
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref bool location, bool value)
     {
-#if (NET35)
-      Thread.MemoryBarrier();
-      location = value;
-#else
       Volatile.Write(ref location, value);
-#endif
     }
   }
 }

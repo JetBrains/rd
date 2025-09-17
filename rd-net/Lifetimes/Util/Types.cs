@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -103,17 +103,11 @@ namespace JetBrains.Util.Util
     }
 
     public static
-      #if NET35
-        Type
-      #else
         System.Reflection.TypeInfo
-      #endif
       OptionalTypeInfo(this Type thisType)
     {
       return thisType
-#if !NET35
       .GetTypeInfo()
-#endif
         ;
     } 
   }

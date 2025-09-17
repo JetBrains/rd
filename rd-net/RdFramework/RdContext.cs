@@ -121,11 +121,7 @@ namespace JetBrains.Rd
   {
     [ThreadStatic] [CanBeNull] private static SingleThreadObjectPool<UpdateValueCookie> ourPool;
     
-#if NET35
-    private readonly ThreadLocal<T> myValue = new ThreadLocal<T>();
-#else
     private readonly AsyncLocal<T> myValue = new();
-#endif
 
     protected ThreadLocalRdContext(string key, bool isHeavy, [NotNull] CtxReadDelegate<T> readDelegate,
       [NotNull] CtxWriteDelegate<T> writeDelegate) : base(key, isHeavy, readDelegate, writeDelegate)

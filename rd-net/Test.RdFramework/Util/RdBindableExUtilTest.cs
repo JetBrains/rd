@@ -6,9 +6,7 @@ using JetBrains.Rd;
 using JetBrains.Rd.Base;
 using JetBrains.Rd.Util;
 using NUnit.Framework;
-#if !NET35
 using System.Collections.Immutable;
-#endif
 
 namespace Test.RdFramework.Util;
 
@@ -40,10 +38,8 @@ public class RdBindableExUtilTest
     Assert.IsFalse(new List<int> { i }.IsBindable());
     Assert.IsFalse(new List<object> { i }.IsBindable());
 
-#if !NET35
     Assert.IsFalse(((ImmutableArray<int>)default).IsBindable()); // cannot be enumerated, but should not throw exception
     Assert.IsFalse(ImmutableArray.Create(1).IsBindable());
-#endif
   } 
   
   [Test]

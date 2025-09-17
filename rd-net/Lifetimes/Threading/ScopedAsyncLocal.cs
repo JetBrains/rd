@@ -3,7 +3,6 @@ using System.Threading;
 
 namespace JetBrains.Threading
 {
-  #if !NET35
   public struct ScopedAsyncLocal<T> : IDisposable 
   {
     private readonly AsyncLocal<T> myAsyncLocal;
@@ -21,5 +20,4 @@ namespace JetBrains.Threading
       myAsyncLocal.Value = myOldValue;
     }
   }
-  #endif
 }

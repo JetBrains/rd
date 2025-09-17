@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -16,9 +16,7 @@ namespace JetBrains.Collections
   /// </summary>
   /// <typeparam name="T"></typeparam>
   public interface IPriorityQueue<T> : ICollection<T>
-    #if !NET35
     , IReadOnlyCollection<T>
-    #endif
   {
     new int Count { get; }
 

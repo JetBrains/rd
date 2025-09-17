@@ -14,11 +14,7 @@ namespace JetBrains.Collections.Viewable
     public class ViewableSet<T> : IViewableSet<T> where T : notnull
   {
         private readonly Signal<SetEvent<T>> myChange = new Signal<SetEvent<T>>();
-#if !NET35
-    private readonly ISet<T> myStorage;
-#else
-        private readonly ICollection<T> myStorage;
-#endif
+        private readonly ISet<T> myStorage;
     
         public ISource<SetEvent<T>> Change => myChange;
 
@@ -30,11 +26,7 @@ namespace JetBrains.Collections.Viewable
         /// </summary>
         /// <param name="storage"></param>
         [PublicAPI] public ViewableSet(
-#if !NET35
             ISet<T> storage
-#else
-            ICollection<T> storage
-#endif
         )
         {
             myStorage = storage ?? throw new ArgumentNullException(nameof(storage));
@@ -61,11 +53,7 @@ namespace JetBrains.Collections.Viewable
         public int Count => myStorage.Count;
 
         public bool IsReadOnly =>
-#if !NET35
                 myStorage.IsReadOnly;
-#else
-            false;
-#endif
         
         public void CopyTo(T[] array, int arrayIndex) => myStorage.CopyTo(array, arrayIndex);
         
@@ -73,29 +61,16 @@ namespace JetBrains.Collections.Viewable
 
 
         #region ISet Read Methods
-        #if !NET35
         public bool IsProperSubsetOf(IEnumerable<T> other) => myStorage.IsProperSubsetOf(other);
         public bool IsProperSupersetOf(IEnumerable<T> other) => myStorage.IsProperSupersetOf(other);
         public bool IsSubsetOf(IEnumerable<T> other) => myStorage.IsSubsetOf(other);
         public bool IsSupersetOf(IEnumerable<T> other) => myStorage.IsSupersetOf(other);
         public bool Overlaps(IEnumerable<T> other) => myStorage.Overlaps(other);
         public bool SetEquals(IEnumerable<T> other) => myStorage.SetEquals(other);
-        #endif
         #endregion
 
         
         #region Simple write methods
-        #if NET35
-        public bool Add(T item)
-        {
-          if (myStorage.Contains(item))
-            return false;
-          myStorage.Add(item);
-
-          myChange.Fire(SetEvent<T>.Add(item));
-          return true;
-        }
-        #else
         public bool Add(T item)
         {
             if (!myStorage.Add(item))
@@ -104,7 +79,6 @@ namespace JetBrains.Collections.Viewable
             myChange.Fire(SetEvent<T>.Add(item));
             return true;
         }
-        #endif
         
         
 
@@ -138,7 +112,6 @@ namespace JetBrains.Collections.Viewable
             BulkFire(AddRemove.Remove, removed);
         }
         
-        #if !NET35
         public void ExceptWith(IEnumerable<T> other)
         {
             var removed = new HashSet<T>(myStorage);
@@ -180,7 +153,6 @@ namespace JetBrains.Collections.Viewable
             
             UnionWith(otherExceptThis); //will throw add events for union
         }
-        #endif
         
         #endregion
     }

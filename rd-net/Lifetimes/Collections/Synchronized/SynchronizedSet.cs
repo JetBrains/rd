@@ -23,11 +23,7 @@ namespace JetBrains.Collections.Synchronized
   /// </summary>
   /// <typeparam name="T"></typeparam>
   [PublicAPI] public class SynchronizedSet<T> :
-#if NET35
-    ICollection<T>
-#else
     ISet<T>, IReadOnlyCollection<T>
-#endif
   {
     private HashSet<T> mySet;
     private readonly object myLocker = new();
@@ -143,7 +139,6 @@ namespace JetBrains.Collections.Synchronized
 
     public bool IsReadOnly => false;
 
-#if !NET35
     bool ISet<T>.Add(T item)
     {
       lock(myLocker)
@@ -151,7 +146,6 @@ namespace JetBrains.Collections.Synchronized
         return GetOrCloneSetNoLock().Add(item);
       }
     }
-#endif
 
     public void UnionWith(IEnumerable<T> other)
     {

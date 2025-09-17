@@ -9,9 +9,6 @@ using JetBrains.Rd.Impl;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
-#if NET35
-using TypeInfo = System.Type;
-#endif
 
 namespace JetBrains.Rd.Reflection
 {

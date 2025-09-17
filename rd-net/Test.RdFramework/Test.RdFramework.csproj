@@ -2,7 +2,7 @@
     <PropertyGroup>
         <!--suppress MsbuildTargetFrameworkTagInspection -->
         <TargetFrameworks>net7.0</TargetFrameworks>
-        <TargetFrameworks Condition=" $(OS) == 'Windows_NT' ">net472;$(TargetFrameworks);net35</TargetFrameworks>
+        <TargetFrameworks Condition=" $(OS) == 'Windows_NT' ">net472;$(TargetFrameworks)</TargetFrameworks>
 
         <DebugType>Full</DebugType>
         <IsPackable>false</IsPackable>
@@ -21,10 +21,6 @@
         <PackageReference Include="TeamCity.VSTest.TestAdapter" Version="1.0.17" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-        <Compile Remove="Reflection/**" />
-    </ItemGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\RdFramework.Reflection\RdFramework.Reflection.csproj" />
         <ProjectReference Include="..\RdFramework\RdFramework.csproj" />
@@ -32,15 +28,10 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Condition="'$(TargetFramework)' != 'net35'" Include="..\Test.RdFramework.Generator\Test.RdFramework.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+      <ProjectReference Include="..\Test.RdFramework.Generator\Test.RdFramework.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
       <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(TargetFramework)' == 'net35'">
-        <PackageReference Include="AsyncBridge.Net35" Version="0.2.0" />
-        <PackageReference Include="TaskParallelLibrary" Version="1.0.2856.0" />
     </ItemGroup>
 </Project>

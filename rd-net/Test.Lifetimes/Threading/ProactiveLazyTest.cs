@@ -1,4 +1,3 @@
-#if !NET35
 using System;
 using System.Threading;
 using JetBrains.Lifetimes;
@@ -60,4 +59,3 @@ namespace Test.Lifetimes.Threading
         }
     }
 }
-#endif

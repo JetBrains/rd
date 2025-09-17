@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using JetBrains.Annotations;
 using JetBrains.Util;
@@ -26,7 +26,6 @@ namespace JetBrains.Diagnostics
     static FirstChanceExceptionInterceptor()
     {
       
-#if !NET35
       AppDomain.CurrentDomain.FirstChanceException += (sender, args) =>
       {
         var info = string.Join("\n -> ", GetThreadLocalDebugInfo());
@@ -35,7 +34,6 @@ namespace JetBrains.Diagnostics
           args.Exception.Data[ExceptionDataKey] = info;
         }
       };
-#endif
     }
     
     public readonly struct ThreadLocalDebugInfo : IDisposable

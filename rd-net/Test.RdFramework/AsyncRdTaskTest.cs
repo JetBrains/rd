@@ -12,7 +12,6 @@ using NUnit.Framework;
 
 namespace Test.RdFramework;
 
-#if !NET35
 [TestFixture]
 public class AsyncRdTaskTest : RdFrameworkTestBase
 {
@@ -139,4 +138,3 @@ public class AsyncRdTaskTest : RdFrameworkTestBase
     return Debugger.IsAttached ? TimeSpan.FromDays(1) : timeout;
   }
 }
-#endif

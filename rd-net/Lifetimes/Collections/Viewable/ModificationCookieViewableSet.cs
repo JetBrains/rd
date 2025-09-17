@@ -53,7 +53,6 @@ namespace JetBrains.Collections.Viewable
       myBackingSet.CopyTo(array, arrayIndex);
     }
 
-    #if !NET35
     public bool IsProperSubsetOf(IEnumerable<T> other)
     {
       return myBackingSet.IsProperSubsetOf(other);
@@ -89,7 +88,6 @@ namespace JetBrains.Collections.Viewable
       using (myCookieFactory())
         return myBackingSet.Add(item);
     }
-    #endif
 
     public bool Remove(T item)
     {
@@ -103,7 +101,6 @@ namespace JetBrains.Collections.Viewable
         myBackingSet.Clear();
     }
 
-    #if !NET35
     public void ExceptWith(IEnumerable<T> other)
     {
       using (myCookieFactory())
@@ -127,7 +124,6 @@ namespace JetBrains.Collections.Viewable
       using (myCookieFactory())
         myBackingSet.SymmetricExceptWith(other);
     }
-    #endif
 
     void ICollection<T>.Add(T item)
     {
