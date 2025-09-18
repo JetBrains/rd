@@ -9,9 +9,7 @@ namespace JetBrains.Rd
     void Register<T>(CtxReadDelegate<T> reader, CtxWriteDelegate<T> writer, long? predefinedType = null);
 
     void RegisterEnum<T>() where T :
-#if !NET35
     unmanaged, 
-#endif
      Enum;
 
     void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers);

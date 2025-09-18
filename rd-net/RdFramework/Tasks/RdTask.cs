@@ -1,13 +1,11 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Util;
 
-#if !NET35
 
-#endif
 
 
 namespace JetBrains.Rd.Tasks
@@ -30,9 +28,7 @@ namespace JetBrains.Rd.Tasks
     [Obsolete("Use 'RdTask.Cancelled<T>()' instead")]
     public static RdTask<T> Cancelled() => RdTask.Cancelled<T>();
 
-#if !NET35
     [PublicAPI] public static implicit operator Task<T>(RdTask<T> task) => task.AsTask();
-#endif
   }
 
   public static class RdTask

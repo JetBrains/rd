@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -47,11 +47,7 @@ namespace JetBrains.Rd.Util
           if (lifetime.IsNotAlive)
             return;
 
-#if NET35
-          lockTaken = Monitor.TryEnter(@lock, timeoutMs);
-#else
           Monitor.TryEnter(@lock, timeoutMs, ref lockTaken);
-#endif
         } while (!lockTaken);
 
 

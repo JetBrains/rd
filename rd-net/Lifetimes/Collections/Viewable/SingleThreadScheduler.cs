@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -159,7 +159,6 @@ namespace JetBrains.Collections.Viewable
       }
     }
 
-#if !NET35    
     public bool PumpAndWaitFor(Lifetime lifetime, TimeSpan timeout, Func<bool> condition)
     {
       var shouldPump = IsActive;
@@ -186,7 +185,6 @@ namespace JetBrains.Collections.Viewable
     {
       return PumpAndWaitFor(Lifetime.Eternal, TimeSpan.MaxValue, condition);
     }
-#endif
 
 
 

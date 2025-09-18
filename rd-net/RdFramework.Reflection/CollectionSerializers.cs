@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using JetBrains.Rd.Impl;
 using JetBrains.Util.Util;
@@ -55,9 +55,6 @@ namespace JetBrains.Rd.Reflection
     public static SerializerPair CreateReadOnlyDictionarySerializerPair<TKey, TValue>(
       SerializerPair keySerializer, SerializerPair valueSerializer)
     {
-#if NET35
-      throw new NotSupportedException();
-#else
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
 
       CtxWriteDelegate<IReadOnlyDictionary<TKey, TValue>?> write = (context, writer, value) =>
@@ -84,7 +81,6 @@ namespace JetBrains.Rd.Reflection
       };
 
       return new SerializerPair(read, write);
-#endif
     }
 
     private static CtxReadDelegate<Dictionary<TKey, TValue>?> CreateReadDictionary<TKey, TValue>(

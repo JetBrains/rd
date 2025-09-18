@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -14,9 +14,6 @@ namespace Test.RdFramework.Reflection
 {
   public class ProxyGeneratorTestBase : RdReflectionTestBase
   {
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
     protected RdBindableBase myClient;
     protected object myProxy;

@@ -80,7 +80,7 @@ namespace Test.RdFramework.Reflection
 
     protected void SaveGeneratedAssembly()
     {
-#if NET35 || NETCOREAPP
+#if NETCOREAPP
       // throw new NotSupportedException();
 #else
       var generatorCache = SFacade.ProxyGenerator as ProxyGeneratorCache;

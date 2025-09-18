@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,9 +17,6 @@ namespace Test.RdFramework
   [Apartment(System.Threading.ApartmentState.STA)]
   public class RdTaskTest : RdFrameworkTestBase
   {
-#if NET35
-    static TaskHack Task = new TaskHack();
-#endif
 
     private static readonly int ourKey = 1;
 

@@ -1,9 +1,7 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
-#if !NET35
 using JetBrains.Diagnostics.StringInterpolation;
-#endif
 
 namespace JetBrains.Diagnostics
 {
@@ -83,7 +81,6 @@ namespace JetBrains.Diagnostics
       @this.Log(LoggingLevel.TRACE, message);
     }
 
-#if !NET35
     /// <summary>
     /// Log the message if <see cref="LoggingLevel.TRACE"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
     /// <br />
@@ -111,7 +108,6 @@ namespace JetBrains.Diagnostics
         logger.Log(LoggingLevel.TRACE, messageHandler.ToStringAndClear());
       }      
     }    
-#endif
 
     [StringFormatMethod("message")]
     public static void Trace<T1>(this ILog @this, string message, T1 t1)
@@ -157,7 +153,6 @@ namespace JetBrains.Diagnostics
       @this.Log(LoggingLevel.VERBOSE, message);
     }
     
-#if !NET35
     /// <summary>
     /// Log the message if <see cref="LoggingLevel.VERBOSE"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
     /// <br />
@@ -214,7 +209,6 @@ namespace JetBrains.Diagnostics
         logger.Verbose(ex, messageHandler.ToStringAndClear());
       }
     }
-#endif
 
     [StringFormatMethod("message")]
     public static void Verbose<T1>(this ILog @this, string message, T1 t1)
@@ -271,7 +265,6 @@ namespace JetBrains.Diagnostics
       @this.Log(LoggingLevel.INFO, message);
     }
     
-#if !NET35
     /// <summary>
     /// Log the message if <see cref="LoggingLevel.INFO"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
     /// <br />
@@ -328,7 +321,6 @@ namespace JetBrains.Diagnostics
         logger.Info(ex, messageHandler.ToStringAndClear());
       }
     }
-#endif
 
     [StringFormatMethod("message")]
     public static void Info(this ILog @this, string message, params object[] args)
@@ -350,7 +342,6 @@ namespace JetBrains.Diagnostics
       @this.Log(LoggingLevel.WARN, message);
     }
     
-#if !NET35
     /// <summary>
     /// Log the message if <see cref="LoggingLevel.WARN"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
     /// <br />
@@ -407,7 +398,6 @@ namespace JetBrains.Diagnostics
       }
     }
 
-#endif
 
     [StringFormatMethod("message")]
     public static void Warn(this ILog @this, string message, params object[] args)
@@ -430,7 +420,6 @@ namespace JetBrains.Diagnostics
       @this.Log(LoggingLevel.ERROR, message);
     }
     
-#if !NET35
     /// <summary>
     /// Log the message if <see cref="LoggingLevel.ERROR"/> is enabled, otherwise the message will not be logged, moreover, no calculations (including method calls) will be performed.
     /// <br />
@@ -488,7 +477,6 @@ namespace JetBrains.Diagnostics
         logger.Error(ex, messageHandler.ToStringAndClear());
       }
     }
-#endif
 
     [StringFormatMethod("message")]
     public static void Error(this ILog @this, string message, params object?[] args)
@@ -543,9 +531,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     public static void Catch(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -564,9 +550,7 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     [PublicAPI] public static T? Catch<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
@@ -585,9 +569,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     [PublicAPI] public static void CatchAndDrop(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -606,9 +588,7 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     [PublicAPI] public static T? CatchAndDrop<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
@@ -627,9 +607,7 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     [PublicAPI] public static void CatchWarn(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -648,9 +626,7 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     [PublicAPI] public static T? CatchWarn<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try

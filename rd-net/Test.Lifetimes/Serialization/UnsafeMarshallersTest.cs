@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -119,15 +119,8 @@ namespace Test.Lifetimes.Serialization
 
         var bytesCount = reader.ReadInt32();
 
-#if NET35
-        var start = reader.ReadRaw(bytesCount);
-        var buffer = new byte[bytesCount];
-        System.Runtime.InteropServices.Marshal.Copy((IntPtr) start, buffer, 0, length: bytesCount);
-        var value2 = encoding.GetString(buffer);
-#else
         var startPtr = reader.ReadRaw(bytesCount);
         var value2 = encoding.GetString(startPtr, bytesCount);
-#endif
 
         var marker = reader.ReadUInt32();
         Assert.AreEqual(marker, 0xDEADBEEF);

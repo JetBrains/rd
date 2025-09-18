@@ -15,9 +15,6 @@ using static System.String;
 
 namespace JetBrains.Rd.Reflection;
 
-#if NET35
-using TypeInfo = System.Type;
-#endif
 
 /// <summary>
 /// Creates and provides access to Reflection-generated serializers for Rd, thread safe
@@ -324,9 +321,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   }
 
   public void RegisterEnum<T>() where T :
-#if !NET35
     unmanaged, 
-#endif
     Enum
   {
     // enums are static sized, so no need for additional registration

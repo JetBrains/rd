@@ -31,7 +31,6 @@ namespace JetBrains.Rd.Impl
     private readonly ITypesRegistrar? myRegistrar;
     private readonly object myLock = new object();
     
-#if !NET35
     private readonly StealingScheduler myBackgroundRegistrar;
 
     public Serializers() : this(null, null)
@@ -56,16 +55,6 @@ namespace JetBrains.Rd.Impl
     : this(scheduler, registrar)
     {
     }
-
-#else
-    public Serializers() => RegisterFrameworkMarshallers(this);
-
-    public Serializers(ITypesRegistrar? registrar)
-      : this()
-    {
-      myRegistrar = registrar;
-    }
-#endif
 
     //readers
     public static readonly CtxReadDelegate<byte> ReadByte = (ctx, reader) => reader.ReadByte();
@@ -197,9 +186,7 @@ namespace JetBrains.Rd.Impl
     }
 
     public static T ReadEnum<T>(SerializationCtx ctx, UnsafeReader reader) where T :
-#if !NET35
     unmanaged,
-#endif
      Enum
     {
       if (Mode.IsAssertion) Assertion.Assert(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
@@ -207,18 +194,14 @@ namespace JetBrains.Rd.Impl
     }
 
     public static void WriteEnum<T>(SerializationCtx ctx, UnsafeWriter writer, T value) where T :
-#if !NET35
     unmanaged,
-#endif
      Enum
     {
       writer.WriteInt32(Cast32BitEnum<T>.ToInt(value));
     }
 
     public void RegisterEnum<T>() where T :
-#if !NET35
     unmanaged,
-#endif
      Enum
     {
       Register(ReadEnum<T>, WriteEnum<T>);
@@ -259,9 +242,7 @@ namespace JetBrains.Rd.Impl
         lock (myLock)
           return myReaders.TryGetValue(rdId, out readDelegate);
       }
-#if !NET35
       myBackgroundRegistrar.Join();
-#endif
       
       var typeId = RdId.Read(reader);
       if (typeId.IsNil)
@@ -303,9 +284,7 @@ namespace JetBrains.Rd.Impl
           return myTypeMapping.TryGetValue(type1, out rdId);
       }
 
-#if !NET35
       myBackgroundRegistrar.Join();
-#endif
 
       if (value == null)
       {
@@ -339,11 +318,8 @@ namespace JetBrains.Rd.Impl
     private readonly HashSet<Type> myRegisteredToplevels = new HashSet<Type>();
     public void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers)
     {
-#if !NET35
       new Task(() => RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers)).Start(myBackgroundRegistrar);
-#else
       RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers);
-#endif
     }
 
     private void RegisterToplevelInternal(Type type, Action<ISerializers> register)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -13,10 +13,6 @@ using JetBrains.Rd.Tasks;
 using JetBrains.Util;
 using JetBrains.Util.Util;
 
-#if NET35
-using TypeInfo = System.Type;
-#else
-#endif
 
 namespace JetBrains.Rd.Reflection
 {

@@ -11,11 +11,7 @@ namespace JetBrains.Collections.Viewable
   /// </summary>
   /// <typeparam name="T"></typeparam>
   public interface IViewableSet<T> : ISource<SetEvent<T>>,
-    #if NET35
-      ICollection<T>
-    #else
       ISet<T>
-    #endif
   where T: notnull
   {
     ISource<SetEvent<T>> Change { get; }

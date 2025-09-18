@@ -30,7 +30,6 @@ namespace Test.Lifetimes.Utils
       mySliceE1 = BitSlice.Enum<E1>(mySliceBool);
     }
 
-#if !NET35
     [Test]
     public void TestBadEnums()
     {
@@ -40,7 +39,6 @@ namespace Test.Lifetimes.Utils
       Assert.Throws<Assertion.AssertionException>(() => BitSlice.Enum<E0>());
       Assert.Throws<TypeInitializationException>(() => BitSlice.Enum<ELong>());
     }
-#endif
     
 
     [Test]

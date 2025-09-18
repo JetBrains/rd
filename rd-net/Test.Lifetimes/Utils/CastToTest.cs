@@ -33,7 +33,6 @@ namespace Test.Lifetimes.Utils
         }
         
         
-#if !NET35
         
         [Test]
         public void TestCastReferenceTypes()
@@ -45,6 +44,5 @@ namespace Test.Lifetimes.Utils
         }
         
         
-#endif
     }
 }

@@ -3,9 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using JetBrains.Annotations;
 
-#if !NET35
 using System.Runtime.InteropServices;
-#endif
 
 namespace JetBrains.Util
 {
@@ -38,11 +36,7 @@ namespace JetBrains.Util
         if (displayName == null) return;
         var versionString = displayName.Invoke(null, null).ToString();
         var input = versionString.Split(' ')[0];
-#if !NET35
         if (Version.TryParse(input, out var version))
-#else
-        if (TryParseVersion(input, out var version))
-#endif
         {
           CurrentMonoVersion = version;
         }
@@ -54,34 +48,9 @@ namespace JetBrains.Util
       }
 
       IsUnalignedAccessAllowed =
-#if NET35
-        true
-#else
         RuntimeInformation.ProcessArchitecture != Architecture.Arm
-#endif
         ;
     }
 
-#if NET35
-    private static bool TryParseVersion(string input, [MaybeNullWhen(false)] out Version version)
-    {
-      if (string.IsNullOrEmpty(input))
-      {
-        version = null;
-        return false;
-      }
-      
-      try
-      {
-        version = new Version(input);
-        return true;
-      }
-      catch
-      {
-        version = null;
-        return false;
-      }
-    }
-#endif
   }
 }

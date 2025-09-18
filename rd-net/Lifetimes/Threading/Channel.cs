@@ -9,7 +9,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Util;
 
-#if !NET35
 namespace JetBrains.Threading
 {
   public interface IReceiveChannel<T>
@@ -168,4 +167,3 @@ namespace JetBrains.Threading
     } 
   }
 }
-#endif

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
@@ -7,23 +7,12 @@ using JetBrains.Lifetimes;
 using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.Threading;
-#if !NET35
 using System.Runtime.ExceptionServices;
-#endif
 #nullable disable
 
 namespace JetBrains.Core
 {
 
-#if NET35
-  internal class ExceptionDispatchInfo
-  {
-    public Exception SourceException { get; }
-    private ExceptionDispatchInfo(Exception exception) { SourceException = exception; }
-    public static ExceptionDispatchInfo Capture(Exception exception) => new ExceptionDispatchInfo(exception);
-    public void Throw() { throw SourceException; }
-  } 
-#endif
   
   /// <summary>
   /// Helper methods for <see cref="Result{T}" /> and <see cref="Result{T,T}"/> building
@@ -118,9 +107,7 @@ namespace JetBrains.Core
     public static Result<Nothing> Canceled()
     {
       return Canceled(new OperationCanceledException(
-        #if !NET35
         Lifetime.Terminated
-        #endif
         ));
     }
 
@@ -148,9 +135,7 @@ namespace JetBrains.Core
     /// <param name="f">Function  to execute</param>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f() if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    #if !NET35
     [HandleProcessCorruptedStateExceptions]
-    #endif    
     public static Result<TRes> Wrap<TRes>([NotNull] Func<TRes> f)
     {
       try
@@ -169,9 +154,7 @@ namespace JetBrains.Core
     /// </summary>
     /// <param name="f">Action to execute</param>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>
-    #if !NET35
     [HandleProcessCorruptedStateExceptions]
-    #endif    
     public static Result<Unit> Wrap([NotNull] Action f)
     {
       try
@@ -193,9 +176,7 @@ namespace JetBrains.Core
     /// <param name="param">function argument</param>
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <returns>Succeed result with <see cref="Result.Unit"/> if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-    #if !NET35
       [HandleProcessCorruptedStateExceptions]
-    #endif
     public static Result<Unit> Wrap<T>([NotNull] Action<T> f, T param)
     {
       try
@@ -217,9 +198,7 @@ namespace JetBrains.Core
     /// <typeparam name="T"><see cref="param"/> type</typeparam>
     /// <typeparam name="TRes">type argument of returned Result</typeparam>
     /// <returns>Succeed result with <see cref="Result{T}.Value"/> == f(param) if no exception happened during <see cref="f"/> execution. Failed result with corresponding exception otherwise </returns>    
-    #if !NET35
     [HandleProcessCorruptedStateExceptions]
-    #endif
     public static Result<TRes> Wrap<T, TRes>([NotNull] Func<T, TRes> f, T param)
     {
       try
@@ -233,7 +212,6 @@ namespace JetBrains.Core
     }
     
     
-    #if !NET35
     /// <summary>
     /// Transforms this <see cref="Result"/> into <see cref="Task"/>.
     /// <see cref="Result{T}.Succeed"/> corresponds to <see cref="Task"/> in <see cref="Result{Task}.Value"/>.
@@ -278,7 +256,6 @@ namespace JetBrains.Core
       else
         return Task.FromCanceled<T>(Lifetime.Terminated);
     }
-    #endif
 
 
     /// <summary>
@@ -410,7 +387,6 @@ namespace JetBrains.Core
     }
 
 
-    #if !NET35
     /// <summary>
     /// Transforms this <see cref="Result"/> into <see cref="Task"/> in <see cref="Task.IsCompleted"/> state state.
     /// <see cref="Succeed"/> corresponds to <see cref="Task.IsRanToCompletion"/>.
@@ -430,7 +406,6 @@ namespace JetBrains.Core
       else
         return Task.FromCanceled<T>(Lifetime.Terminated);
     }
-    #endif
     
     public override string ToString()
     {
@@ -512,9 +487,7 @@ namespace JetBrains.Core
    
     public bool Canceled => 
       Exception is OperationCanceledException 
-      #if !NET35
       ||((Exception as AggregateException)?.Flatten().InnerExceptions.Any(ex => ex is OperationCanceledException) ?? false)
-      #endif
     ;
 
        

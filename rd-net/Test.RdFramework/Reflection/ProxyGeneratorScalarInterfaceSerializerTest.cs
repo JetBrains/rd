@@ -1,5 +1,4 @@
-﻿#if !NET35
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Rd;
@@ -101,5 +100,3 @@ namespace Test.RdFramework.Reflection
     }
   }
 }
-
-#endif

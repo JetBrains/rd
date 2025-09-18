@@ -10,13 +10,11 @@ using JetBrains.Diagnostics;
 using JetBrains.Diagnostics.Internal;
 using JetBrains.Lifetimes;
 using NUnit.Framework;
-#if !NET35
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Diagnostics;
 using JetBrains.Threading;
 using Microsoft.Diagnostics.Runtime;
-#endif
 
 // ReSharper disable MethodSupportsCancellation
 
@@ -98,7 +96,6 @@ namespace Test.Lifetimes.Lifetimes
       });
     }
 
-#if !NET35
     [Test]
     public void TestTerminationWithAsyncTimeout()
     {
@@ -139,7 +136,6 @@ namespace Test.Lifetimes.Lifetimes
       Assert.AreEqual(new []{0, 1, -1}, log.ToArray());
 
     } 
-#endif
      
     [Test]
     public void TestEternal()
@@ -280,10 +276,8 @@ namespace Test.Lifetimes.Lifetimes
       var warningReceived = false;
       Exception? receivedException = null;
 
-#if !NET35
       const string stackTraceHeader = "CurrentProcessThreadDumps:";
       var executionWasNotCancelledByTimeoutReceived = false;
-#endif
 
       Lifetime.Using(lifetime =>
       {
@@ -302,7 +296,6 @@ namespace Test.Lifetimes.Lifetimes
         var lifetimeDefinition = lifetime.CreateNested();
 
         var def2 = lifetime.CreateNested();
-#if !NET35
         LifetimeDefinition.AdditionalDiagnostics = new LifetimeDefinition.AdditionalDiagnosticsInfo(false, async (lf) => 
         {
           var stacks = GetCurrentProcessThreadDumps();
@@ -310,12 +303,9 @@ namespace Test.Lifetimes.Lifetimes
           executionWasNotCancelledByTimeoutReceived = true;
           return $"{stackTraceHeader}\n{stacks}";
         });
-#endif
         
         def2.Terminate();
-#if !NET35
         Assert.IsFalse(executionWasNotCancelledByTimeoutReceived);
-#endif
         
         var lifetimeTerminatedEvent = new ManualResetEvent(false);
         var backgroundThreadIsInTryExecuteEvent = new ManualResetEvent(false);
@@ -345,7 +335,6 @@ namespace Test.Lifetimes.Lifetimes
       Assert.IsTrue(warningReceived, "Warning `{0}` must have been logged", expectedWarningText);
       Assert.IsNotNull(receivedException, "Exception `{0}` must have been logged", expectedExceptionText);
       
-#if !NET35
       Assert.IsTrue(executionWasNotCancelledByTimeoutReceived);
       Assert.IsTrue(receivedException.Message.Contains(stackTraceHeader), $"Exception `{expectedExceptionText}` doesn't contain {stackTraceHeader}");
       Assert.IsTrue(receivedException.Message.Contains(nameof(WaitForLifetimeTerminatedEvent)), $"Exception `{expectedExceptionText}` doesn't contain {nameof(WaitForLifetimeTerminatedEvent)} method");
@@ -375,7 +364,6 @@ namespace Test.Lifetimes.Lifetimes
 
         return output.ToString();
       }
-#endif
     }
 
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
@@ -896,7 +884,6 @@ namespace Test.Lifetimes.Lifetimes
 
     }
 
-#if !NET35
     [Test]
     public void TestTaskAttachment()
     {
@@ -934,7 +921,6 @@ namespace Test.Lifetimes.Lifetimes
 
       Assert.Throws<AggregateException>(task.Wait);
     }
-#endif
 
     [Test]
     public void TestAllInnerLifetimesTerminatedExceptLast()
@@ -1010,7 +996,6 @@ namespace Test.Lifetimes.Lifetimes
 //      Assert.False(lf.IsAlive);
 //    }
 
-#if !NET35
     [Test]
     public void TestCancellationToken1()
     {
@@ -1128,7 +1113,6 @@ namespace Test.Lifetimes.Lifetimes
         LifetimeDefinition.SetTerminationTimeoutMs(timeoutKind, oldTimeoutMs);
       }
     }
-#endif
     
     
     
@@ -1197,7 +1181,6 @@ namespace Test.Lifetimes.Lifetimes
       
     }
 
-#if !NET35
     [Test]
     public void CancellationTokenTest()
     {
@@ -1447,7 +1430,6 @@ namespace Test.Lifetimes.Lifetimes
       }
     }
 
-#endif
 
     [Test]
     public void SimpleOnTerminationStressTest()

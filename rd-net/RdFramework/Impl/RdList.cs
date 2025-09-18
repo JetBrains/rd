@@ -20,9 +20,7 @@ using JetBrains.Serialization;
 namespace JetBrains.Rd.Impl
 {
   public class  RdList<V> : RdReactiveBase, IViewableList<V>
-#if !NET35
     , INotifyCollectionChanged
-#endif
     where V : notnull
   {
     private readonly ViewableList<V> myList = new(new SynchronizedList<V>()/*to have thread safe print*/);
@@ -40,16 +38,12 @@ namespace JetBrains.Rd.Impl
       {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Count"));
-#if !NET35
         CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(kind == AddRemove.Add ? NotifyCollectionChangedAction.Add : NotifyCollectionChangedAction.Remove, v, idx));
-  #endif
       });
     }
 
     //WPF integration
-#if !NET35
     public event NotifyCollectionChangedEventHandler CollectionChanged;
-#endif
     public override event PropertyChangedEventHandler PropertyChanged;
 
 

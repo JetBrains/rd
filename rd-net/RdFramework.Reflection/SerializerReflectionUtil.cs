@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -8,9 +8,6 @@ using JetBrains.Rd.Base;
 using JetBrains.Serialization;
 using JetBrains.Util.Util;
 
-#if NET35
-using TypeInfo = System.Type;
-#endif
 
 namespace JetBrains.Rd.Reflection
 {

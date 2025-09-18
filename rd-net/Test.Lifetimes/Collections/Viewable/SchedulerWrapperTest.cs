@@ -7,7 +7,6 @@ using NUnit.Framework;
 
 namespace Test.Lifetimes.Collections.Viewable
 {
-#if !NET35
   public class SchedulerWrapperTest : LifetimesTestBase
   {
     [Test]
@@ -101,5 +100,4 @@ namespace Test.Lifetimes.Collections.Viewable
       }
     }
   }
-#endif
 }

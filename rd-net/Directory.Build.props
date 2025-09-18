@@ -16,18 +16,12 @@
       mcs versions without this commit:
       https://github.com/mono/ikvm-fork/commit/caa8e7f54279a47422626005d228447f5d3670d5 
     -->
-    <Nullable Condition="'$(TargetFramework)' == 'net35'">disable</Nullable>
     <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
 
     <DefineConstants>JET_MODE_ASSERT</DefineConstants>
-    <NoWarn Condition="'$(TargetFramework)' == 'net35'">nullable</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Condition="'$(TargetFramework)' == 'net472'" Version="1.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net35" Condition="'$(TargetFramework)' == 'net35'" Version="1.0.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

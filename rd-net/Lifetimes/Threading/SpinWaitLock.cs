@@ -122,11 +122,7 @@ namespace JetBrains.Threading
         CalcApprovedProcessorCount();
       }
 
-#if !NET35
       Thread.Yield();
-#else
-      Thread.Sleep(0); // This effectively does a Yield which is still missing from cheap dotnets
-#endif
     }
 
     private int _ownerThreadId;

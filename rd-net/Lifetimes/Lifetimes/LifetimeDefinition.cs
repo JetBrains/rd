@@ -22,10 +22,8 @@ namespace JetBrains.Lifetimes
 #pragma warning disable 420
     #region Statics
     
-#if !NET35
     public static AdditionalDiagnosticsInfo? AdditionalDiagnostics { get; set; }
     private static readonly AdditionalDiagnosticsInfoStorage ourAdditionalDiagnosticsStorage = new();
-#endif
 
     internal static readonly ILog Log = JetBrains.Diagnostics.Log.GetLog<Lifetime>();
     
@@ -268,9 +266,7 @@ namespace JetBrains.Lifetimes
       ExecuteOrTerminateOnFail(atomicAction);
     }
 
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     internal void ExecuteOrTerminateOnFail(Action<LifetimeDefinition>? atomicAction)
     {
       try
@@ -288,9 +284,7 @@ namespace JetBrains.Lifetimes
       }
     }
     
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif
     internal void ExecuteOrTerminateOnFail(Action<Lifetime>? atomicAction)
     {
       try
@@ -460,7 +454,6 @@ namespace JetBrains.Lifetimes
                         + "This may happen either because of the ExecuteIfAlive failed to complete in a timely manner. In the case there will be following error messages." + Environment.NewLine
                         + "This is also possible if the thread waiting for the termination wasn't able to receive execution time during the wait in SpinWait.spinUntil, so it has missed the fact that the lifetime was terminated in time.");
 
-#if !NET35
         if (AdditionalDiagnostics is { } additionalDiagnostics)
         {
           try
@@ -472,7 +465,6 @@ namespace JetBrains.Lifetimes
             Log.Error(e);
           }
         }
-#endif
 
         ourLogErrorAfterExecution.InterlockedUpdate(ref myState, true);
       }
@@ -514,9 +506,7 @@ namespace JetBrains.Lifetimes
       }
     }
 
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif  
     private void Destruct()
     {
       var status = Status;
@@ -820,7 +810,6 @@ namespace JetBrains.Lifetimes
         if (ourLogErrorAfterExecution[myDef.myState])
         {
           string? additionalInfo = null;
-#if !NET35
           if (AdditionalDiagnostics is { } additionalDiagnostics)
           {
             var diagnostics = ourAdditionalDiagnosticsStorage.TryGetDiagnostics(myDef);
@@ -834,7 +823,6 @@ namespace JetBrains.Lifetimes
               additionalInfo = diagnostics.Result;
             }
           }
-#endif
 
           var terminationTimeoutMs = GetTerminationTimeoutMs(myDef.TerminationTimeoutKind);
           var message = $"ExecuteIfAlive after termination of {myDef} took too much time (>{terminationTimeoutMs}ms)";
@@ -873,10 +861,8 @@ namespace JetBrains.Lifetimes
       }
     }
 
-    #if !NET35
     internal Task TryExecuteAsync(Func<Task> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
     internal Task<T> TryExecuteAsync<T>(Func<Task<T>> closure, bool wrapExceptions = false) => Attached(TryExecute(closure, wrapExceptions).UnwrapTask());
-    #endif
     
     internal T Execute<T>(Func<T> action)
     {      
@@ -1117,7 +1103,6 @@ namespace JetBrains.Lifetimes
     #endregion
 
 
-#if !NET35
 
     public class AdditionalDiagnosticsInfo
     {
@@ -1197,7 +1182,6 @@ namespace JetBrains.Lifetimes
         }
       }
     }
-#endif
     
     
     

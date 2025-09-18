@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
@@ -162,13 +162,8 @@ namespace JetBrains.Rd.Impl
     }
 
     // ReSharper disable once AssignNullToNotNullAttribute
-    #if NET35
-    public
-    #endif
     void
-      #if !NET35
       ICollection<T>.
-      #endif
       Add(T item)
     {
       AssertNullability(item);
@@ -176,7 +171,6 @@ namespace JetBrains.Rd.Impl
         mySet.Add(item);
     }
 
-    #if !NET35
     public bool Add(T item)
     {
       AssertNullability(item);
@@ -207,7 +201,6 @@ namespace JetBrains.Rd.Impl
       using (UsingLocalChange())
         mySet.UnionWith(other);
     }
-    #endif
 
     public void Clear()
     {
@@ -221,7 +214,6 @@ namespace JetBrains.Rd.Impl
 
     #region ISet Read delegation
 
-    #if !NET35
     public bool IsProperSubsetOf(IEnumerable<T> other) => mySet.IsProperSubsetOf(other);
 
     public bool IsProperSupersetOf(IEnumerable<T> other) => mySet.IsProperSupersetOf(other);
@@ -233,7 +225,6 @@ namespace JetBrains.Rd.Impl
     public bool Overlaps(IEnumerable<T> other) => mySet.Overlaps(other);
 
     public bool SetEquals(IEnumerable<T> other) => mySet.SetEquals(other);
-    #endif
 
     #endregion
 

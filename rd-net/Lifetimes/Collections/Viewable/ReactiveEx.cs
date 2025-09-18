@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -392,7 +392,6 @@ namespace JetBrains.Collections.Viewable
     }
 
 
-#if !NET35
     public static Task<T> NextNotNullValueAsync<T>(this ISource<T> source, Lifetime lifetime)
     {
       return source.NextValueAsync(lifetime, value => value != null);
@@ -427,6 +426,5 @@ namespace JetBrains.Collections.Viewable
       
       return tcs.Task;
     }
-#endif
   }
 }

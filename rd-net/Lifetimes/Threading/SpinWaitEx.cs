@@ -97,9 +97,7 @@ namespace JetBrains.Threading
     public static bool SpinUntil<TState>(
       Lifetime lifetime, long timeoutMs, TState state, [InstantHandle, RequireStaticDelegate] Func<TState, bool> condition)
     {
-#if !NET35
       var s = new SpinWait();
-#endif
       var start = Environment.TickCount;
 
       while (true)
@@ -113,15 +111,10 @@ namespace JetBrains.Threading
         if (Environment.TickCount - start > timeoutMs)
           return false;
 
-#if !NET35
         s.SpinOnce();
-#else
-        Thread.Sleep(0);
-#endif
       }
     }
 
-#if !NET35
     /// <summary>
     /// Spins in ASYNC manner (not consuming thread or CPU resources) while <paramref name="lifetime"/> is alive,
     /// <paramref name="timeoutMs"/> is not elapsed and <paramref name="condition"/> is false.
@@ -161,6 +154,5 @@ namespace JetBrains.Threading
           return true;
       }
     }
-#endif
   }
 }

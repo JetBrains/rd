@@ -13,7 +13,6 @@ using JetBrains.Util;
 namespace JetBrains.Threading
 {
 
-#if !NET35
   /// <summary>
   /// Actor is a channel with predefined (possible async) handler. All messages from the channel are
   /// processed sequentially so handling of new message from channel can only start when handling of previous one is completed.  
@@ -104,9 +103,7 @@ namespace JetBrains.Threading
         }, lifetime, TaskCreationOptions.None, scheduler ?? TaskScheduler.Default);
     }
 
-#if !NET35
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-#endif    
     
     
     
@@ -175,30 +172,4 @@ namespace JetBrains.Threading
       SpinWaitEx.SpinUntil(() => IsEmpty);
     }
   }
-  
-#else
-
-  public class Actor<T>
-  {
-    private readonly Action<T> myProcessor;
-    private readonly SingleThreadScheduler myScheduler;
-    private readonly Task myCompletedTask;
-
-    public Actor(string id, Lifetime lifetime, Action<T> processor)
-    {
-      myProcessor = processor;
-      myScheduler = SingleThreadScheduler.RunOnSeparateThread(lifetime, id);
-      myCompletedTask = Task.Factory.StartNew(() => {}, CancellationToken.None, TaskCreationOptions.None, TaskScheduler.Default);
-    }
-
-    public Task SendAsync(T msg) {
-      myScheduler.Queue(() => myProcessor(msg));
-      return myCompletedTask;
-    }
-    
-  }
-
-
-
-#endif
 }

@@ -11,9 +11,7 @@ namespace JetBrains.Lifetimes
     [PublicAPI] public Lifetime Lifetime { get; }
 
     public LifetimeCanceledException(Lifetime lifetime) : base(
-      #if !NET35
       lifetime.Definition.ToCancellationToken(true)
-      #endif
       )
     {
       if (lifetime.IsAlive) 

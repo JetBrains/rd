@@ -1,4 +1,3 @@
-#if !NET35
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Collections.Viewable;
@@ -124,4 +123,3 @@ namespace Test.RdFramework
     }
   }
 }
-#endif

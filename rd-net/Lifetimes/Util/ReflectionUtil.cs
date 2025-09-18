@@ -6,12 +6,9 @@ using JetBrains.Annotations;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Util.Util;
-#if !NET35
 using System.Runtime.ExceptionServices;
-#else
 // unused variables
 #pragma warning disable 168
-#endif
 
 namespace JetBrains.Util
 {
@@ -105,9 +102,7 @@ namespace JetBrains.Util
       }
       catch (TargetInvocationException e)
       {
-#if !NET35
         if (e.InnerException != null) ExceptionDispatchInfo.Capture(e.InnerException).Throw();
-#endif
         throw;
       }
 
@@ -208,7 +203,6 @@ namespace JetBrains.Util
       return result;
     }
 
-#if !NET35
     public static T SetStaticInstanceProperty<T>(Lifetime lifetime, Type type)
     {
       const BindingFlags propertiesFlags = BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Static;
@@ -231,6 +225,5 @@ namespace JetBrains.Util
       return instance;
     }
     
-    #endif
   }
 }

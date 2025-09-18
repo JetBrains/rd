@@ -1,5 +1,4 @@
-﻿#nullable enable
-#if !NET35
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -407,4 +406,3 @@ public class InterpolatedStringHandlerTests
     }
   }
 }
-#endif

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Diagnostics;
 using JetBrains.dotMemoryUnit;
@@ -13,9 +13,6 @@ namespace Test.RdFramework.Reflection
   [Apartment(System.Threading.ApartmentState.STA)]
   public class ProxyGeneratorSimpleTest : RdReflectionTestBase
   {
-#if NET35
-    private static TaskHack Task = new TaskHack();
-#endif
 
     [Test]
     public void TestSimple()

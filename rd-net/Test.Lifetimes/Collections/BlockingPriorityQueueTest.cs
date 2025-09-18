@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +10,6 @@ using Lifetime = JetBrains.Lifetimes.Lifetime;
 
 namespace Test.Lifetimes.Collections
 {
-#if !NET35
   public class BlockingPriorityQueueTest
   {
     [Test]
@@ -83,5 +82,4 @@ namespace Test.Lifetimes.Collections
       }
     }
   }
-#endif
 }

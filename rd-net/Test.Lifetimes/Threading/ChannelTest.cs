@@ -6,7 +6,6 @@ using NUnit.Framework;
 
 namespace Test.Lifetimes.Threading
 {
-#if !NET35
   public class ChannelTest : LifetimesTestBase
   {
     private AsyncChannel<int> myChannel;
@@ -51,5 +50,4 @@ namespace Test.Lifetimes.Threading
     }
 
   }
-#endif
 }

@@ -1,4 +1,3 @@
-#if !NET35
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -309,4 +308,3 @@ namespace JetBrains.Rd.Text.Impl
     }
   }
 }
-#endif
