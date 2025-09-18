@@ -47,19 +47,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v5
-
-    - name: Cache submodules
-      uses: actions/cache@v4
-      id: cache-submodules
       with:
-        path: |
-          rd-cpp/thirdparty/spdlog
-          rd-cpp/googletest
-        key: ${{ matrix.config.os }}-submodules-${{ hashFiles('.gitmodules') }}
-      
-    - name: Get submodules
-      if: steps.cache-submodules.outputs.cache-hit != 'true'
-      run: git submodule update --init --recursive
+        submodules: recursive
 
     - name: Get nuget
       if: steps.cache-nuget.outputs.cache-hit != 'true'
