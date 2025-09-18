@@ -2,7 +2,6 @@ package com.jetbrains.rd.framework.test.cases.wire
 
 import com.jetbrains.rd.framework.IProtocol
 import com.jetbrains.rd.framework.SocketWire
-import com.jetbrains.rd.framework.serverPort
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
@@ -52,7 +51,7 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
     }
 
     internal constructor(id: String, lifetime: Lifetime, protocol: IProtocol) :
-        this(id, lifetime, protocol.wire.serverPort)
+        this(id, lifetime, (protocol.wire as SocketWire.Server).port)
 
     fun start() {
         fun setSocketOptions(acceptedClient: Socket) {
@@ -62,7 +61,7 @@ class SocketProxy internal constructor(val id: String, val lifetime: Lifetime, p
         try {
             logger.info { "Creating proxies for server and client..." }
             proxyServer = Socket(InetAddress.getLoopbackAddress(), serverPort).also { lifetime.onTermination(it) }
-            proxyClient = SocketWire.Server.createServerSocket(lifetime, 0, false).also { lifetime.onTermination(it) }
+            proxyClient = SocketWire.Server.createServerSocket(lifetime, 0, false).also { lifetime.onTermination(it) }.socket() // TODO: Remove .socket() call and replace SocketServer to ServerSocketChannel
 
             setSocketOptions(proxyServer)
             _port = proxyClient.localPort

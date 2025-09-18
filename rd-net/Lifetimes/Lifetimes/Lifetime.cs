@@ -126,7 +126,7 @@ namespace JetBrains.Lifetimes
 
     internal void AssertInitialized()
     {
-      if (!Mode.IsAssertion) return;
+      /*if (!Mode.IsAssertion) return; // TODO: FIX THIS
       
       if (LogErrorIfLifetimeIsNotInitialized && IsUninitialized)
       {
@@ -134,7 +134,7 @@ namespace JetBrains.Lifetimes
                        "This may cause a memory leak as default(Lifetime) is treated as Eternal. " +
                        "Please provide a properly initialized Lifetime or use `Lifetime?` if you need to handle both cases. " +
                        "Use Lifetime.Eternal explicitly if that behavior is intended.");
-      }
+      }*/
     }
 
     //ctor

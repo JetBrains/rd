@@ -297,7 +297,7 @@ namespace JetBrains.Rd.Base
 
     // NOTE: dummy implementation which prevents WPF from hanging the viewmodel forever on reflection property descriptor fabricated change events:
     //       when it sees PropertyChanged, it does not look for property descriptor events
-    public virtual event PropertyChangedEventHandler PropertyChanged { add { } remove { } }
+    public virtual event PropertyChangedEventHandler? PropertyChanged { add { } remove { } }
   }
   
   public enum BindState

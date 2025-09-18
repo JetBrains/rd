@@ -22,7 +22,7 @@ namespace JetBrains.Rd.Reflection
     }
 
     public static SerializerPair CreateDictionarySerializerPair<TKey, TValue>(
-      SerializerPair keySerializer, SerializerPair valueSerializer)
+      SerializerPair keySerializer, SerializerPair valueSerializer) where TKey : notnull
     {
       var read = CreateReadDictionary<TKey, TValue>(keySerializer, valueSerializer);
 
@@ -53,7 +53,7 @@ namespace JetBrains.Rd.Reflection
     }
 
     public static SerializerPair CreateReadOnlyDictionarySerializerPair<TKey, TValue>(
-      SerializerPair keySerializer, SerializerPair valueSerializer)
+      SerializerPair keySerializer, SerializerPair valueSerializer) where TKey : notnull
     {
 #if NET35
       throw new NotSupportedException();
@@ -88,7 +88,7 @@ namespace JetBrains.Rd.Reflection
     }
 
     private static CtxReadDelegate<Dictionary<TKey, TValue>?> CreateReadDictionary<TKey, TValue>(
-      SerializerPair keySerializer, SerializerPair valueSerializer)
+      SerializerPair keySerializer, SerializerPair valueSerializer) where TKey : notnull
     {
       CtxReadDelegate<Dictionary<TKey, TValue>?> read = (context, reader) =>
       {

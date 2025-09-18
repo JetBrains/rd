@@ -8,7 +8,7 @@ namespace JetBrains.Rd.Util
     #if NET35
     ICollection<T>
     #else
-    ISet<T>
+    ISet<T> where T : notnull
     #endif
   {
     private readonly ConcurrentDictionary<T, bool> myDictionary = new ConcurrentDictionary<T, bool>();

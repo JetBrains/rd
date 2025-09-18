@@ -1,8 +1,15 @@
 package com.jetbrains.rd.framework.util
 
-import java.net.InetAddress
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.net.ServerSocket
+import java.nio.ByteBuffer
+import java.nio.channels.Channels
+import java.nio.channels.ReadableByteChannel
+import java.nio.channels.SocketChannel
+import java.nio.channels.WritableByteChannel
 
 object NetUtils {
     private fun isPortFree(port: Int?): Boolean {
@@ -52,3 +59,36 @@ data class PortPair private constructor(val senderPort: Int, val receiverPort: I
     }
 }
 
+fun SocketChannel.getInputStream(): InputStream {
+    val ch = this
+    return Channels.newInputStream(object : ReadableByteChannel {
+        override fun read(dst: ByteBuffer?): Int {
+            return ch.read(dst)
+        }
+
+        override fun close() {
+            ch.close()
+        }
+
+        override fun isOpen(): Boolean {
+            return ch.isOpen
+        }
+    })
+}
+
+fun SocketChannel.getOutputStream(): OutputStream {
+    val ch = this
+    return Channels.newOutputStream(object : WritableByteChannel {
+        override fun write(src: ByteBuffer?): Int {
+            return ch.write(src)
+        }
+
+        override fun close() {
+            ch.close()
+        }
+
+        override fun isOpen(): Boolean {
+            return ch.isOpen
+        }
+    })
+}

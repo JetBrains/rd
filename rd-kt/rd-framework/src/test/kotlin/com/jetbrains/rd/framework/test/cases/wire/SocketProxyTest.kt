@@ -22,18 +22,18 @@ class SocketProxyTest : TestBase() {
             val proxyLifetimeDefinition = lifetime.createNested()
             val proxyLifetime = proxyLifetimeDefinition.lifetime
 
-            val serverProtocol = SocketWireTest.server(lifetime)
+            val serverProtocol = SocketWireTestBase.server(lifetime, 0)
 
             val proxy = SocketProxy("TestProxy", proxyLifetime, serverProtocol).apply { start() }
             Thread.sleep(DefaultTimeoutMs)
 
-            val clientProtocol = SocketWireTest.client(lifetime, proxy.port)
+            val clientProtocol = SocketWireTestBase.client(lifetime, proxy.port)
 
             val sp = RdSignal<Int>().static(1)
-            sp.bindTopLevel(lifetime, serverProtocol, SocketWireTest.top)
+            sp.bindTopLevel(lifetime, serverProtocol, SocketWireTestBase.top)
 
             val cp = RdSignal<Int>().static(1)
-            cp.bindTopLevel(lifetime, clientProtocol, SocketWireTest.top)
+            cp.bindTopLevel(lifetime, clientProtocol, SocketWireTestBase.top)
 
             val serverLog = mutableListOf<Int>()
             val clientLog = mutableListOf<Int>()
