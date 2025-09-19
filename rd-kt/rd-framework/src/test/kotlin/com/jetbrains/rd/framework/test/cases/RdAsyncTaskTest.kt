@@ -8,10 +8,12 @@ import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.framework.util.*
-import com.jetbrains.rd.util.AtomicInteger
 import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.getLogger
-import com.jetbrains.rd.util.lifetime.*
+import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition
+import com.jetbrains.rd.util.lifetime.isAlive
+import com.jetbrains.rd.util.lifetime.isNotAlive
 import com.jetbrains.rd.util.reactive.RdFault
 import com.jetbrains.rd.util.reactive.hasValue
 import com.jetbrains.rd.util.reactive.valueOrThrow
@@ -26,6 +28,7 @@ import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 class RdAsyncTaskTest : RdFrameworkTestBase() {

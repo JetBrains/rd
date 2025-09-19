@@ -1,10 +1,11 @@
 package com.jetbrains.rd.util.threading.coroutines
 
-import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.jetbrains.rd.util.trace
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
-import java.lang.IllegalStateException
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
