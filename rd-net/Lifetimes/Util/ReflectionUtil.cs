@@ -218,7 +218,7 @@ namespace JetBrains.Util
 
       const BindingFlags creationFlags = 
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.CreateInstance;
-      var instance = (T) Activator.CreateInstance(type, creationFlags, null, EmptyArray<object>.Instance, null);
+      var instance = (T) Activator.CreateInstance(type, creationFlags, null, EmptyArray<object>.Instance, null)!;
 
       members[0].SetValue(null, instance);
       lifetime.OnTermination(() => members[0].SetValue(null, null));

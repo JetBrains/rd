@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using JetBrains.Annotations;
@@ -301,7 +301,9 @@ namespace JetBrains.Diagnostics
       Fire(category, msg, LoggingLevel.TRACE);
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     
     public static void Catch(string comment, Action action)
     {
@@ -315,7 +317,9 @@ namespace JetBrains.Diagnostics
       }
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     
     public static void Catch(Action action)
     {
@@ -329,7 +333,9 @@ namespace JetBrains.Diagnostics
       }
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     
     public static T? Catch<T>(Func<T> action)
     {

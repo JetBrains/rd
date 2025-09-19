@@ -398,9 +398,12 @@ namespace JetBrains.Diagnostics
     {
       public AssertionException(string message) : base(message) { }
 
+      #pragma warning disable SYSLIB0051
       protected AssertionException(SerializationInfo info, StreamingContext context) : base(info, context)
       {
       }
+      
+      #pragma warning restore SYSLIB0051
     }
   }
 }

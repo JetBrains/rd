@@ -23,7 +23,7 @@ namespace JetBrains.Util
         Environment.OSVersion.Platform == PlatformID.Win32Windows ||
         Environment.OSVersion.Platform == PlatformID.WinCE;
       
-      IsRunningOnCore = typeof(string).Assembly.FullName.StartsWith(
+      IsRunningOnCore = typeof(string).Assembly.FullName!.StartsWith(
         "System.Private.CoreLib",
         StringComparison.Ordinal);
 
@@ -34,8 +34,8 @@ namespace JetBrains.Util
 
         var displayName = monoRuntimeType.GetMethod("GetDisplayName", BindingFlags.NonPublic | BindingFlags.Static);
         if (displayName == null) return;
-        var versionString = displayName.Invoke(null, null).ToString();
-        var input = versionString.Split(' ')[0];
+        var versionString = displayName.Invoke(null, null)!.ToString();
+        var input = versionString!.Split(' ')[0];
         if (Version.TryParse(input, out var version))
         {
           CurrentMonoVersion = version;

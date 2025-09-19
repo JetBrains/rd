@@ -193,8 +193,10 @@ namespace JetBrains.Threading
       if (!res)
       {
         LogLog.Warn($"Async processor {Id} hasn't finished in ${timeoutMs} ms. Trying to abort thread.");
+#if !NETCOREAPP
         if (!RuntimeInfo.IsRunningOnCore)
-          LogLog.Catch(() => myAsyncProcessingThread.Abort());
+          LogLog.Catch(() => myAsyncProcessingThread.Abort());  
+#endif
       }
 
       CleanupInternal();
@@ -213,7 +215,9 @@ namespace JetBrains.Threading
       {
         LogLog.Info($"ByteBufferProcessor {Id} was stopped by Thread.Abort rather than by normal Stop(): {0}", e);
 
+#if !NETCOREAPP
         Thread.ResetAbort();
+#endif
       }
     }
     
@@ -466,7 +470,9 @@ namespace JetBrains.Threading
     }
 
 
-    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions] // to force myLock to be unlocked even in case of corrupted state exception
+#if !NETCOREAPP
+    [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif // to force myLock to be unlocked even in case of corrupted state exception
     [PublicAPI] public void Put(byte* start, int count)
     {
       if (count <= 0) return;

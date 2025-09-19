@@ -5,6 +5,7 @@
 // and updated to have the scope of the attributes be internal.
 
 // ReSharper disable once CheckNamespace
+#if !NETCOREAPP
 namespace System.Runtime.CompilerServices
 {
   [AttributeUsage(AttributeTargets.Parameter)]
@@ -18,3 +19,4 @@ namespace System.Runtime.CompilerServices
     public string ParameterName { get; }
   }
 }
+#endif

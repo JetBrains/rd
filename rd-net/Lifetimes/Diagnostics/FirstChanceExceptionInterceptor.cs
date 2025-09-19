@@ -56,7 +56,7 @@ namespace JetBrains.Diagnostics
       }
     }
 
-    private static object[] GetThreadLocalDebugInfo()
+    private static object?[] GetThreadLocalDebugInfo()
     {
       var info = ourThreadLocalDebugInfo;
       if (info == null || info.Count == 0) 
