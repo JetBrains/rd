@@ -319,7 +319,6 @@ namespace JetBrains.Rd.Impl
     public void RegisterToplevelOnce(Type toplevelType, Action<ISerializers> registerDeclaredTypesSerializers)
     {
       new Task(() => RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers)).Start(myBackgroundRegistrar);
-      RegisterToplevelInternal(toplevelType, registerDeclaredTypesSerializers);
     }
 
     private void RegisterToplevelInternal(Type type, Action<ISerializers> register)
