@@ -7,8 +7,6 @@ using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
 using JetBrains.Util.Util;
 using System.Runtime.ExceptionServices;
-// unused variables
-#pragma warning disable 168
 
 namespace JetBrains.Util
 {
