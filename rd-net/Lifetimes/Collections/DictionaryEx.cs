@@ -12,7 +12,7 @@ namespace JetBrains.Rd.Util
   {
     [Pure]
     internal static TValue? GetOrDefault<TKey, TValue>(
-      this Dictionary<TKey, TValue> dictionary, [DisallowNull] TKey key, TValue? @default = default(TValue))
+      this Dictionary<TKey, TValue> dictionary, [DisallowNull] TKey key, TValue? @default = default(TValue)) where TKey : notnull
     {
       if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
 

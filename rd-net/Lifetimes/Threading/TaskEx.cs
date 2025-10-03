@@ -77,7 +77,7 @@ namespace JetBrains.Threading
 
 
         /// <summary>
-        /// Transform result of original task right after it finished (with <see cref="Task.ConfigureAwait"/> == false).
+        /// Transform result of original task right after it finished (with <see cref="Task.ConfigureAwait(bool)"/> == false).
         /// If task is not successfully finished then throw original exception. 
         /// </summary>
         /// <param name="task">original task</param>

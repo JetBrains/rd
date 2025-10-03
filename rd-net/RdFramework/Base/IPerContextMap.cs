@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using JetBrains.Collections.Viewable;
 using JetBrains.Lifetimes;
 using JetBrains.Rd.Impl;
@@ -44,6 +45,6 @@ namespace JetBrains.Rd.Base
     /// Gets the value associated with specified context value and returns true, or returns false if none is associated
     /// When this map is not bound, this will automatically create a new mapping instead of returning false
     /// </summary>
-    bool TryGetValue(K key, out V value);
+    bool TryGetValue(K key, [MaybeNullWhen(false)] out V value);
   }
 }

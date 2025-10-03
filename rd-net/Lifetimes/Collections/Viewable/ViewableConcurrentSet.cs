@@ -7,7 +7,7 @@ using JetBrains.Util.Internal;
 
 namespace JetBrains.Collections.Viewable;
 
-public class ViewableConcurrentSet<T> : IViewableConcurrentSet<T>
+public class ViewableConcurrentSet<T> : IViewableConcurrentSet<T> where T : notnull
 {
   private readonly Signal<VersionedData> mySignal = new();
   private Dictionary<T, LifetimeDefinition> myMap;
@@ -25,7 +25,7 @@ public class ViewableConcurrentSet<T> : IViewableConcurrentSet<T>
 
   public bool Add(T value)
   {
-    LifetimeDefinition definition;
+    LifetimeDefinition? definition;
     int version;
     lock (myLocker)
     {
@@ -45,7 +45,7 @@ public class ViewableConcurrentSet<T> : IViewableConcurrentSet<T>
 
   public bool Remove(T value)
   {
-    LifetimeDefinition definitionToRemove;
+    LifetimeDefinition? definitionToRemove;
     lock (myLocker)
     {
       var map = GetOrCloneMapNoLock();

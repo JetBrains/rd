@@ -266,7 +266,9 @@ namespace JetBrains.Lifetimes
       ExecuteOrTerminateOnFail(atomicAction);
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     internal void ExecuteOrTerminateOnFail(Action<LifetimeDefinition>? atomicAction)
     {
       try
@@ -284,7 +286,9 @@ namespace JetBrains.Lifetimes
       }
     }
     
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     internal void ExecuteOrTerminateOnFail(Action<Lifetime>? atomicAction)
     {
       try
@@ -506,7 +510,9 @@ namespace JetBrains.Lifetimes
       }
     }
 
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     private void Destruct()
     {
       var status = Status;
@@ -1189,7 +1195,7 @@ namespace JetBrains.Lifetimes
 
     /// <summary>
     /// <list type="number">
-    /// <item>Finishes <paramref name="taskCompletionSource"/> with <see cref="TaskCompletionSource{TResult}.SetCanceled"/> when
+    /// <item>Finishes <paramref name="taskCompletionSource"/> with <see cref="TaskCompletionSource{TResult}.SetCanceled()"/> when
     /// this definition is termination.</item>
     /// <item>
     /// Terminates this definition by <see cref="Terminate"/> when <paramref name="taskCompletionSource"/> is completed (with any result).

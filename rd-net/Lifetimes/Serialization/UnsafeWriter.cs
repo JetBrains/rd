@@ -658,7 +658,9 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public void WriteUri(Uri value)
     {
+      #pragma warning disable SYSLIB0013
       WriteString(Uri.EscapeUriString(value.OriginalString));
+      #pragma warning restore SYSLIB0013
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]

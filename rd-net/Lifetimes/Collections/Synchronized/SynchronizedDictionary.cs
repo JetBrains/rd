@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics;
@@ -15,7 +16,7 @@ namespace JetBrains.Collections.Synchronized
   /// </summary>
   /// <typeparam name="TK"></typeparam>
   /// <typeparam name="TV"></typeparam>
-  [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>, ICollection<TK>
+  [PublicAPI] public class SynchronizedDictionary<TK, TV> : IDictionary<TK, TV>, ICollection<TK> where TK : notnull
   {
     private Dictionary<TK, TV> myImpl;
     private SynchronizedValues? myValues;
@@ -171,7 +172,12 @@ namespace JetBrains.Collections.Synchronized
     }
 
     
-    public bool TryGetValue(TK key, out TV value)
+    public bool TryGetValue(
+      TK key,
+#if NETCOREAPP
+      [MaybeNullWhen(false)]
+#endif
+      out TV value)
     {
       lock(myLocker) return myImpl.TryGetValue(key, out value);
     }

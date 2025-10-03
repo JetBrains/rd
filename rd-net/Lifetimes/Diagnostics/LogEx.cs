@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using JetBrains.Diagnostics.StringInterpolation;
@@ -531,7 +531,9 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     public static void Catch(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -550,7 +552,9 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     [PublicAPI] public static T? Catch<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
@@ -569,7 +573,9 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     [PublicAPI] public static void CatchAndDrop(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -588,7 +594,9 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     [PublicAPI] public static T? CatchAndDrop<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try
@@ -607,7 +615,9 @@ namespace JetBrains.Diagnostics
     /// </summary>
     /// <param name="log"></param>
     /// <param name="action"></param>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     [PublicAPI] public static void CatchWarn(this ILog log, [InstantHandle] Action action)
     {
       try
@@ -626,7 +636,9 @@ namespace JetBrains.Diagnostics
     /// <param name="log"></param>
     /// <param name="action"></param>
     /// <returns>result of action() or <c>default(T)></c> if exception arises</returns>
+#if !NETCOREAPP
     [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
+#endif
     [PublicAPI] public static T? CatchWarn<T>(this ILog log, [InstantHandle] Func<T> action)
     {
       try

@@ -86,7 +86,9 @@ namespace JetBrains.Threading
       {
         unchecked
         {
+#pragma warning disable CA1416
           long am = Process.GetCurrentProcess().ProcessorAffinity.ToInt64();
+#pragma warning restore CA1416
           while (am != 0)
           {
             ++procCount;
