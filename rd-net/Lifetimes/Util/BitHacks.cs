@@ -10,6 +10,7 @@ namespace JetBrains.Util
   
   public static class BitHacks
   {
+#if !NET5_0_OR_GREATER
     // de Bruijn multiplication, see http://supertech.csail.mit.edu/papers/debruijn.pdf
     private const uint DeBruijnSequence32 = 0x07C4ACDD;
     private const ulong DeBruijnSequence64 = 0x03F79D71B4CB0A89;
@@ -31,6 +32,7 @@ namespace JetBrains.Util
       25, 39, 14, 33, 19, 30, 9, 24,
       13, 18, 8, 12, 7, 6, 5, 63
     };
+#endif
 
     /// <summary>
     /// Returns the integer (floor) log of the specified value, base 2. 
@@ -122,9 +124,18 @@ namespace JetBrains.Util
     {      
       if (x < 0) throw new ArgumentException("x must be greater than 0");
       if (x == 0) return 0;
+#if NET5_0_OR_GREATER
+      var result = Log2Floor(x);
+      if (PopCount((ulong)x) != 1)
+      {
+        result++;
+      }
+      return result;
+#else
       var log2Floor = ReverseBitScan((ulong)x);
       if (1UL << log2Floor == (ulong)x) return log2Floor;
       return log2Floor + 1;
+#endif
     }
 
     /// <summary>
@@ -205,6 +216,7 @@ namespace JetBrains.Util
 #endif
     }
 
+#if !NET5_0_OR_GREATER
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static int ReverseBitScan(uint value)
     {
@@ -233,5 +245,6 @@ namespace JetBrains.Util
         return ourDeBruijnBitTable64[(int) ((value * DeBruijnSequence64) >> 58)];
       }
     }
+#endif
   }
 }
