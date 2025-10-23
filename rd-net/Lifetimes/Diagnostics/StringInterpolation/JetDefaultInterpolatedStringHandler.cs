@@ -6,7 +6,7 @@ namespace JetBrains.Diagnostics.StringInterpolation;
 
 internal struct JetDefaultInterpolatedStringHandler
 {
-  private StringBuilder myBuffer;
+  private StringBuilder? myBuffer;
 
   public JetDefaultInterpolatedStringHandler(int literalLength, int formattedCount)
   {
@@ -16,10 +16,8 @@ internal struct JetDefaultInterpolatedStringHandler
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public string ToStringAndClear()
   {
-    myBuffer ??= new StringBuilder();
-    
-    var result = myBuffer.ToString();
-    myBuffer.Clear();
+    var result = ToString();
+    myBuffer = null;
     return result;
   }
 
