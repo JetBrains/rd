@@ -65,12 +65,15 @@ namespace JetBrains.Lifetimes
     }
 
     //in x64 we have one free 4-bytes slot in this structure so let we use it for something meaningful
-    //1. Global lock (GlobalMutexSlice) for thread-safe insertion of a new element
-    //2. Local lock (LocalMutexSlice) for fast thread-safe reading/writing of `mySize` and `myItems`
-    //3. Marker (MarkerMutexSlice) to delimit items into two parts: with high priority (< Marker) and normal (>= Marker)
-    private int myState;
-    private int mySize;
-    private ValueLifetimed<T>[] myItems;
+    //1. Lock (MutexSlice) for thread-safe insertion of a new element
+    //2. Marker (MarkerMutexSlice) to delimit items into two parts: with high priority (< Marker) and normal (>= Marker)
+    private volatile int myState;
+    private volatile int mySize;
+    private volatile ValueLifetimed<T>[] myItems;
+
+    // A special marker to indicate that we update internal state mySize and myItems. 
+    // ReSharper disable once UseArrayEmptyMethod
+    private static readonly ValueLifetimed<T>[] UpdatingMarker = new ValueLifetimed<T>[0];
 
     public void Add(Lifetime lifetime, T value) => Add(new ValueLifetimed<T>(lifetime, value));
     public void AddPriorityItem(Lifetime lifetime, T value) => AddPriorityItem(new ValueLifetimed<T>(lifetime, value));
@@ -78,29 +81,33 @@ namespace JetBrains.Lifetimes
     public void Add(ValueLifetimed<T> item)
     {
       bool shouldClear;
-      EnterGlobalLock();
+      EnterLock();
       try
       {
         shouldClear = EnsureCapacityNoLock(false, out var items, out var marker, out var size);
-        items[size] = item;  
-        
-        EnterLocalLock();
-        try
+        items[size] = item;
+
+        if (items != myItems)
         {
+          // temporarily set myItems to UpdatingMarker to let GetSnapshot observe consistent mySize and myItems
+          myItems = UpdatingMarker;
+          
           // increase mySize only after inserting an element
           mySize = size + 1;
           myItems = items;
-          // no need to use InterlockedUpdate because we under lock
-          myState = MarkerMutexSlice.Updated(myState, marker);
         }
-        finally
+        else // no need to use UpdatingMarker because we updating only mySize and it can only grow
         {
-          ReleaseLocalLock();
+          // increase mySize only after inserting an element
+          mySize = size + 1;
         }
+        
+        // no need to use InterlockedUpdate because we under lock
+        myState = MarkerMutexSlice.Updated(myState, marker);
       }
       finally
       {
-        ReleaseGlobalLock();
+        ReleaseLock();
       }
 
       if (shouldClear)
@@ -118,30 +125,24 @@ namespace JetBrains.Lifetimes
 
     public void AddPriorityItem(ValueLifetimed<T> item)
     {
-      EnterGlobalLock();
+      EnterLock();
       try
       {
         // AddPriorityItem is not a frequent operation, we can afford to create a new array each time
         EnsureCapacityNoLock(true, out var items, out var marker, out var size);
         items[marker] = item;
-        
-        EnterLocalLock();
-        try
-        {
-          // increase mySize only after inserting an element
-          mySize = size + 1;
-          myItems = items;
-          // no need to use InterlockedUpdate because we under lock
-          myState = MarkerMutexSlice.Updated(myState, marker + 1);
-        }
-        finally
-        {
-          ReleaseLocalLock();
-        }
+
+        // temporarily set myItems to UpdatingMarker to let GetSnapshot observe consistent mySize and myItems
+        myItems = UpdatingMarker;
+        // increase mySize only after inserting an element
+        mySize = size + 1;
+        myItems = items;
+        // no need to use InterlockedUpdate because we under lock
+        myState = MarkerMutexSlice.Updated(myState, marker + 1);
       }
       finally
       {
-        ReleaseGlobalLock();
+        ReleaseLock();
       }
       
       // AddPriorityItem always creates a new array
@@ -212,10 +213,10 @@ namespace JetBrains.Lifetimes
     {
       // !!! performance optimization !!!
       // no need to take lock because it doesn't affect the addition of new items.
-      var items = Memory.VolatileRead(ref myItems);
+      var items = myItems;
       if (items == null) return;
       
-      var size = Math.Min(Memory.VolatileRead(ref mySize), items.Length);
+      var size = Math.Min(mySize, items.Length);
       for (var j = 0; j < size; j++)
       {
         items[j].ClearValueIfNotAlive();
@@ -223,58 +224,65 @@ namespace JetBrains.Lifetimes
     }
 
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void EnterGlobalLock() => EnterLock(GlobalMutexSlice);
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void ReleaseGlobalLock() => ReleaseLock(GlobalMutexSlice);
-
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void EnterLocalLock() => EnterLock(LocalMutexSlice);
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void ReleaseLocalLock() => ReleaseLock(LocalMutexSlice);
-    
-    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void EnterLock(BoolBitSlice slice)
+    private void EnterLock()
     {
       do
       {
-        var s = Memory.VolatileRead(ref myState);
-        if (slice[s])
+        var s = myState;
+        if (MutexSlice[s])
           continue;
 
-        if (Interlocked.CompareExchange(ref myState, slice.Updated(s, true), s) == s)
+        if (Interlocked.CompareExchange(ref myState, MutexSlice.Updated(s, true), s) == s)
           return;
         
       } while (true);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
-    private void ReleaseLock(BoolBitSlice slice)
+    private void ReleaseLock()
     {
-      if (Mode.IsAssertion) Assertion.Assert(slice[myState], "Must be under mutex");
-      slice.InterlockedUpdate(ref myState, false);
+      if (Mode.IsAssertion) Assertion.Assert(MutexSlice[myState], "Must be under mutex");
+      // no need for interlocked update because myState can be modified under lock only
+      myState = MutexSlice.Updated(myState, false);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Snapshot GetSnapshot()
+    {
+      var items = myItems;
+      if (items == null) return new Snapshot(EmptyArray<ValueLifetimed<T>>.Instance, 0);
+      
+      do
+      {
+        items = myItems;
+        if (items == UpdatingMarker) continue;
+
+        // we update mySize and myItems sequentially, so if myItems before and after getting mySize are the same that
+        // means that mySize either wasn't updated or became greater (not lower by contract)
+        // 
+        // it's ok if mySize is slightly outdated if there is concurrent modification
+        // we just have to ensure that mySize is consistent with myItems
+        var size = mySize;
+        if (items != myItems) continue;
+
+        return new Snapshot(items, size);
+      } while (true);
     }
 
     public Enumerator GetEnumerator()
     {
-      EnterLocalLock();
-      try
-      {
-        return new Enumerator(myItems, mySize);
-      }
-      finally
-      {
-        ReleaseLocalLock();
-      }
+      var (items, size) = GetSnapshot();
+      return new Enumerator(items, size);
     }
+
+    public record struct Snapshot(ValueLifetimed<T>[] Items, int Size);
   }
+  
 
   public static class LifetimedListEx
   {
-    internal static readonly BoolBitSlice GlobalMutexSlice = BitSlice.Bool();
-    internal static readonly BoolBitSlice LocalMutexSlice = BitSlice.Bool(GlobalMutexSlice);
-    internal static readonly IntBitSlice MarkerMutexSlice = BitSlice.Int(16, LocalMutexSlice);
+    internal static readonly BoolBitSlice MutexSlice = BitSlice.Bool();
+    internal static readonly IntBitSlice MarkerMutexSlice = BitSlice.Int(16, MutexSlice);
 
     public static IEnumerable<TOut> Select<TIn, TOut>(this LifetimedList<TIn> source, Func<ValueLifetimed<TIn>, TOut> selector)
     {
