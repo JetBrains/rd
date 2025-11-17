@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Core;
@@ -107,62 +106,64 @@ namespace JetBrains.Rd.Reflection
       // RdRpc attribute can be specified in RdExt attribute. Therefore, now this assert cannot be verified.
       // if (!ReflectionSerializerVerifier.IsRpcAttributeDefined(typeof(TInterface)))
       //   throw new ArgumentException($"Unable to create proxy for {typeof(TInterface)}. No {nameof(RdRpcAttribute)} specified.");
-
-      var moduleBuilder = myModuleBuilder.Value;
-      var className = interfaceType.Name.Substring(1);
-      var proxyTypeName = "Proxy." + className;
-      var typebuilder = moduleBuilder.DefineType(
-        proxyTypeName,
-        TypeAttributes.NotPublic | TypeAttributes.Class | TypeAttributes.Sealed,
-        typeof(RdExtReflectionBindableBase));
-
-      // Implement interface
-      typebuilder.AddInterfaceImplementation(interfaceType);
-
-      // mark it as proxy type
-      typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
-
-      // Add RdExt attribute to type
-      var rdExtConstructor = Members.RdExtConstructor;
-      typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[]{ interfaceType }));
-
-      var ctx = new TypeBuilderContext(typebuilder);
-      ImplementInterface(interfaceType, ctx);
-      foreach (var baseInterface in interfaceType.GetInterfaces())
-        ImplementInterface(baseInterface, ctx);
-
-      void ImplementInterface(Type baseInterface, TypeBuilderContext ctx)
+      lock (myModuleBuilder.Value)
       {
-        if (baseInterface.GetCustomAttribute<RpcTimeoutAttribute>() is { } timeouts)
+        var moduleBuilder = myModuleBuilder.Value;
+        var className = interfaceType.Name.Substring(1);
+        var proxyTypeName = "Proxy." + className;
+        var typebuilder = moduleBuilder.DefineType(
+          proxyTypeName,
+          TypeAttributes.NotPublic | TypeAttributes.Class | TypeAttributes.Sealed,
+          typeof(RdExtReflectionBindableBase));
+
+        // Implement interface
+        typebuilder.AddInterfaceImplementation(interfaceType);
+
+        // mark it as proxy type
+        typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
+
+        // Add RdExt attribute to type
+        var rdExtConstructor = Members.RdExtConstructor;
+        typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[] { interfaceType }));
+
+        var ctx = new TypeBuilderContext(typebuilder);
+        ImplementInterface(interfaceType, ctx);
+        foreach (var baseInterface in interfaceType.GetInterfaces())
+          ImplementInterface(baseInterface, ctx);
+
+        void ImplementInterface(Type baseInterface, TypeBuilderContext ctx)
         {
-          ctx.SetDefaultTimeout(timeouts);
+          if (baseInterface.GetCustomAttribute<RpcTimeoutAttribute>() is { } timeouts)
+          {
+            ctx.SetDefaultTimeout(timeouts);
+          }
+
+          foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
+          {
+            ImplementMember(ctx, member);
+          }
         }
 
-        foreach (var member in baseInterface.GetMembers(BindingFlags.Instance | BindingFlags.Public))
+        if (ctx.TimeoutFields.IsValueCreated)
         {
-          ImplementMember(ctx, member);
+          var cctor = typebuilder.DefineTypeInitializer();
+          var il = cctor.GetILGenerator();
+          foreach (var kvp in ctx.TimeoutFields.Value)
+          {
+            // Re-create RpcTimeouts attribute. It used only to re-create RpcTimeouts. It is more robust to use types for
+            // ProxyGeneration which are located on our project.
+            il.Emit(OpCodes.Ldc_I8, kvp.Value.WarnAwaitTime.Ticks);
+            il.Emit(OpCodes.Ldc_I8, kvp.Value.ErrorAwaitTime.Ticks);
+            il.Emit(OpCodes.Call, ProxyGeneratorMembers.CreateRpcTimeoutMethod);
+
+            // set the static field
+            il.Emit(OpCodes.Stsfld, kvp.Key);
+          }
+          il.Emit(OpCodes.Ret);
         }
+
+        return typebuilder.CreateTypeInfo().NotNull("Unable to create type");
       }
-
-      if (ctx.TimeoutFields.IsValueCreated)
-      {
-        var cctor = typebuilder.DefineTypeInitializer();
-        var il = cctor.GetILGenerator();
-        foreach (var kvp in ctx.TimeoutFields.Value)
-        {
-          // Re-create RpcTimeouts attribute. It used only to re-create RpcTimeouts. It is more robust to use types for
-          // ProxyGeneration which are located on our project.
-          il.Emit(OpCodes.Ldc_I8, kvp.Value.WarnAwaitTime.Ticks);
-          il.Emit(OpCodes.Ldc_I8, kvp.Value.ErrorAwaitTime.Ticks);
-          il.Emit(OpCodes.Call, ProxyGeneratorMembers.CreateRpcTimeoutMethod);
-          
-          // set the static field
-          il.Emit(OpCodes.Stsfld, kvp.Key);
-        }
-        il.Emit(OpCodes.Ret);
-      }
-
-      return typebuilder.CreateTypeInfo().NotNull("Unable to create type");
     }
 
 
@@ -180,99 +181,102 @@ namespace JetBrains.Rd.Reflection
       Assertion.Require(!method.IsGenericMethod, "generics are not supported");
       Assertion.Require(!method.IsStatic, "only instance methods are supported");
 
-      // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter",
-      //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
-      var requestType = GetRequstType(method)[0];
-      var responseType = GetResponseType(method, unwrapTask: false);
-      Type returnType;
-      if (IsSync(method))
+      lock (myModuleBuilder.Value)
       {
-        returnType = typeof(RdTask<>).MakeGenericType(responseType);
-      }
-      else
-      {
-        returnType = responseType;
-      }
-
-      var methodBuilder = new DynamicMethod(method.Name, returnType, new[] { selfType, typeof(Lifetime), requestType }, DynamicModule);
-      var il = methodBuilder.GetILGenerator();
-
-      // Invoke adapter method
-      il.Emit(OpCodes.Ldarg_0); // this/self
-      FieldInfo[] fields;
-      if (requestType == typeof(Unit))
-      {
-        fields = new FieldInfo[0];
-      }
-      else
-      {
-        fields = requestType.GetFields();
-      }
-
-      var parameters = method.GetParameters();
-      for (int parameterIndex = 0, fi = 0; parameterIndex < parameters.Length; parameterIndex++)
-      {
-        if (parameters[parameterIndex].ParameterType == typeof(Lifetime))
+        // var type = ModuleBuilder.DefineType(selfType.FullName + "_adapter",
+        //   TypeAttributes.Public & TypeAttributes.Sealed & TypeAttributes.Abstract & TypeAttributes.BeforeFieldInit);
+        var requestType = GetRequstType(method)[0];
+        var responseType = GetResponseType(method, unwrapTask: false);
+        Type returnType;
+        if (IsSync(method))
         {
-          LoadArgument(il, 1 /* external cancellation lifetime in SetHandler */);
+          returnType = typeof(RdTask<>).MakeGenericType(responseType);
         }
         else
         {
-          il.Emit(OpCodes.Ldarg_2); // value tuple
-          
-          int i = fi;
-          var f = fields;
-          while (i >= MaxTuplePayload)
-          {
-            il.Emit(OpCodes.Ldfld, f[MaxTuplePayload]);
-            f = f[MaxTuplePayload].FieldType.GetFields();
-            i -= MaxTuplePayload;
-          }
-          if (Mode.IsAssertion)
-            Assertion.Assert(parameters[parameterIndex].ParameterType == f[i].FieldType, "parameters[pi].ParameterType == fields[i].FieldType");
-
-          il.Emit(OpCodes.Ldfld, f[i]);
-
-          fi++;
+          returnType = responseType;
         }
-      }
-      // call wrapped method
-      il.Emit(OpCodes.Callvirt, method);
 
-      // load Unit result if necessary
-      if (method.ReturnType == typeof(void) && IsSync(method))
-      {
-        il.Emit(OpCodes.Ldsfld, Members.UnitInstance);
-      }
+        var methodBuilder = new DynamicMethod(method.Name, returnType, new[] { selfType, typeof(Lifetime), requestType }, myModuleBuilder.Value);
+        var il = methodBuilder.GetILGenerator();
 
-      if (IsSync(method))
-      {
-        // Create RdTask
-        var taskFactoryMethod = typeof(RdTask).GetMethod(nameof(RdTask.Successful))?.MakeGenericMethod(responseType);
-        il.Emit(OpCodes.Call, taskFactoryMethod.NotNull("RdTask.Successful<Unit> not found"));
-      }
-      else
-      {
-        // regular task already on stack
-      }
-
-      il.Emit(OpCodes.Ret);
-
-/*      if (myAllowSave)
-      {
-        // shadow methods are required only for reviewing dynamic methods bodies in dotpeek
-        var typeBuilder = ModuleBuilder.DefineType(selfType.FullName + "_shadow");
-        foreach (var dynamicMethod in result)
+        // Invoke adapter method
+        il.Emit(OpCodes.Ldarg_0); // this/self
+        FieldInfo[] fields;
+        if (requestType == typeof(Unit))
         {
-          var shadowMethod = typeBuilder.DefineMethod(dynamicMethod.Name, MethodAttributes.Static | MethodAttributes.Public, dynamicMethod.ReturnType, dynamicMethod.GetParameters().Select(p => p.ParameterType).ToArray());
-          var body = dynamicMethod.GetMethodBody();
-          shadowMethod.SetMethodBody(body.GetILAsByteArray(), body.MaxStackSize, new byte[0], new ExceptionHandler[0], new int[0]);
+          fields = new FieldInfo[0];
+        }
+        else
+        {
+          fields = requestType.GetFields();
         }
 
-        typeBuilder.CreateType();
-      }*/
+        var parameters = method.GetParameters();
+        for (int parameterIndex = 0, fi = 0; parameterIndex < parameters.Length; parameterIndex++)
+        {
+          if (parameters[parameterIndex].ParameterType == typeof(Lifetime))
+          {
+            LoadArgument(il, 1 /* external cancellation lifetime in SetHandler */);
+          }
+          else
+          {
+            il.Emit(OpCodes.Ldarg_2); // value tuple
 
-      return methodBuilder;
+            int i = fi;
+            var f = fields;
+            while (i >= MaxTuplePayload)
+            {
+              il.Emit(OpCodes.Ldfld, f[MaxTuplePayload]);
+              f = f[MaxTuplePayload].FieldType.GetFields();
+              i -= MaxTuplePayload;
+            }
+            if (Mode.IsAssertion)
+              Assertion.Assert(parameters[parameterIndex].ParameterType == f[i].FieldType, "parameters[pi].ParameterType == fields[i].FieldType");
+
+            il.Emit(OpCodes.Ldfld, f[i]);
+
+            fi++;
+          }
+        }
+        // call wrapped method
+        il.Emit(OpCodes.Callvirt, method);
+
+        // load Unit result if necessary
+        if (method.ReturnType == typeof(void) && IsSync(method))
+        {
+          il.Emit(OpCodes.Ldsfld, Members.UnitInstance);
+        }
+
+        if (IsSync(method))
+        {
+          // Create RdTask
+          var taskFactoryMethod = typeof(RdTask).GetMethod(nameof(RdTask.Successful))?.MakeGenericMethod(responseType);
+          il.Emit(OpCodes.Call, taskFactoryMethod.NotNull("RdTask.Successful<Unit> not found"));
+        }
+        else
+        {
+          // regular task already on stack
+        }
+
+        il.Emit(OpCodes.Ret);
+
+        /*      if (myAllowSave)
+              {
+                // shadow methods are required only for reviewing dynamic methods bodies in dotpeek
+                var typeBuilder = ModuleBuilder.DefineType(selfType.FullName + "_shadow");
+                foreach (var dynamicMethod in result)
+                {
+                  var shadowMethod = typeBuilder.DefineMethod(dynamicMethod.Name, MethodAttributes.Static | MethodAttributes.Public, dynamicMethod.ReturnType, dynamicMethod.GetParameters().Select(p => p.ParameterType).ToArray());
+                  var body = dynamicMethod.GetMethodBody();
+                  shadowMethod.SetMethodBody(body.GetILAsByteArray(), body.MaxStackSize, new byte[0], new ExceptionHandler[0], new int[0]);
+                }
+
+                typeBuilder.CreateType();
+              }*/
+
+        return methodBuilder;
+      }
     }
 
     public static bool IsSync(MethodInfo impl)
