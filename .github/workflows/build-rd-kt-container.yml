@@ -15,7 +15,7 @@ jobs:
       TEAMCITY_VERSION: 1 # temporary; to disable cross tests
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v5
