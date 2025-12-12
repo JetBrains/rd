@@ -57,19 +57,19 @@ jobs:
         nuget-version: '5.x'
 
     - name: Gradle JVM Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.local/share/gradle-jvm
         key: ${{ runner.os }}.gradle-jvm-cache.${{ hashFiles('gradle/**') }}
 
     - name: Gradle Wrapper Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.GRADLE_USER_HOME }}/wrapper
         key: ${{ runner.os }}.gradle-wrapper.${{ hashFiles('gradle/**') }}
 
     - name: Gradle Cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.GRADLE_USER_HOME }}/caches/modules-2
         key: ${{ runner.os }}.gradle.${{ hashFiles('**/*.gradle.kts') }}
@@ -79,7 +79,7 @@ jobs:
       run: ./gradlew generateEverything
 
     - name: Cache Ninja
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-ninja
       with:
         path: |
