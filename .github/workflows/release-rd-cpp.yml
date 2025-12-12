@@ -51,7 +51,7 @@ jobs:
     - uses: actions/checkout@v6
       
     - name: Cache submodules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-submodules
       with:
         path: |
@@ -70,7 +70,7 @@ jobs:
         nuget-version: '5.x'
       
     - name: Cache Ninja
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache-ninja
       with:
         path: |
