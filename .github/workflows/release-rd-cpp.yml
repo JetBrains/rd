@@ -197,7 +197,7 @@ jobs:
       run: cd export && cmake -E tar "cfv" ../${{ env.artifact }} --format=zip include libs
 
     - name: Upload
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         path: |
           ${{ env.working-dir }}${{ matrix.config.SEP }}export${{ matrix.config.SEP }}**
