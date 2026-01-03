@@ -24,8 +24,6 @@ class RdGen : Kli() {
         get() = "Generates RD Model from DSL "
 
 
-    var compilerClassloader : ClassLoader? = null
-
     val clearOutput =   option_flag(  'x',   "clear", "Clear output folder before generation (if it is not incremental) ")
 
     val packages =      option_string('p',    "packages", "Java package names to search toplevels, delimited by ','. Example: com.jetbrains.rd.model.nova", "com,org")
