@@ -1,18 +1,26 @@
+import com.jetbrains.rd.gradle.plugins.applyKotlinJVM
 import com.jetbrains.rd.gradle.tasks.RdGenerateTask
 import com.jetbrains.rd.gradle.tasks.util.cppDirectorySystemPropertyKey
 import com.jetbrains.rd.gradle.tasks.util.csDirectorySystemPropertyKey
 import com.jetbrains.rd.gradle.tasks.util.ktDirectorySystemPropertyKey
+
+applyKotlinJVM()
+plugins {
+    kotlin("jvm")
+}
 
 val repoRoot: File by rootProject.extra.properties
 val cppRoot: File by rootProject.extra.properties
 val ktRoot: File by rootProject.extra.properties
 val csRoot: File by rootProject.extra.properties
 
-val BUILD_DIR = parent!!.buildDir
+val BUILD_DIR = rootProject!!.buildDir
+
+dependencies {
+    implementation(project(":rd-gen"))
+}
 
 tasks {
-    val sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
-    
     fun RdGenerateTask.prepareOutputs() {
         fun mapSources(properties: Map<String, String>, sourcesFolder: String) {
             addOutputDirectories(properties.mapKeys { "${it.key}.$sourcesFolder" })
@@ -49,7 +57,7 @@ tasks {
 
     @Suppress("UNUSED_VARIABLE")
     val generateEverything by registering(RdGenerateTask::class) {
-        val modelClassPath = project.the<SourceSetContainer>()["models"].runtimeClasspath 
+        val modelClassPath = sourceSets["main"].runtimeClasspath 
         classpath(modelClassPath)
         
         inputs.files(modelClassPath)

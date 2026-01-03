@@ -17,20 +17,16 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
 }
 
-apply(from = "models.gradle.kts")
-
 sourceSets {
-    create("models") {
-        dependencies {
-            implementation(sourceSets.main.map { it.output })
-        }
-    }
     create("gradlePlugin") {
         compileClasspath += sourceSets["main"].compileClasspath - files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>())
     }
 }
 
-val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, tasks.named("generateEverything"))
+val testCopySources by creatingCopySourcesTask(
+    kotlin.sourceSets.test,
+    evaluationDependsOn(":rd-gen:models").tasks.named("generateEverything")
+)
 
 tasks.named("compileTestKotlin") {
     dependsOn(testCopySources)
@@ -40,10 +36,6 @@ tasks {
     jar {
         from(sourceSets["gradlePlugin"].output)
     }
-}
-
-val modelsImplementation: Configuration by configurations.getting {
-    extendsFrom(configurations.implementation.get())
 }
 
 publishing.publications.named<MavenPublication>("pluginMaven") {

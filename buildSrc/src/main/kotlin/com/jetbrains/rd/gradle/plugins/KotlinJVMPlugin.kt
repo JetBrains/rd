@@ -52,7 +52,7 @@ open class KotlinJVMPlugin : Plugin<Project> {
                 enabled = false
             }
 
-            if (project.name != "rd-cross") {
+            if (project.name != "rd-cross" && project.name != "models") {
                 configure<PublishingExtension> {
                     publications {
                         register("pluginMaven", MavenPublication::class.java) {

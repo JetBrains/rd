@@ -7,11 +7,11 @@ import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
 tasks {
     val build by creating(DotnetBuildTask::class) {
         configuration("Debug")
-        mustRunAfter(":rd-gen:generateEverything")
+        mustRunAfter(":rd-gen:models:generateEverything")
     }
 
     val buildCrossTests by creating(DotnetBuildTask::class) {
-        dependsOn(":rd-gen:generateEverything")
+        dependsOn(":rd-gen:models:generateEverything")
 
         configuration("CrossTests")
     }
