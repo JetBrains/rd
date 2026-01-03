@@ -8,8 +8,6 @@ import java.io.File
  * Uses compiled RdGen for generating prepared models
  */
 open class RdGenerateTask : JavaExec() {
-    @InputFiles
-    val sourceDirectories = mutableListOf<File>()
 
     init {
         group = "generate"
@@ -22,11 +20,6 @@ open class RdGenerateTask : JavaExec() {
         super.exec()
 
         println("Finishing GenerateTask args=${args}")
-    }
-
-    fun addSourceDirectory(file: File) {
-        sourceDirectories.add(file)
-        inputs.dir(file)
     }
 
     fun addOutputDirectories(properties: Map<String, String>) {

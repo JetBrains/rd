@@ -2,6 +2,7 @@ package com.jetbrains.rd.gradle.tasks
 
 import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.creating
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -17,7 +18,7 @@ open class CopySourcesTask @Inject constructor() : Exec() {
     @Internal
     lateinit var currentProject: Project
     @Internal
-    lateinit var generativeSourceSet: SourceSet
+    lateinit var generativeTask: TaskProvider<Task>
 
     private lateinit var generatedDir: File
 
@@ -28,7 +29,7 @@ open class CopySourcesTask @Inject constructor() : Exec() {
     fun lateInit() {
         generatedDir = currentProject.buildDir.resolve("generated")
 
-        generativeSourceSet.output.dirs.forEach { inputs.dir(it) }
+        inputs.files(generativeTask.get().outputs)
         outputs.dirs(generatedDir)
 
         currentSourceSet.kotlin.srcDirs(generatedDir.absolutePath)
@@ -40,20 +41,20 @@ open class CopySourcesTask @Inject constructor() : Exec() {
 
     private fun copyGeneratedSources() {
         generatedDir.mkdirs()
-        generativeSourceSet.output.dirs.forEach { dir ->
-            dir.copyRecursively(File(generatedDir, dir.name), overwrite = true)
+        generativeTask.get().outputs.files.forEach { file ->
+            file.copyRecursively(File(generatedDir, file.name), overwrite = true)
         }
     }
 }
 
 fun Project.creatingCopySourcesTask(currentSourceSet: NamedDomainObjectProvider<KotlinSourceSet>,
-                                    generativeSourceSet: SourceSet) =
+                                    generativeTask: TaskProvider<Task>) =
     tasks.creating(CopySourcesTask::class) {
-        dependsOn(generativeSourceSet.output)
+        dependsOn(generativeTask)
 
         this.currentSourceSet = currentSourceSet.get()
         this.currentProject = this@creatingCopySourcesTask
-        this.generativeSourceSet = generativeSourceSet
+        this.generativeTask = generativeTask
 
         lateInit()
     }
