@@ -16,7 +16,6 @@ object PerClientIdRoot1 : Root(
 ) {
 
     val key = threadLocalContext(PredefinedType.string)
-    val lightKey = threadLocalContext(PredefinedType.int).light
     init {
         setting(Cpp17Generator.TargetName, "contexts_test_model")
 //        setting(Kotlin11Generator.MasterStateful, false)
@@ -34,6 +33,5 @@ object PerClientIdRoot1 : Root(
             signal("someClassSignal", structdef("PerClientIdSignal") {}).perContext(key)
         })
 
-        property("aPropPerLight", false).perContext(lightKey)
     }
 }
