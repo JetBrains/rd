@@ -12,56 +12,50 @@ val BUILD_DIR = parent!!.buildDir
 
 tasks {
     val sourcesRoot = ktRoot.resolve("rd-gen/src/models/kotlin/com/jetbrains/rd/models")
-
-    fun RdGenerateTask.collectSources() {
-        fun addSources(properties: Map<String, String>, sourcesFolder: String) {
-            addSourceDirectory(sourcesRoot.resolve(sourcesFolder))
+    
+    fun RdGenerateTask.prepareOutputs() {
+        fun mapSources(properties: Map<String, String>, sourcesFolder: String) {
             addOutputDirectories(properties.mapKeys { "${it.key}.$sourcesFolder" })
         }
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 cppDirectorySystemPropertyKey to "${cppRoot}/demo",
                 ktDirectorySystemPropertyKey to "${BUILD_DIR}/models/demo",
                 csDirectorySystemPropertyKey to "${csRoot}/Test.Cross/obj/DemoModel"
         ), "demo")
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/interning",
                 ktDirectorySystemPropertyKey to "$BUILD_DIR/models/interning"
         ), "interning")
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 cppDirectorySystemPropertyKey to "$cppRoot/src/rd_framework_cpp/src/test/util/entities"
         ), "entities")
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 ktDirectorySystemPropertyKey to "$BUILD_DIR/models/sync",
                 csDirectorySystemPropertyKey to "${csRoot}/Test.Cross/obj/SyncModel"
         ), "sync")
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 ktDirectorySystemPropertyKey to "$BUILD_DIR/models/openEntity"
         ), "openEntity")
 
-        addSources(mapOf(
+        mapSources(mapOf(
                 csDirectorySystemPropertyKey to "${csRoot}/Test.RdFramework/Reflection/data/Generated"
         ), "reflectionTest")
     }
 
     @Suppress("UNUSED_VARIABLE")
-    val generateEverything by creating(RdGenerateTask::class) {
-        classpath(project.the<SourceSetContainer>()["main"]!!.compileClasspath
-                .minus(files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>()))
-        )
-        classpath(project.the<SourceSetContainer>()["main"]!!.output)
+    val generateEverything by registering(RdGenerateTask::class) {
+        val modelClassPath = project.the<SourceSetContainer>()["models"].runtimeClasspath 
+        classpath(modelClassPath)
+        
+        inputs.files(modelClassPath)
+        
+        prepareOutputs()
 
-        collectSources()
-
-        val sourceFiles = sourceDirectories.joinToString(separator = ";") { it.absolutePath }
-        val hashFolder = project.rootProject.buildDir
-                .resolve("hash")
-                .resolve("models")
-        outputs.dirs(hashFolder)
-        args = listOf("--source=$sourceFiles;", "--packages=com,org,testModels", "--hash-folder=$hashFolder", "-v")
+        args = listOf("--packages=com,org,testModels", "-v")
     }
 }

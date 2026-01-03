@@ -11,8 +11,6 @@ plugins {
 dependencies {
     implementation(project(":rd-core"))
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlinVersion}")
-    implementation("org.jetbrains.kotlin:kotlin-script-runtime:${kotlinVersion}")
     implementation("org.jetbrains.intellij.deps:trove4j:1.0.20200330")
     testImplementation(project(":rd-framework"))
     testImplementation("org.jetbrains:annotations:26.0.2-1")
@@ -21,29 +19,18 @@ dependencies {
 
 apply(from = "models.gradle.kts")
 
-lateinit var models: SourceSet
-
 sourceSets {
-    models = create("models") {
-        kotlin {
-            compileClasspath += main.get().output
-
-            listOf("interning", "demo", "sync", "openEntity").map {
-                rootProject.buildDir.resolve("models").resolve(it)
-            }.forEach {
-                output.dir(it)
-            }
-
-            compiledBy("generateEverything")
+    create("models") {
+        dependencies {
+            implementation(sourceSets.main.map { it.output })
         }
     }
-
     create("gradlePlugin") {
         compileClasspath += sourceSets["main"].compileClasspath - files(gradle.gradleHomeDir?.resolve("lib")?.listFiles()?.filter { it.name.contains("kotlin-stdlib") || it.name.contains("kotlin-reflect") } ?: listOf<File>())
     }
 }
 
-val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, models)
+val testCopySources by creatingCopySourcesTask(kotlin.sourceSets.test, tasks.named("generateEverything"))
 
 tasks.named("compileTestKotlin") {
     dependsOn(testCopySources)

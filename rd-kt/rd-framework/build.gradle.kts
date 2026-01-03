@@ -19,7 +19,7 @@ kotlin {
 
 val testCopySources by creatingCopySourcesTask(
         kotlin.sourceSets.test,
-        evaluationDependsOn(":rd-gen").sourceSets["models"]
+        evaluationDependsOn(":rd-gen").tasks.named("generateEverything")
 )
 
 tasks.named("compileTestKotlin") {

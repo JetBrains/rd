@@ -10,8 +10,6 @@ class AsyncPrimitivesTest : CSharpRdGenOutputTest() {
         const val testName = "asyncPrimitives"
     }
 
-    override val compileAfterGenerate: Boolean
-        get() = false
     override val testName = Companion.testName
 
     @Test

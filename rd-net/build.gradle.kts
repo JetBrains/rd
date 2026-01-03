@@ -7,6 +7,7 @@ import com.jetbrains.rd.gradle.tasks.DotnetBuildTask
 tasks {
     val build by creating(DotnetBuildTask::class) {
         configuration("Debug")
+        mustRunAfter(":rd-gen:generateEverything")
     }
 
     val buildCrossTests by creating(DotnetBuildTask::class) {

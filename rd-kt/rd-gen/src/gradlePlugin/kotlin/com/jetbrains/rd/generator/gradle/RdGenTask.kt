@@ -23,7 +23,6 @@ open class RdGenTask : JavaExec() {
         try {
             args(params.toArguments(tempGeneratorsFile))
 
-            val files = project.configurations.getByName("rdGenConfiguration").files
             val buildScriptFiles = project.buildscript.configurations.getByName("classpath").files
             val rdFiles: MutableSet<File> = HashSet()
             for (file in buildScriptFiles) {
@@ -31,7 +30,6 @@ open class RdGenTask : JavaExec() {
                     rdFiles.add(file)
                 }
             }
-            classpath(files)
             classpath(rdFiles)
 
             super.exec()

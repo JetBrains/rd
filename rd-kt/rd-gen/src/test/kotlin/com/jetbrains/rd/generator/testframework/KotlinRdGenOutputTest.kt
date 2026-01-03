@@ -17,7 +17,6 @@ abstract class KotlinRdGenOutputTest : RdGenOutputTestBase() {
         )
     }
 
-    override val compileAfterGenerate = true
     override val fileExtensionNoDot = "kt"
     override val generatedSourcesDir
         get() = ktGeneratedSourcesDir(testName)

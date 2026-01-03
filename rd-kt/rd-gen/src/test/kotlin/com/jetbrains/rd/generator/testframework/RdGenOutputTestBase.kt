@@ -1,8 +1,6 @@
 package com.jetbrains.rd.generator.testframework
 
-import com.jetbrains.rd.generator.nova.RdGen
 import com.jetbrains.rd.generator.nova.generateRdModel
-import com.jetbrains.rd.util.reflection.scanForResourcesContaining
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.io.File
@@ -14,8 +12,6 @@ abstract class RdGenOutputTestBase {
     private val testFolder
         get() = File("build/$testName")
 
-    protected open val compileAfterGenerate: Boolean = false
-
     protected abstract val fileExtensionNoDot: String
     protected abstract val generatedSourcesDir: String
 
@@ -24,8 +20,7 @@ abstract class RdGenOutputTestBase {
     protected open fun expectedFileCount(model: Class<*>): Int = 1
 
     protected inline fun <reified TModel> doTest(
-        vararg models: Class<*>,
-        noinline afterCompileAction: ((ClassLoader) -> Unit)? = null
+        vararg models: Class<*>
     ) {
         val classLoader = TModel::class.java.classLoader
         val containingPackage = TModel::class.java.`package`.name
@@ -57,28 +52,6 @@ abstract class RdGenOutputTestBase {
                     )
                 }
             }
-
-            if (compileAfterGenerate) {
-                val rdGen = RdGen().apply { verbose *= true }
-
-                val rdFrameworkClasspath = classLoader.scanForResourcesContaining(
-                    "org.jetbrains.annotations",
-                    "com.jetbrains.rd.framework",
-                    "com.jetbrains.rd.util"
-                )
-                rdGen.classpath *= rdFrameworkClasspath.joinToString(File.pathSeparator)
-
-                val generatedSources = File(generatedSourcesDir, transform).walk().toList() + customGeneratedSources()
-                rdGen.compileDsl(generatedSources).use { (compiledClassesLoader) ->
-                    Assertions.assertNotNull(
-                        compiledClassesLoader,
-                        "Failed to compile generated sources: ${rdGen.error}"
-                    )
-
-                    afterCompileAction?.invoke(compiledClassesLoader!!)
-                }
-            } else
-                Assertions.assertNull(afterCompileAction)
         }
     }
 
