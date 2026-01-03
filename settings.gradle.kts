@@ -12,6 +12,8 @@ project(":rd-framework").projectDir = File("rd-kt/rd-framework")
 
 include(":rd-gen")
 project(":rd-gen").projectDir = File("rd-kt/rd-gen")
+include(":rd-gen:models")
+project(":rd-gen:models").projectDir = File("rd-kt/rd-gen/models")
 
 include(":rd-text")
 project(":rd-text").projectDir = File("rd-kt/rd-text")

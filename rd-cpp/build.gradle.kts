@@ -9,7 +9,7 @@ tasks {
     }
 
     val buildTests by creating(CppBuildTask::class) {
-        dependsOn(":rd-gen:generateEverything")
+        dependsOn(":rd-gen:models:generateEverything")
         execPath("buildtest.cmd")
     }
 
