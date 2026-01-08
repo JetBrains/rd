@@ -2,8 +2,6 @@ package com.jetbrains.rd.framework.test.util
 
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.base.*
-import com.jetbrains.rd.framework.base.bindTopLevel
-import com.jetbrains.rd.util.Closeable
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -11,6 +9,7 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.reactive.ExecutionOrder
 import com.jetbrains.rd.util.reactive.IScheduler
+import java.io.Closeable
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 

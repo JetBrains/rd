@@ -1,7 +1,7 @@
 package com.jetbrains.rd.util.reactive
 
-import com.jetbrains.rd.util.ExecutionException
 import com.jetbrains.rd.util.getThrowableText
+import java.util.concurrent.ExecutionException
 
 
 class RdFault constructor(val reasonTypeFqn: String, val reasonMessage: String, val reasonAsText: String, reason: Throwable? = null)
