@@ -28,7 +28,6 @@ namespace Test.RdFramework.Reflection
 
     [TestCase(typeof(CircularDependencyModelError))]
     [TestCase(typeof(CircularDependencyNestedModel1Error))]
-    [TestCase(typeof(ModelCalls.ModelInvalidCalls))]
     public void TestError(Type type)
     {
       Assert.True(Mode.IsAssertion);

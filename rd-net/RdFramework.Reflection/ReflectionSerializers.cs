@@ -197,7 +197,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
             return;
           }*/
 
-    var memberInfos = SerializerReflectionUtil.GetBindableFields(typeInfo);
+    var memberInfos = SerializerReflectionUtil.GetSerializableFields(typeInfo);
     var memberSetters = memberInfos.Select(ReflectionUtil.GetSetter).ToArray();
     var memberGetters = memberInfos.Select(ReflectionUtil.GetGetter).ToArray();
 

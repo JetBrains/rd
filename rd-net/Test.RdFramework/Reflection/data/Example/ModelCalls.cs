@@ -9,14 +9,6 @@ namespace Test.RdFramework.Reflection
   {
     public IRdCall<string, Unit> Rpc1 { get; }
     public IRdCall<MyEnum, MyEnum> Rpc2 { get; }
-
-
-    [RdExt]
-    public class ModelInvalidCalls : RdExtReflectionBindableBase
-    {
-      // should not be possible!
-      public IRdCall<Animal, Animal> Rpc3 { get; }
-    }
   }
 
   public enum MyEnum

@@ -95,15 +95,12 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair CreateCustomScalar<T>(ISerializersSource serializers)
     {
-      if (typeof(IRdBindable).IsAssignableFrom(typeof(T)))
-        Assertion.Fail($"Invalid scalar type: {typeof(T).ToString(true)}. Scalar types cannot be IRdBindable.");
-      if (typeof(T).IsInterface || typeof(T).IsAbstract)
-        Assertion.Fail($"Invalid scalar type: {typeof(T).ToString(true)}. Scalar types should be concrete types.");
-
+      if (Mode.IsAssertion)
+        ReflectionSerializerVerifier.AssertValidScalar(typeof(T).GetTypeInfo());
       TypeInfo typeInfo = typeof(T).GetTypeInfo();
       var allowNullable = ReflectionSerializerVerifier.CanBeNull(typeInfo);
 
-      var memberInfos = SerializerReflectionUtil.GetBindableFields(typeInfo);
+      var memberInfos = SerializerReflectionUtil.GetSerializableFields(typeInfo);
       var memberSetters = memberInfos.Select(ReflectionUtil.GetSetter).ToArray();
       var memberGetters = memberInfos.Select(ReflectionUtil.GetGetter).ToArray();
 

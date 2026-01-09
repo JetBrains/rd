@@ -2,7 +2,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Collections.Viewable;
+using JetBrains.Core;
 using JetBrains.Diagnostics;
+using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
 using JetBrains.Rd.Tasks;
 using NUnit.Framework;
@@ -58,8 +60,8 @@ namespace Test.RdFramework.Reflection
     [RdRpc] public interface IInvalid7 { event Action<string> Event; }
     [RdRpc] public interface IInvalid8 { string X { set; } }
     [RdRpc] public interface IInvalid9 { string X { get; set; } }
-    public interface IInvalid10 {  } // no RdRpcAttribute
     [RdRpc] public interface IInvalid11 { void M(Action x); }
+    [RdRpc] public interface IInvalid12 { RdCall<Lifetime, Unit> Call { get; } }
 
 
     private bool TestType<T>() where T : class
@@ -85,7 +87,6 @@ namespace Test.RdFramework.Reflection
     [Test] public void TestInvalid7() { Assert.IsTrue(TestType<IInvalid7>()); }
     [Test] public void TestInvalid8() { Assert.IsTrue(TestType<IInvalid8>()); }
     [Test] public void TestInvalid9() { Assert.IsTrue(TestType<IInvalid9>()); }
-    [Test] public void TestInvalid10() { Assert.IsTrue(TestType<IInvalid10>()); }
     [Test] public void TestInvalid11() { Assert.IsTrue(TestType<IInvalid11>()); }
 
 
