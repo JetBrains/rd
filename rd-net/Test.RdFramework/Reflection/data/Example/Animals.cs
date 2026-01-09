@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using JetBrains.Annotations;
 using JetBrains.Collections.Viewable;
 using JetBrains.Rd.Reflection;
@@ -17,6 +18,8 @@ namespace Test.RdFramework.Reflection
     /// Arbitrary data without [NonSerialized] will be serialized only once at the moment of passing to the other side.
     /// </summary>
     [CanBeNull] public string[] arrays2;
+    
+    [CanBeNull] public IPolymorphicScalar scalar;
 
     /// <summary>
     /// Nested RdModel should work
@@ -35,6 +38,15 @@ namespace Test.RdFramework.Reflection
 
   [RdModel]
   public class Mammal : Animal
+  {
+  }
+
+  public interface IPolymorphicScalar
+  {
+
+  }
+
+  public class Scalar : IPolymorphicScalar
   {
   }
 }

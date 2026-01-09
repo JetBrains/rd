@@ -136,7 +136,6 @@ namespace JetBrains.Rd.Reflection
       }
 
       var typeInfo = type.GetTypeInfo();
-      ReflectionSerializerVerifier.AssertEitherExtModelAttribute(typeInfo);
       var implementingType = ReflectionSerializerVerifier.GetImplementingType(typeInfo);
       if (Mode.IsAssertion) Assertion.Assert(typeof(RdBindableBase).GetTypeInfo().IsAssignableFrom(implementingType),
         $"Unable to activate {type.FullName}: type should be {nameof(RdBindableBase)}");
@@ -177,9 +176,8 @@ namespace JetBrains.Rd.Reflection
       if (ReflectionSerializerVerifier.HasRdExtAttribute(instance.GetType().GetTypeInfo()))
         ReflectionSerializerVerifier.AssertValidRdExt(typeInfo);
 
-      foreach (var mi in SerializerReflectionUtil.GetBindableFields(typeInfo))
+      foreach (var mi in SerializerReflectionUtil.GetSerializableFields(typeInfo))
       {
-        ReflectionSerializerVerifier.AssertMemberDeclaration(mi);
         var currentValue = ReflectionUtil.GetGetter(mi)(instance);
         if (currentValue == null)
         {

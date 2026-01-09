@@ -18,57 +18,6 @@ using static JetBrains.Rd.Reflection.ReflectionSerializerVerifier;
 
 namespace JetBrains.Rd.Reflection
 {
-  /**
-    <summary>
-    Struct, Aggregate, ImmutableList are not supported.
-
-    This enbf-like scheme can only be used to understand basic concepts and terms, there is no
-    any strong semantics behind several leaf rules.
-    <code>
-     //  RdBasic, may have inexact mapping to C# types.
-     IType ::= IBindable | IScalar
-     Bindable ::= NullableBindable | Array[Bindable] | ImmutableListBindable | Class
-
-     IScalar           ::= NullableScalar | NonNullableScalar
-     NullableScalar    ::= Maybe[NonNullableScalar]
-     NonNullableScalar ::= List[IScalar] | Array[IScalar] | PredefinedType | Struct
-
-     NonNullableBindable ::= Array[Bindable] | IReadOnlyList[Bindable] | Class
-     NonNullable::= NonNullableScalar | NonNullableBindable
-
-     FieldType ::=  IScalar|IType|Aggregate
-
-     RdProperty ::= RdProperty[FieldType]
-     RdSet      ::= RdSet[INonNullableScalar]
-     RdMap      ::= RdMap[INonNullableScalar, INonNullable]
-     RdCall     ::= RdCall[IScalar, IScalar]
-     RdSignal   ::= RdSignal[IScalar]
-
-     // C# declarations, [ and ] mean &lt; &gt;.
-     FieldDeclaration[T] ::= C#(public readonly? T identifier)
-     PropertyDeclaration[T] ::= C#(public T identifier { get; })                   |
-																C#(public T identifier { get; private set; })
-																// etc.
-																//
-     PropOrFieldDeclaration[T] ::= FieldDeclaration[T] || PropertyDeclaration[T]
-     EnumDeclaration ::= C#(Enum[enum_const*])
-     // Not supported. No RdGenerator analogue.
-     // StructDeclaration ::= C#(struct field* )
-
-     Member ::= RdSignal | RdProperty| RdList | RdSet | RdMap | RdModel | RdCall
-     Declaration ::= BindableDeclaration | Struct | Enum | RdExtDeclaration
-     BindableDeclaration ::= TopLevel | Class
-
-     MemberDeclaration ::= PropOrFieldDeclaration[Member]
-     RdModelMemberDeclaration ::= PropOrFieldDeclaration[Member|FieldType]
-
-     RdModelDeclaration ::= C#([RdModel] class {RdModelMemberDeclaration*}) | EnumDeclaration | ValueTuple[FieldType{1,7}]
-     RdExtDeclaration ::= C#([RdExt] class {MemberDeclaration}* )
-
-     ROOT ::= RdModelDeclaration ROOT | RdExtDeclaration ROOT | Nothing
-    </code>
-    </summary>
-  **/
   public static class ReflectionSerializerVerifier
   {
     private static readonly HashSet<Type> ourPrimitiveTypes = new HashSet<Type>()
@@ -111,14 +60,6 @@ namespace JetBrains.Rd.Reflection
       return ourPrimitiveTypes.Contains(typeInfo);
     }
 
-    public static bool IsModelMemberDeclaration(MemberInfo memberInfo)
-    {
-      var returnType = ReflectionUtil.GetReturnType(memberInfo);
-      var typeInfo = returnType.GetTypeInfo();
-
-      return IsFieldType(typeInfo) || IsMemberType(typeInfo);
-    }
-
     public static bool CanBeNull(Type type)
     {
       var returnType = type;
@@ -129,11 +70,6 @@ namespace JetBrains.Rd.Reflection
 
       if (returnTypeInfo.IsValueType)
         return false;
-/*
-      foreach (var attribute in memberInfo.GetCustomAttributes(false))
-        if (attribute is CanBeNullAttribute)
-          return true;
-*/
 
       return true;
     }
@@ -164,56 +100,9 @@ namespace JetBrains.Rd.Reflection
              filter(typeInfo.GetGenericArguments()[0]);
     }
 
-    public static bool IsMemberDeclaration(MemberInfo memberInfo)
-    {
-      var returnType = ReflectionUtil.GetReturnType(memberInfo);
-      var typeInfo = returnType.GetTypeInfo();
-      return IsMemberType(typeInfo);
-    }
-
-    public static bool IsMemberType(TypeInfo typeInfo)
-    {
-      if (typeInfo.IsGenericType)
-      {
-        var implementingType = GetImplementingType(typeInfo);
-        var genericDefinition = implementingType.GetGenericTypeDefinition();
-
-        var arguments = implementingType.GetGenericArguments();
-        return genericDefinition == typeof(RdSignal<>) ||
-               genericDefinition == typeof(RdProperty<>) ||
-               genericDefinition == typeof(RdList<>) ||
-               genericDefinition == typeof(RdSet<>) ||
-               genericDefinition == typeof(RdMap<,>) ||                          // TResponse can be LiveModel
-               (genericDefinition == typeof(RdCall<,>) && IsScalar(arguments[0]) /*&& IsScalar(arguments[1])*/) ||
-               // Custom classes support
-               (typeInfo.IsClass && typeInfo.IsSealed && typeof(IRdBindable).IsAssignableFrom(typeInfo));
-      }
-
-      if (IsScalar(typeInfo))
-        return true;
-
-      var hasRdExt = typeInfo.GetCustomAttribute<RdExtAttribute>() != null;
-      if (hasRdExt)
-        return true;
-
-      var hasRdModel = typeInfo.GetCustomAttribute<RdModelAttribute>() != null;
-      if (hasRdModel)
-        return true;
-
-      return false;
-    }
-
     public static bool IsScalar(Type type)
     {
       return !typeof(IRdBindable).IsAssignableFrom(type);
-    }
-
-    public static void AssertEitherExtModelAttribute(TypeInfo type)
-    {
-      if (Mode.IsAssertion)
-      {
-        Assertion.Assert(HasRdExtAttribute(type) ^ HasRdModelAttribute(type), $"Invalid RdModel {type.ToString(true)}: expected to have only one of {nameof(RdModelAttribute)} or {nameof(RdExtAttribute)}.");
-      }
     }
 
     public static void AssertRoot(TypeInfo type)
@@ -223,15 +112,12 @@ namespace JetBrains.Rd.Reflection
 
       if (HasRdExtAttribute(type))
       {
-        AssertEitherExtModelAttribute(type);
         AssertValidRdExt(type);
         return;
       }
 
       if (HasRdModelAttribute(type))
       {
-        AssertEitherExtModelAttribute(type);
-        AssertValidRdModel(type);
         return;
       }
 
@@ -242,7 +128,7 @@ namespace JetBrains.Rd.Reflection
       }
 
       // Generated from DSL models
-      if (typeof(RdBindableBase).IsAssignableFrom(type) && BuiltInSerializers.HasBuiltInFields(type))
+      if (typeof(IRdBindable).IsAssignableFrom(type) && BuiltInSerializers.HasBuiltInFields(type))
       {
         return;
       }
@@ -280,12 +166,7 @@ namespace JetBrains.Rd.Reflection
       // commented sealed check to avoid annoying colleagues.
       // Assertion.Assert(type.IsSealed, $"Error in {type.ToString(true)} model: RdModels must be sealed.");
 
-      var extMembers = SerializerReflectionUtil.GetBindableFields(type);
-      foreach (var member in extMembers)
-      {
-        AssertMemberDeclaration(member);
-      }
-
+      var extMembers = SerializerReflectionUtil.GetSerializableFields(type);
       var rpcInterface = GetRpcInterface(type);
       if (rpcInterface != null)
       {
@@ -310,37 +191,6 @@ namespace JetBrains.Rd.Reflection
       }
     }
 
-    public static void AssertMemberDeclaration(MemberInfo member)
-    {
-      if (!Mode.IsAssertion)
-        return;
-
-      var isMember = IsMemberDeclaration(member);
-      Assertion.Assert(isMember,
-        $"Error in {member.DeclaringType?.ToString(true)}: model: member {member.Name} " +
-        $"can't be {ReflectionUtil.GetReturnType(member)} type, " +
-        "only (RdProperty | RdList | RdSet | RdMap | RdModel | RdCall | custom sealed bindable types) allowed in RdModel or RdExt!");
-    }
-
-    public static void AssertValidRdModel(TypeInfo type)
-    {
-      if (!Mode.IsAssertion)
-        return;
-
-      var isDataModel = HasRdModelAttribute(type);
-      Assertion.Assert(isDataModel, $"Error in {type.ToString(true)} model: no {nameof(RdModelAttribute)} attribute specified");
-      Assertion.Assert(typeof(RdReflectionBindableBase).GetTypeInfo().IsAssignableFrom(type.AsType()), $"Error in {type.ToString(true)} model: should be inherited from {nameof(RdReflectionBindableBase)}");
-
-      // No way to prevent serialization errors for built in serializers, just skip for now
-      if (BuiltInSerializers.Has(type))
-        return;
-
-      foreach (var member in SerializerReflectionUtil.GetBindableFields(type))
-      {
-        AssertDataMemberDeclaration(member);
-      }
-    }
-
     public static bool HasRdModelAttribute(TypeInfo type)
     {
       var modelAttribute = type.GetCustomAttribute<RdModelAttribute>();
@@ -348,10 +198,15 @@ namespace JetBrains.Rd.Reflection
       return isDataModel;
     }
 
-    private static void AssertValidScalar(TypeInfo type)
+    public static void AssertValidScalar(TypeInfo type)
     {
       if (!Mode.IsAssertion)
         return;
+
+      if (typeof(Delegate).IsAssignableFrom(type))
+      {
+        Assertion.Fail("Delegates cannot be serialized.");
+      }
 
       if (HasRdModelAttribute(type) || HasRdExtAttribute(type))
       {
@@ -367,19 +222,6 @@ namespace JetBrains.Rd.Reflection
           $" Check requirements in {nameof(ReflectionSerializerVerifier)}.{nameof(IsFieldType)}");
       }
     }
-
-    public static void AssertDataMemberDeclaration(MemberInfo member)
-    {
-      if (!Mode.IsAssertion)
-        return;
-
-      var isMember = IsModelMemberDeclaration(member);
-      Assertion.Assert(isMember,
-        $"Error in {member.DeclaringType?.ToString(true)}: data model: member {member.Name} " +
-        $"can't be {ReflectionUtil.GetReturnType(member)} type, " +
-        $"can be only DataMemberDeclaration, see {nameof(ReflectionSerializerVerifier)} XMLDoc for more details.");
-    }
-
 
     public static Type GetImplementingType(TypeInfo typeInfo)
     {

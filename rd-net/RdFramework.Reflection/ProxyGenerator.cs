@@ -456,6 +456,7 @@ namespace JetBrains.Rd.Reflection
         {
           if (i != lifetimeArgument)
           {
+            ReflectionSerializerVerifier.AssertValidScalar(parameters[i].ParameterType.GetTypeInfo());
             // load args
             LoadArgument(ilgen, i + 1 /* #0 is `self/this` argument */);
           }
