@@ -33,3 +33,7 @@ jobs:
       with:
         name: tests-log.${{ runner.os }}
         path: "**/reports/*"
+
+    - name: Check Publishing
+      run: ./gradlew publishToMavenLocal
+      
