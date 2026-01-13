@@ -192,12 +192,26 @@ namespace JetBrains.Rd.Tasks
       if (proto == null || !TryGetSerializationContext(out var serializationContext))
         return new WiredRdTask<TReq, TRes>.CallSite(Lifetime.Terminated, this, RdId.Nil, SynchronousScheduler.Instance);
 
+      var taskId = proto.Identities.Next(RdId.Nil);
+
       // Short-circuit of calls on local wires. On a local protocol with stub wire the handler will
       // never be executed, so we call it right now explicitly in sync mode.
       if (proto.Wire.IsStub)
-        return RunHandler(request, requestLifetime, moniker: this);
-
-      var taskId = proto.Identities.Next(RdId.Nil);
+      {
+        var t = RunHandler(request, requestLifetime, moniker: this);
+        var intersectedDef = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
+        t.Result.AdviseOnce(intersectedDef.Lifetime, taskRes =>
+        {
+          if (taskRes.Status != RdTaskStatus.Success) return;
+          var potentiallyBindable = taskRes.Result;
+          if (potentiallyBindable.IsBindable())
+          {
+            potentiallyBindable.PreBindPolymorphic(intersectedDef.Lifetime, this, taskId.ToString());
+            potentiallyBindable.BindPolymorphic();
+          }
+        });
+        return t;
+      }
 
       var task = CreateCallSite(requestLifetime, (lifetime) => new WiredRdTask<TReq, TRes>.CallSite(lifetime, this, taskId, scheduler ?? proto.Scheduler));
       
