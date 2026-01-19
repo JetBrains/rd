@@ -194,26 +194,17 @@ namespace JetBrains.Rd.Tasks
 
       var taskId = proto.Identities.Next(RdId.Nil);
 
-      // Short-circuit of calls on local wires. On a local protocol with stub wire the handler will
-      // never be executed, so we call it right now explicitly in sync mode.
+      var task = CreateCallSite(requestLifetime, (lifetime) => new WiredRdTask<TReq, TRes>.CallSite(lifetime, this, taskId, scheduler ?? proto.Scheduler));
+
       if (proto.Wire.IsStub)
       {
-        var t = RunHandler(request, requestLifetime, moniker: this);
-        var intersectedDef = Lifetime.DefineIntersection(requestLifetime, myBindLifetime);
-        t.Result.AdviseOnce(intersectedDef.Lifetime, taskRes =>
+        var taskResult = RunHandler(request, task.Lifetime, moniker: this).Result;
+        taskResult.AdviseOnce(requestLifetime, result =>
         {
-          if (taskRes.Status != RdTaskStatus.Success) return;
-          var potentiallyBindable = taskRes.Result;
-          if (potentiallyBindable.IsBindable())
-          {
-            potentiallyBindable.PreBindPolymorphic(intersectedDef.Lifetime, this, taskId.ToString());
-            potentiallyBindable.BindPolymorphic();
-          }
+          task.OnResultReceived(result, new SynchronousDispatchHelper(RdId, requestLifetime));
         });
-        return t;
+        return task;
       }
-
-      var task = CreateCallSite(requestLifetime, (lifetime) => new WiredRdTask<TReq, TRes>.CallSite(lifetime, this, taskId, scheduler ?? proto.Scheduler));
       
       using var cookie = task.Lifetime.UsingExecuteIfAlive();
       if (cookie.Succeed)
@@ -247,6 +238,19 @@ namespace JetBrains.Rd.Tasks
       });
 
       return task;
+    }
+    
+    private class SynchronousDispatchHelper : IRdWireableDispatchHelper
+    {
+      public SynchronousDispatchHelper(RdId rdId, Lifetime lifetime)
+      {
+        RdId = rdId;
+        Lifetime = lifetime;
+      }
+
+      public RdId RdId { get; }
+      public Lifetime Lifetime { get; }
+      public void Dispatch(IScheduler? scheduler, Action action) => action();
     }
 
     public static RdCall<TReq, TRes> Read(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
