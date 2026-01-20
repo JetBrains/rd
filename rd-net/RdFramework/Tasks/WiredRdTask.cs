@@ -93,6 +93,11 @@ namespace JetBrains.Rd.Tasks
       {
         // we are at call side, so listening no response and bind it if it's bindable
         var taskResult = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, ctx, reader);
+        OnResultReceived(taskResult, dispatchHelper);
+      }
+
+      internal void OnResultReceived(RdTaskResult<TRes> taskResult, IRdWireableDispatchHelper dispatchHelper)
+      {
         Trace(RdReactiveBase.ourLogReceived, "received response", taskResult);
 
         var maybe = ResultInternal.Maybe;

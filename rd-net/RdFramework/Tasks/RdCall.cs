@@ -192,14 +192,19 @@ namespace JetBrains.Rd.Tasks
       if (proto == null || !TryGetSerializationContext(out var serializationContext))
         return new WiredRdTask<TReq, TRes>.CallSite(Lifetime.Terminated, this, RdId.Nil, SynchronousScheduler.Instance);
 
-      // Short-circuit of calls on local wires. On a local protocol with stub wire the handler will
-      // never be executed, so we call it right now explicitly in sync mode.
-      if (proto.Wire.IsStub)
-        return RunHandler(request, requestLifetime, moniker: this);
-
       var taskId = proto.Identities.Next(RdId.Nil);
 
       var task = CreateCallSite(requestLifetime, (lifetime) => new WiredRdTask<TReq, TRes>.CallSite(lifetime, this, taskId, scheduler ?? proto.Scheduler));
+
+      if (proto.Wire.IsStub)
+      {
+        var taskResult = RunHandler(request, task.Lifetime, moniker: this).Result;
+        taskResult.AdviseOnce(requestLifetime, result =>
+        {
+          task.OnResultReceived(result, new SynchronousDispatchHelper(RdId, requestLifetime));
+        });
+        return task;
+      }
       
       using var cookie = task.Lifetime.UsingExecuteIfAlive();
       if (cookie.Succeed)
@@ -233,6 +238,19 @@ namespace JetBrains.Rd.Tasks
       });
 
       return task;
+    }
+    
+    private class SynchronousDispatchHelper : IRdWireableDispatchHelper
+    {
+      public SynchronousDispatchHelper(RdId rdId, Lifetime lifetime)
+      {
+        RdId = rdId;
+        Lifetime = lifetime;
+      }
+
+      public RdId RdId { get; }
+      public Lifetime Lifetime { get; }
+      public void Dispatch(IScheduler? scheduler, Action action) => action();
     }
 
     public static RdCall<TReq, TRes> Read(SerializationCtx ctx, UnsafeReader reader, CtxReadDelegate<TReq> readRequest, CtxWriteDelegate<TReq> writeRequest, CtxReadDelegate<TRes> readResponse, CtxWriteDelegate<TRes> writeResponse)
