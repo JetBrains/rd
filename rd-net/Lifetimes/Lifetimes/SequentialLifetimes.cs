@@ -71,8 +71,15 @@ namespace JetBrains.Lifetimes
       TrySetNewAndTerminateOld(LifetimeDefinition.Terminated);
     }
 
-    // For sequential usage (say single-threaded or actor-like) usage only.
+    /// For sequential usage (say single-threaded or actor-like) usage only.
     public bool IsCurrentTerminated => myCurrentDef.Status == LifetimeStatus.Terminated;
+
+    /// For sequential usage (say single-threaded or actor-like) usage only.
+    public bool IsCurrentAlive => myCurrentDef.Status == LifetimeStatus.Alive;
+
+    /// For sequential usage (say single-threaded or actor-like) usage only.
+    public LifetimeStatus CurrentStatus => myCurrentDef.Status;
+
 
     /// <summary>
     /// Atomically, assigns the new lifetime and terminates the old one.
