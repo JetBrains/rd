@@ -201,7 +201,7 @@ namespace JetBrains.Rd.Tasks
         var taskResult = RunHandler(request, task.Lifetime, moniker: this).Result;
         taskResult.AdviseOnce(requestLifetime, result =>
         {
-          task.OnResultReceived(result, new SynchronousDispatchHelper(RdId, requestLifetime));
+          task.OnResultReceived(proto, result, new SynchronousDispatchHelper(RdId, requestLifetime), true);
         });
         return task;
       }

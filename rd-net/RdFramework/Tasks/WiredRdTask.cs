@@ -93,10 +93,10 @@ namespace JetBrains.Rd.Tasks
       {
         // we are at call side, so listening no response and bind it if it's bindable
         var taskResult = RdTaskResult<TRes>.Read(myCall.ReadResponseDelegate, ctx, reader);
-        OnResultReceived(taskResult, dispatchHelper);
+        OnResultReceived(proto, taskResult, dispatchHelper, false);
       }
 
-      internal void OnResultReceived(RdTaskResult<TRes> taskResult, IRdWireableDispatchHelper dispatchHelper)
+      internal void OnResultReceived(IProtocol? proto, RdTaskResult<TRes> taskResult, IRdWireableDispatchHelper dispatchHelper, bool isLocalWire)
       {
         Trace(RdReactiveBase.ourLogReceived, "received response", taskResult);
 
@@ -110,6 +110,12 @@ namespace JetBrains.Rd.Tasks
         var potentiallyBindable = taskResult.Result;
         if (potentiallyBindable.IsBindable())
         {
+          if (proto != null && isLocalWire)
+          {
+            // we don't have the endpoint side, since we are on stub wire, so identify bindable result here
+            potentiallyBindable.IdentifyPolymorphic(proto.Identities, myCall.RdId.Mix(RdId.ToString()));
+          }
+          
           var definition = new LifetimeDefinition { Id = potentiallyBindable };
 
           try
