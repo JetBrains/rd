@@ -48,6 +48,7 @@ public class RdCallStubTest : RdFrameworkTestBase
     var prop = call.Start(lf, 123).AsTask().GetOrWait(lf);
     Assert.AreEqual(prop.Value, "123");
     Assert.True(prop.IsBound);
+    Assert.False(prop.RdId.IsNil);
     ld.Terminate();
     Assert.False(prop.IsBound);
   }
