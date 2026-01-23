@@ -201,7 +201,13 @@ namespace JetBrains.Rd.Tasks
         var taskResult = RunHandler(request, task.Lifetime, moniker: this).Result;
         taskResult.AdviseOnce(requestLifetime, result =>
         {
-          task.OnResultReceived(proto, result, new SynchronousDispatchHelper(RdId, requestLifetime), true);
+          if (result.Result.IsBindable())
+          {
+            // we mock the endpoint side, since we are on stub wire, so identify bindable result here
+            result.Result.IdentifyPolymorphic(proto.Identities, RdId.Mix(taskId.ToString()));
+          }
+          
+          task.OnResultReceived(result, new SynchronousDispatchHelper(taskId, requestLifetime));
         });
         return task;
       }
