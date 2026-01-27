@@ -63,21 +63,23 @@ namespace JetBrains.Collections.Viewable
         
         public virtual void Fire(T value)
         {
-            foreach (var l in myListeners)
-            {
-              if (!l.Lifetime.IsAlive) 
-                continue;
+          var snapshot = myListeners.GetSnapshot();
+          for (var index = 0; index < snapshot.Size; index++)
+          {
+            var l = snapshot.Items[index];
+            if (l.Value is not { } action)
+              continue;
 
-              try
-              {
-                l.Value?.Invoke(value);
-              }
-              catch (Exception e)
-              {
-                //todo suppress operation canceled
-                Log.Root.Error(e);
-              }
+            try
+            {
+              action.Invoke(value);
             }
+            catch (Exception e)
+            {
+              //todo suppress operation canceled
+              Log.Root.Error(e);
+            }
+          }
         }
 
         public virtual void Advise(Lifetime lifetime, Action<T> handler)
