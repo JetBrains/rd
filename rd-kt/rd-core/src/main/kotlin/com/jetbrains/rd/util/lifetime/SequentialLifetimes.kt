@@ -1,8 +1,8 @@
 package com.jetbrains.rd.util.lifetime
 
-import com.jetbrains.rd.util.AtomicReference
 import com.jetbrains.rd.util.Logger
 import com.jetbrains.rd.util.error
+import java.util.concurrent.atomic.AtomicReference
 
 open class SequentialLifetimes(private val parentLifetime: Lifetime) {
     private val currentDef = AtomicReference(LifetimeDefinition.Terminated)

@@ -1,14 +1,17 @@
 package com.jetbrains.rd.util.test.cases
 
-import com.jetbrains.rd.util.AtomicInteger
-import com.jetbrains.rd.util.Closeable
 import com.jetbrains.rd.util.ILoggerFactory
 import com.jetbrains.rd.util.Statics
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.TestSingleThreadScheduler
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.io.Closeable
+import java.util.concurrent.atomic.AtomicInteger
 
 
 class BackgroundSchedulerTest {

@@ -1,21 +1,22 @@
 package com.jetbrains.rd.framework.test.cases
 
 import com.jetbrains.rd.framework.util.*
-import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.assert
+import com.jetbrains.rd.util.error
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.LifetimeStatus
 import com.jetbrains.rd.util.lifetime.isAlive
 import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.Signal
+import com.jetbrains.rd.util.spinUntil
 import com.jetbrains.rd.util.threading.CompoundThrowable
 import com.jetbrains.rd.util.threading.coroutines.RdCoroutineScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Runnable
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 

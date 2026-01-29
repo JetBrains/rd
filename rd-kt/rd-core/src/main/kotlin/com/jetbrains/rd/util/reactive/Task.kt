@@ -1,6 +1,6 @@
 package com.jetbrains.rd.util.reactive
 
-import com.jetbrains.rd.util.*
+import java.util.concurrent.CancellationException
 
 sealed class TaskResult<out T> {
 

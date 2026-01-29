@@ -1,10 +1,14 @@
 package com.jetbrains.rd.util.test.framework
 
-import com.jetbrains.rd.util.*
+import com.jetbrains.rd.util.ILoggerFactory
+import com.jetbrains.rd.util.Statics
+import com.jetbrains.rd.util.error
+import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 import com.jetbrains.rd.util.log.ErrorAccumulatorLoggerFactory
 import com.jetbrains.rd.util.threading.Linearization
+import java.io.Closeable
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 
