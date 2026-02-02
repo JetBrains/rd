@@ -69,6 +69,12 @@ class ClassModel private constructor(
     val fff: @org.jetbrains.annotations.Nls String = "123",
     private val _ppp: RdProperty<@org.jetbrains.annotations.Nls String>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeString(fff)
+        RdProperty.write(ctx, buffer, _ppp)
+    }
     //companion
     
     companion object : IMarshaller<ClassModel> {
@@ -84,9 +90,7 @@ class ClassModel private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ClassModel)  {
-            value.rdid.write(buffer)
-            buffer.writeString(value.fff)
-            RdProperty.write(ctx, buffer, value._ppp)
+            value.write(ctx, buffer)
         }
         
         private val __StringSerializer = FrameworkMarshallers.String
