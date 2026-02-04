@@ -67,7 +67,7 @@ namespace org.example
     
     public ExampleRootNova(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, RdId.Root.Mix("ExampleRootNova"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "ExampleRootNova"));
       this.BindTopLevel(lifetime, protocol, "ExampleRootNova");
     }
     

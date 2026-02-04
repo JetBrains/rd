@@ -156,13 +156,33 @@ interface ISerializers {
 
 /**
  * Generates unique identifiers for objects in an object graph.
+ *
+ * Two types of IDs are supported:
+ * - Dynamic IDs: Generated for entities created at runtime (via [next])
+ * - Stable IDs: Hash-based IDs for statically known entities like extensions (via [mix])
  */
 interface IIdentities {
     val dynamicKind : IdKind
+
     /**
-     * Generates the next unique identifier.
+     * Generates the next unique dynamic identifier for a runtime-created entity.
      */
     fun next(parent: RdId): RdId
+
+    /**
+     * Creates a stable identifier by mixing the parent ID with a string key.
+     */
+    fun mix(rdId: RdId, tail: String): RdId
+
+    /**
+     * Creates a stable identifier by mixing the parent ID with an integer key.
+     */
+    fun mix(rdId: RdId, tail: Int): RdId
+
+    /**
+     * Creates a stable identifier by mixing the parent ID with a long key.
+     */
+    fun mix(rdId: RdId, tail: Long): RdId
 }
 
 /**

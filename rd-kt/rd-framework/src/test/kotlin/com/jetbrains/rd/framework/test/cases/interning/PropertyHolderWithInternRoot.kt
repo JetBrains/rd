@@ -26,7 +26,7 @@ class PropertyHolderWithInternRoot<T : Any>(val property: RdOptionalProperty<T>,
     }
 
     override fun identify(identities: IIdentities, id: RdId) {
-        property.identify(identities, id.mix("propertyHolderWithInternRoot"))
+        property.identify(identities, identities.mix(id, "propertyHolderWithInternRoot"))
         super.identify(identities, id)
     }
 

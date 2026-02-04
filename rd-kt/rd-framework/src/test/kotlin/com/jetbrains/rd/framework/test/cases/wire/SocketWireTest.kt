@@ -35,21 +35,21 @@ class SocketWireTest : TestBase() {
         internal const val top = "top"
 
         internal fun server(lifetime: Lifetime, port: Int? = null): Protocol {
-            return Protocol("Server", Serializers(), Identities(IdKind.Server), TestScheduler,
+            return Protocol("Server", Serializers(), SequentialIdentities(IdKind.Server), TestScheduler,
                 SocketWire.Server(lifetime, TestScheduler, port, "TestServer"), lifetime
             )
         }
 
 
         internal fun client(lifetime: Lifetime, serverProtocol: Protocol): Protocol {
-            return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
+            return Protocol("Client", Serializers(), SequentialIdentities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime,
                     TestScheduler, (serverProtocol.wire as SocketWire.Server).port, "TestClient"), lifetime
             )
         }
 
         internal fun client(lifetime: Lifetime, port: Int): Protocol {
-            return Protocol("Client", Serializers(), Identities(IdKind.Client), TestScheduler,
+            return Protocol("Client", Serializers(), SequentialIdentities(IdKind.Client), TestScheduler,
                 SocketWire.Client(lifetime, TestScheduler, port, "TestClient"), lifetime
             )
         }

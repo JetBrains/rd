@@ -46,7 +46,7 @@ public class RdCollectionsTest : RdFrameworkTestBase
 
     void Register<T>(CtxReadDelegate<T> read, CtxWriteDelegate<T> write)
     {
-      serializers.Register(read, write, RdId.DefineByFqn(typeof(T)).Value);
+      serializers.Register(read, write, RdIdUtil.DefineByFqn(typeof(T)).Value);
     }
   }
   

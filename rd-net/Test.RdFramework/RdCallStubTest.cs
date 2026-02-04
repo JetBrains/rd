@@ -29,7 +29,7 @@ public class RdCallStubTest : RdFrameworkTestBase
   {
     var scheduler = SynchronousScheduler.Instance;
     var wire = new StubWire();
-    var protocol = new Protocol("TestProtocol", new Serializers(), new Identities(IdKind.Server), scheduler, wire, LifetimeDefinition.Lifetime);
+    var protocol = new Protocol("TestProtocol", new Serializers(), new SequentialIdentities(IdKind.Server), scheduler, wire, LifetimeDefinition.Lifetime);
     wire.Contexts = protocol.Contexts;
     var call = NewRdCall<int, RdProperty<string>>();
     using (AllowBindCookie.Create())

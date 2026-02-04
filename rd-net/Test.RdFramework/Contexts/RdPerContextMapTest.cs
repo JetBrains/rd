@@ -230,7 +230,7 @@ namespace Test.RdFramework.Contexts
 
       using (key.UpdateValue(server1Cid))
       {
-        ServerProtocol.Wire.Send(RdId.Nil.Mix(10), _ => { });
+        ServerProtocol.Wire.Send(ServerProtocol.Identities.Mix(RdId.Nil, 10), _ => { });
       }
       
       Assert.True(ServerProtocol.Contexts.GetValueSet(key).Contains(server1Cid));

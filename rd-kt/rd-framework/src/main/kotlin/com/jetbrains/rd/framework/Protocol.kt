@@ -57,8 +57,8 @@ class Protocol internal constructor(
     }
 
     override val protocol: IProtocol get() = this
-    override val serializationContext: SerializationCtx = parentProtocol?.serializationContext ?: SerializationCtx(serializers, mapOf("Protocol" to InternRoot<Any>().also {
-        it.rdid = RdId.Null.mix("ProtocolInternRoot")
+    override val serializationContext: SerializationCtx = parentProtocol?.serializationContext ?: SerializationCtx(serializers, identity, mapOf("Protocol" to InternRoot<Any>().also {
+        it.rdid = identity.mix(RdId.Null, "ProtocolInternRoot")
     }))
 
     override val contexts: ProtocolContexts = parentProtocol?.contexts ?: ProtocolContexts(serializationContext)
@@ -84,7 +84,7 @@ class Protocol internal constructor(
 
         if (parentProtocol?.contexts == null) {
             contexts.also {
-                it.rdid = RdId.Null.mix("ProtocolContextHandler")
+                it.rdid = identity.mix(RdId.Null, "ProtocolContextHandler")
                 AllowBindingCookie.allowBind {
                     it.bindTopLevel(lifetime, this, "ProtocolContextHandler")
                 }
@@ -92,7 +92,7 @@ class Protocol internal constructor(
         }
 
         extCreated = parentProtocol?.extCreated ?: Signal()
-        extConfirmation = parentExtConfirmation ?: createExtSignal().also { signal ->
+        extConfirmation = parentExtConfirmation ?: createExtSignal(identity).also { signal ->
             val protocolScheduler = scheduler
             signal.scheduler = (protocolScheduler as? ISchedulerWithBackground)?.backgroundScheduler ?: protocolScheduler
         }
@@ -130,7 +130,7 @@ class Protocol internal constructor(
                 val newExtension = create()
                 extensions[clazz] = newExtension
                 val declName = clazz.simpleName ?: error("Can't get simple name for class $clazz")
-                newExtension.identify(identity, RdId.Null.mix(declName))
+                newExtension.identify(identity, identity.mix(RdId.Null, declName))
                 newExtension.bindTopLevel(lifetime, this, declName)
                 newExtension
             }

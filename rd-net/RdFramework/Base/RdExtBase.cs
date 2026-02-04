@@ -60,7 +60,7 @@ if (!TryGetSerializationContext(out var serializationContext))
         () =>
         {
           var parentProtocolImpl = (Protocol)parentProto;
-          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal());
+          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal(parentProto.Identities));
           myExtProtocol = proto;
 
           //protocol must be set first to allow bindable bind to it

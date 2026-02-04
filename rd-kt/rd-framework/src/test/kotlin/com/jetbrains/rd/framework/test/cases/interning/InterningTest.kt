@@ -326,7 +326,7 @@ class InterningTest: RdFrameworkTestBase() {
 
 
     private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
-        identify(protocol.identity, RdId.Null.mix(id))
+        identify(protocol.identity, protocol.identity.mix(RdId.Null, id))
         bindTopLevel(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
         return this
     }

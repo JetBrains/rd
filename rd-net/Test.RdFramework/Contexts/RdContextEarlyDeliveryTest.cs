@@ -97,7 +97,7 @@ namespace Test.RdFramework.Contexts
     {
       var key = heavy ? TestKeyHeavy.Instance : (RdContext<string>) TestKeyLight.Instance;
       
-      var identities = new Identities(IdKind.Server);
+      var identities = new SequentialIdentities(IdKind.Server);
 
       var serverDispatcher = CreateScheduler();
       var clientDispatcher = CreateScheduler();

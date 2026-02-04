@@ -46,7 +46,7 @@ class RdPerContextMap<K: Any, V : RdBindableBase> private constructor(override v
             val value = (oldValue ?: valueFactory(master))
 
             contextValueLifetime.executeIfAlive {
-                value.withId(rdid.mix(contextValue.toString()))
+                value.withId(proto.identity.mix(rdid, contextValue.toString()))
                 value.preBind(contextValueLifetime, this, "[${contextValue}]")
             }
 

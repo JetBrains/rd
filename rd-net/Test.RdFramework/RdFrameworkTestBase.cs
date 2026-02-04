@@ -29,7 +29,7 @@ namespace Test.RdFramework
     {
       base.SetUp();
       
-      var identities = new Identities(IdKind.Server);
+      var identities = new SequentialIdentities(IdKind.Server);
 
       var serverDispatcher = CreateScheduler(true);
       var clientDispatcher = CreateScheduler(false);

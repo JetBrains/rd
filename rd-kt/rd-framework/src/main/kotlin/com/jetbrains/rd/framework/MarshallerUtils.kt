@@ -41,7 +41,7 @@ object RNameMarshaller {
     }
 }
 
-internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
+internal fun IRdDynamic.createExtSignal(identities: IIdentities): RdSignal<ExtCreationInfo> {
     val marshaller = create(ExtCreationInfo::class, { buffer ->
             val rName = RNameMarshaller.read(buffer)
             val rdId = buffer.readNullable { buffer.readRdId() }
@@ -58,6 +58,6 @@ internal fun IRdDynamic.createExtSignal(): RdSignal<ExtCreationInfo> {
         it.async = true
 
         val baseId = (this as? IRdWireable)?.rdid ?: RdId.Null
-        it.rdid = baseId.mix("ProtocolExtCreated")
+        it.rdid = identities.mix(baseId, "ProtocolExtCreated")
     }
 }

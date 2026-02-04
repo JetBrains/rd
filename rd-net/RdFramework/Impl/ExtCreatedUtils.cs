@@ -9,7 +9,7 @@ namespace JetBrains.Rd.Impl
 {
   public static class ExtCreatedUtils
   {
-    public static RdSignal<ExtCreationInfo> CreateExtSignal(this IRdDynamic @this)
+    public static RdSignal<ExtCreationInfo> CreateExtSignal(this IRdDynamic @this, IIdentities identities)
     {
       var signal = new RdSignal<ExtCreationInfo>(
         (ctx, reader) =>
@@ -27,7 +27,7 @@ namespace JetBrains.Rd.Impl
         }
       );
       var baseId = @this is IRdWireable wireable ? wireable.RdId : RdId.Nil;
-      signal.RdId = baseId.Mix(Protocol.ProtocolExtCreatedRdId);
+      signal.RdId = identities.Mix(baseId, Protocol.ProtocolExtCreatedRdId);
       signal.Async = true;
       return signal;
     }

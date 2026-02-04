@@ -67,7 +67,7 @@ namespace org.example
     
     public AsyncPrimitivesRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, RdId.Root.Mix("AsyncPrimitivesRoot"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "AsyncPrimitivesRoot"));
       this.BindTopLevel(lifetime, protocol, "AsyncPrimitivesRoot");
     }
     

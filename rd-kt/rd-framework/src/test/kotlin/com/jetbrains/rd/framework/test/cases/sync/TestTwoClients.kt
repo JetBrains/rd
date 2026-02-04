@@ -37,13 +37,13 @@ class TestTwoClients : TestBase() {
 
         val sp = mutableListOf<Protocol>()
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("${wire.id}.Protocol", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
+            val protocol = Protocol("${wire.id}.Protocol", Serializers(), SequentialIdentities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), SequentialIdentities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())

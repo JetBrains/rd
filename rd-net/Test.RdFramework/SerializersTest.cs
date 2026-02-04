@@ -14,7 +14,7 @@ namespace Test.RdFramework
     {
       var serializers = new Serializers();
       serializers.Register(MyTestObject.Read, MyTestObject.Write);
-      var serializationCtx = new SerializationCtx(serializers);
+      var serializationCtx = new SerializationCtx(serializers, new SequentialIdentities(IdKind.Client));
       var testObject = new MyTestObject("Monomorphic");
 
       byte[] data;
