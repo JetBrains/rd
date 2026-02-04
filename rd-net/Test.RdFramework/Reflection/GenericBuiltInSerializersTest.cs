@@ -1,5 +1,6 @@
 ﻿using System;
 using JetBrains.Rd;
+using JetBrains.Rd.Impl;
 using JetBrains.Serialization;
 using NUnit.Framework;
 
@@ -54,7 +55,7 @@ public unsafe class GenericBuiltInSerializersTest : RdReflectionTestBase
     var serializers = CFacade.Serializers;
     using var cookie = UnsafeWriter.NewThreadLocalWriter();
 
-    var serializationCtx = new SerializationCtx(serializers);
+    var serializationCtx = new SerializationCtx(serializers, new SequentialIdentities(IdKind.Client));
     serializers.Write(serializationCtx, cookie.Writer, originalType);
     var reader = UnsafeReader.CreateReader(cookie.Data, cookie.Count);
     return serializers.Read<T>(serializationCtx, reader);

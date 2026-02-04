@@ -76,7 +76,7 @@ abstract class RdExtBase : RdReactiveBase() {
                 ExtThreadingKind.AllowBackgroundCreation -> parentProtocol.scheduler
             }
 
-            val signal = createExtSignal()
+            val signal = createExtSignal(parentProtocol.identity)
             val proto = Protocol(parentProtocol.name, parentProtocol.serializers, parentProtocol.identity, scheduler, extWire, lifetime, parentProtocol, signal).also {
                 it.outOfSyncModels.flowInto(lifetime, parentProtocol.outOfSyncModels) { model -> model }
             }

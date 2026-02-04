@@ -9,8 +9,6 @@ import com.jetbrains.rd.util.Sync
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IAppendOnlyViewableConcurrentSet
-import com.jetbrains.rd.util.reactive.IMutableViewableSet
-import com.jetbrains.rd.util.reactive.IScheduler
 import com.jetbrains.rd.util.reactive.ViewableList
 import com.jetbrains.rd.util.reflection.threadLocal
 import com.jetbrains.rd.util.reflection.usingValue
@@ -40,7 +38,7 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
 
         Sync.lock(myOrderingsLock) {
             myHandlerOrder.view(lifetime) { handlerLifetime, _, handler ->
-                preBindHandler(handlerLifetime, handler, handler.context.key)
+                preBindHandler(handlerLifetime, handler, handler.context.key, proto)
             }
         }
 
@@ -88,10 +86,10 @@ class ProtocolContexts(val serializationCtx: SerializationCtx) : RdReactiveBase(
         }
     }
 
-    private fun preBindHandler(lifetime: Lifetime, handler: ISingleContextHandler<*>, key: String) {
+    private fun preBindHandler(lifetime: Lifetime, handler: ISingleContextHandler<*>, key: String, proto: IProtocol) {
         if (handler !is HeavySingleContextHandler<*>) return
 
-        handler.rdid = rdid.mix(key)
+        handler.rdid = proto.identity.mix(rdid, key)
         handler.preBind(lifetime, this, key)
     }
 

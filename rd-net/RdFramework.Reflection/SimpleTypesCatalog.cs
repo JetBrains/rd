@@ -21,7 +21,7 @@ namespace JetBrains.Rd.Reflection
       return null;
     }
 
-    public RdId GetByType(Type type) => RdId.DefineByFqn(type);
+    public RdId GetByType(Type type) => RdIdUtil.DefineByFqn(type);
 
     public void AddType(Type type)
     {
@@ -33,7 +33,7 @@ namespace JetBrains.Rd.Reflection
             Assertion.Assert(t == type, $"Unable to register {type.ToString(false)} with id: {predefinedId.Value}: this id already registered as {t.ToString(false)}");
           }
     */
-      myRdIdToTypeMapping[RdId.DefineByFqn(type)] = type;
+      myRdIdToTypeMapping[RdIdUtil.DefineByFqn(type)] = type;
     }
 
     public void Register<T>() => AddType(typeof(T));

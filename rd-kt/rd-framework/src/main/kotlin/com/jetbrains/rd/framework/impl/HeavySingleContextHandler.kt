@@ -31,10 +31,10 @@ internal class HeavySingleContextHandler<T : Any>(override val context: RdContex
     override fun preInit(lifetime: Lifetime, proto: IProtocol) {
         super.preInit(lifetime, proto)
 
-        protocolValueSet.rdid = rdid.mix("ValueSet")
+        protocolValueSet.rdid = proto.identity.mix(rdid, "ValueSet")
         protocolValueSet.preBind(lifetime, this, "ValueSet")
 
-        internRoot.rdid = rdid.mix("InternRoot")
+        internRoot.rdid = proto.identity.mix(rdid, "InternRoot")
         internRoot.preBind(lifetime, this, "InternRoot")
     }
 

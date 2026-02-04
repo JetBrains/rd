@@ -41,8 +41,8 @@ namespace JetBrains.Rd.Impl
     {
       base.PreInit(lifetime, proto);
 
-      myInternRoot.RdId = RdId.Mix("InternRoot");
-      myProtocolValueSet.RdId = RdId.Mix("ValueSet");
+      myInternRoot.RdId = proto.Identities.Mix(RdId, "InternRoot");;
+      myProtocolValueSet.RdId = proto.Identities.Mix(RdId, "ValueSet");
 
       myInternRoot.PreBind(lifetime, this, "InternRoot");
       myProtocolValueSet.PreBind(lifetime, this, "ValueSet");

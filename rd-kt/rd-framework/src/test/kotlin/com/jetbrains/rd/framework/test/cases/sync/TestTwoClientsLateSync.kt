@@ -44,13 +44,13 @@ class TestTwoClientsLateSync : TestBase() {
         val sp = mutableListOf<Protocol>()
         var spIdx = 0
         wireFactory.view(lifetime) { lf, wire ->
-            val protocol = Protocol("s[${spIdx++}]", Serializers(), Identities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
+            val protocol = Protocol("s[${spIdx++}]", Serializers(), SequentialIdentities(IdKind.Server), sc, wire, lf, SyncModelExt.ClientId)
             sp.addUnique(lf, protocol)
         }
 
 
         var cpIdx = 0
-        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), Identities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
+        val cpFunc = { Protocol("c[${cpIdx++}]", Serializers(), SequentialIdentities(IdKind.Client), sc, SocketWire.Client(lifetime, sc, port), lifetime, SyncModelExt.ClientId) }
 
         val cp = mutableListOf<Protocol>()
         cp.add(cpFunc())

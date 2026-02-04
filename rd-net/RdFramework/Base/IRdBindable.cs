@@ -245,7 +245,7 @@ namespace JetBrains.Rd.Base
       var i = 0;
       foreach (var x in items)
       {
-        (x as IRdBindable).IdentifyEx(ids, id.Mix(i++));
+        (x as IRdBindable).IdentifyEx(ids, ids.Mix(id, i++));
       }
     }
 

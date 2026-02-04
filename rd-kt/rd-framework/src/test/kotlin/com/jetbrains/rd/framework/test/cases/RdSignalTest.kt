@@ -9,7 +9,6 @@ import com.jetbrains.rd.framework.impl.RdProperty
 import com.jetbrains.rd.framework.impl.RdSignal
 import com.jetbrains.rd.framework.test.util.RdFrameworkTestBase
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.*
 import com.jetbrains.rd.util.threading.SynchronousScheduler
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -133,7 +132,7 @@ class RdSignalTest : RdFrameworkTestBase() {
         }
 
         override fun identify(identities: IIdentities, id: RdId) {
-            _foo.identify(identities, id.mix("foo"))
+            _foo.identify(identities, identities.mix(id, "foo"))
         }
 
 
@@ -281,7 +280,7 @@ class RdSignalTest : RdFrameworkTestBase() {
         }
 
         override fun identify(identities: IIdentities, id: RdId) {
-            _foo.identify(identities, id.mix("foo"))
+            _foo.identify(identities, identities.mix(id, "foo"))
         }
 
         constructor() : this(RdSignal<Unit>())

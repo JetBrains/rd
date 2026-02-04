@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
-    identify(protocol.identity, RdId.Null.mix(this.javaClass.simpleName))
+    identify(protocol.identity, protocol.identity.mix(RdId.Null, this.javaClass.simpleName))
     preBind(lifetime, protocol, this.javaClass.simpleName)
     bind()
 }
@@ -43,8 +43,8 @@ class TextBufferTest {
         private val serverWire = TestWire(serverScheduler).apply { autoFlush = false }
         private var clientLifetimeDef: LifetimeDefinition = LifetimeDefinition()
         private var serverLifetimeDef: LifetimeDefinition = LifetimeDefinition()
-        private var clientProtocol: IProtocol = Protocol("Client", serializers, Identities(IdKind.Client), clientScheduler, clientWire, clientLifetimeDef.lifetime)
-        private var serverProtocol: IProtocol = Protocol("Server", serializers, Identities(IdKind.Server), serverScheduler, serverWire, serverLifetimeDef.lifetime)
+        private var clientProtocol: IProtocol = Protocol("Client", serializers, SequentialIdentities(IdKind.Client), clientScheduler, clientWire, clientLifetimeDef.lifetime)
+        private var serverProtocol: IProtocol = Protocol("Server", serializers, SequentialIdentities(IdKind.Server), serverScheduler, serverWire, serverLifetimeDef.lifetime)
         private var disposeLoggerFactory = Statics<ILoggerFactory>().push(ErrorAccumulatorLoggerFactory)
         private val clientScheduler: IScheduler get() = TestScheduler
         private val serverScheduler: IScheduler get() = TestScheduler

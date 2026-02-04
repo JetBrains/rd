@@ -71,6 +71,7 @@ typealias Date = Date
 typealias UUID = java.util.UUID
 
 typealias AtomicInteger = AtomicInteger
+typealias AtomicLong = java.util.concurrent.atomic.AtomicLong
 
 typealias Queue<E> = java.util.concurrent.LinkedBlockingQueue<E>
 typealias ConcurrentHashMap<K, V> = java.util.concurrent.ConcurrentHashMap<K, V>

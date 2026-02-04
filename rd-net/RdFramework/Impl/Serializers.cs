@@ -211,7 +211,7 @@ namespace JetBrains.Rd.Impl
     {
       lock (myLock)
       {
-        var typeId = RdId.Define<T>(predefinedId);
+        var typeId = RdIdUtil.Define<T>(predefinedId);
         RdId existing;
         if (myTypeMapping.TryGetValue(typeof(T), out existing))
         {

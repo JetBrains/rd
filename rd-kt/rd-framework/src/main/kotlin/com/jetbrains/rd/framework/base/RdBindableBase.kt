@@ -138,7 +138,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                     val localBindLifetime = bindLifetime
                     if (localBindLifetime.isAlive) {
                         if (newExtension.rdid == RdId.Null)
-                            newExtension.identify(proto.identity, rdid.mix(".$name"))
+                            newExtension.identify(proto.identity, proto.identity.mix(rdid, ".$name"))
                         newExtension.preBind(localBindLifetime, this, name)
                         newExtension.bind()
                     }
@@ -211,7 +211,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
 
         rdid = id
         for ((name, child) in bindableChildren) {
-            child?.identifyPolymorphic(identities, id.mix(".$name"))
+            child?.identifyPolymorphic(identities, identities.mix(id, ".$name"))
         }
     }
 
@@ -286,9 +286,5 @@ fun <T : RdBindableBase> T.withId(id: RdId) : T {
 fun <T : RdBindableBase> T.static(id: Int) : T {
     require(id > 0 && id < RdId.MAX_STATIC_ID) { "Expected id > 0 && id < RdId.MaxStaticId, got $id" }
     return withId(RdId(id.toLong()))
-}
-
-fun <T : RdBindableBase> T.withIdFromName(name: String) : T {
-    return withId(RdId.Null.mix(name))
 }
 

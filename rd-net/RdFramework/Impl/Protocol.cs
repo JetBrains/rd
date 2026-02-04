@@ -63,7 +63,7 @@ namespace JetBrains.Rd.Impl
         BindContexts(lifetime);
       OutOfSyncModels = new ViewableSet<RdExtBase>();
       ExtCreated = parentProtocol?.ExtCreated ?? new Signal<ExtCreationInfoEx>();
-      ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal();
+      ExtConfirmation = parentExtConfirmation ?? this.CreateExtSignal(identities);
       ExtIsLocal = new ThreadLocal<bool>(() => false);
       ExtConfirmation.Advise(lifetime, message =>
       {
@@ -85,14 +85,14 @@ namespace JetBrains.Rd.Impl
     private InternRoot<object> CreateProtocolInternRoot(Lifetime lifetime)
     {
       var root = new InternRoot<object>();
-      root.RdId = RdId.Nil.Mix(ProtocolInternRootRdId);
+      root.RdId = Identities.Mix(RdId.Nil, ProtocolInternRootRdId);
       
       return root;
     }
 
     private void BindContexts(Lifetime lifetime)
     {
-      Contexts.RdId = RdId.Nil.Mix(ContextHandlerRdId);
+      Contexts.RdId = Identities.Mix(RdId.Nil, ContextHandlerRdId);
       using (AllowBindCookie.Create()) 
       {
         Contexts.PreBind(lifetime, this, ContextHandlerRdId);
@@ -172,7 +172,7 @@ namespace JetBrains.Rd.Impl
         myExtensions[name] = res;
         if (res is IRdBindable rdBindable)
         {
-          rdBindable.Identify(Identities, RdId.Root.Mix(name));
+          rdBindable.Identify(Identities, Identities.Mix(RdId.Root, name));
           rdBindable.PreBind(Lifetime, this, name);
           rdBindable.Bind();
         }

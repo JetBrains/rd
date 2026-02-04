@@ -64,13 +64,13 @@ namespace Test.Reflection.App
       {
         Console.Title = "Server";
         wire = new SocketWire.Server(lifetime, scheduler, ourIpEndPoint);
-        protocol = new Protocol("Server", reflectionSerializers.Serializers, new Identities(IdKind.Server), scheduler, wire, lifetime);
+        protocol = new Protocol("Server", reflectionSerializers.Serializers, new SequentialIdentities(IdKind.Server), scheduler, wire, lifetime);
       }
       else
       {
         Console.Title = "Client";
         wire = new SocketWire.Client(lifetime, scheduler, ourIpEndPoint);
-        protocol = new Protocol("Client", reflectionSerializers.Serializers, new Identities(IdKind.Client), scheduler, wire, lifetime);
+        protocol = new Protocol("Client", reflectionSerializers.Serializers, new SequentialIdentities(IdKind.Client), scheduler, wire, lifetime);
       }
 
       scheduler.Queue(() => RunApplication(isServer, reflectionSerializers, lifetime, protocol));

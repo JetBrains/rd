@@ -70,11 +70,11 @@ open class RdFrameworkTestBase {
         w2.counterpart = w1
 
         clientProtocol = Protocol("Client", createSerializers(false),
-                Identities(IdKind.Client),
+                SequentialIdentities(IdKind.Client),
             clientScheduler, clientTestWire, clientLifetime)
 
         serverProtocol = Protocol("Server", createSerializers(true),
-                Identities(IdKind.Server),
+                SequentialIdentities(IdKind.Server),
             serverScheduler, serverTestWire, serverLifetime)
     }
 

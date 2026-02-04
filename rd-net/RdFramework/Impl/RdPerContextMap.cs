@@ -60,7 +60,7 @@ namespace JetBrains.Rd.Impl
                 if (!cookie.Succeed)
                   return;
                 
-                value.WithId(RdId.Mix(contextValue.ToString()));
+                value.WithId(proto.Identities.Mix(RdId, contextValue.ToString()));
                 value.PreBind(contextValueLifetime, this, $"[{contextValue.ToString()}]");  
               }
 

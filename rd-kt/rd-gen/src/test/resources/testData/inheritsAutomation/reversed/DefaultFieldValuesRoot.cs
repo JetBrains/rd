@@ -66,7 +66,7 @@ namespace DefaultFieldValuesRoot
     
     public DefaultFieldValuesRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, RdId.Root.Mix("DefaultFieldValuesRoot"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "DefaultFieldValuesRoot"));
       this.BindTopLevel(lifetime, protocol, "DefaultFieldValuesRoot");
     }
     

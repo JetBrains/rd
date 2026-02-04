@@ -38,11 +38,6 @@ namespace JetBrains.Rd.Base
       Assertion.Require(id > 0 && id < RdId.MaxStaticId, "id > 0 && id < RdId.MaxStaticId");
       return thIs.WithId(new RdId(id));
     }
-    
-    public static T WithIdFromName<T>(this T thIs, string name) where T : IRdReactive
-    {
-      return thIs.WithId(RdId.Nil.Mix(name));
-    }
 
   }
 }

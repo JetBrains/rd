@@ -81,11 +81,11 @@ namespace JetBrains.Rd.Impl
       }
     }
 
-    private void PreBindHandler(Lifetime lifetime, string key, ISingleContextHandler handler)
+    private void PreBindHandler(Lifetime lifetime, string key, ISingleContextHandler handler, IProtocol proto)
     {
       if (handler is RdBindableBase bindableHandler)
       {
-        bindableHandler.RdId = RdId.Mix(key);
+        bindableHandler.RdId = proto.Identities.Mix(RdId, key);
         bindableHandler.PreBind(lifetime, this, key);
       }
     }
@@ -157,7 +157,7 @@ namespace JetBrains.Rd.Impl
       {
         myHandlerOrder.View(lifetime, (handlerLt, _, handler) =>
         {
-          PreBindHandler(handlerLt, handler.ContextBase.Key, handler);
+          PreBindHandler(handlerLt, handler.ContextBase.Key, handler, proto);
         });
       }
 

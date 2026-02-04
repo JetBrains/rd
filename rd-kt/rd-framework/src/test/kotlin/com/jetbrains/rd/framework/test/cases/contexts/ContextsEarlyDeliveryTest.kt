@@ -109,7 +109,7 @@ class ContextsEarlyDeliveryTest {
         val key = if(heavy) TestKeyHeavy else TestKeyLight
 
         serverProtocol = Protocol("Server", serializers,
-            Identities(IdKind.Server),
+            SequentialIdentities(IdKind.Server),
             serverScheduler, serverWire, serverLifetime, key)
 
         val serverSignal = RdSignal<String>()
@@ -122,7 +122,7 @@ class ContextsEarlyDeliveryTest {
 
             clientProtocol = Protocol(
                 "Client", serializers,
-                Identities(IdKind.Client),
+                SequentialIdentities(IdKind.Client),
                 clientScheduler, clientWire, clientLifetime, key
             )
             val clientSignal = RdSignal<String>()

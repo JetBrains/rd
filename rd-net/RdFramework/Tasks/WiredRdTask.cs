@@ -169,13 +169,14 @@ namespace JetBrains.Rd.Tasks
               Wire?.Send(RdId, writer => { RdTaskResult<TRes>.Write(myCall.WriteResponseDelegate, serializationCtx, writer, RdTaskResult<TRes>.Cancelled()); });
               return;
             }
-            
-            potentiallyBindable.IdentifyPolymorphic(proto.Identities, myCall.RdId.Mix(RdId.ToString()));
+
+            var bindableRdId = proto.Identities.Next(RdId);
+            potentiallyBindable.IdentifyPolymorphic(proto.Identities, bindableRdId);
 
             using var cookie = Lifetime.UsingExecuteIfAlive();
             if (cookie.Succeed) // lifetime can be terminated from background thread
             {
-              potentiallyBindable.PreBindPolymorphic(Lifetime, myCall, RdId.ToString());
+              potentiallyBindable.PreBindPolymorphic(Lifetime, myCall, bindableRdId.ToString());
               if (Lifetime.IsNotAlive)
                 return;
 

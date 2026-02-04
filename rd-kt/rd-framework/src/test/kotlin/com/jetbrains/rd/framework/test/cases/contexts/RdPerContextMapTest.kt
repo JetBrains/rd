@@ -246,7 +246,7 @@ class RdPerContextMapTest : RdFrameworkTestBase() {
         serverMap.bindTopLevel(serverLifetime, serverProtocol, "map")
 
         key.updateValue(server1Cid).use {
-            serverProtocol.wire.send(RdId.Null.mix(10)) {} // trigger key addition by protocol write
+            serverProtocol.wire.send(serverProtocol.identity.mix(RdId.Null, 10)) {} // trigger key addition by protocol write
         }
 
         assertTrue(serverProtocol.contexts.getValueSet(key).contains(server1Cid))

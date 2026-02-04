@@ -14,63 +14,9 @@ namespace JetBrains.Rd
 
     private readonly long myValue;
 
-    public static RdId Define<T>(long? id = null)
-    {
-      return new RdId(id ?? Hash(typeof(T).Name));
-    }
-
-    public static RdId Define(Type type, long? id = null)
-    {
-      return new RdId(id ?? Hash(type.Name));
-    }
-
-    /// <summary>
-    /// Define an RdId by fully-qualified type name.
-    /// You should use it only in case of C#-C# communication.
-    /// </summary>
-    public static RdId DefineByFqn(Type type)
-    {
-      return new RdId(Hash(type.FullName));
-    }
-
     public RdId(long value)
     {
       myValue = value;
-    }
-
-    [Pure]
-    public RdId Mix(string tail)
-    {
-      return new RdId(Hash(tail, myValue));
-    }
-
-    [Pure]
-    public RdId Mix(int tail)
-    {
-      return Mix((long) tail);
-    }
-
-    [Pure]
-    public RdId Mix(long tail)
-    {
-      return new RdId(myValue * 31 + (tail + 1));
-    }
-
-    public static long Hash(string? s, long initValue = 19)
-    {
-      if (s == null) return 0;
-
-      long hash = initValue;
-// ReSharper disable LoopCanBeConvertedToQuery 
-// ReSharper disable ForCanBeConvertedToForeach
-      for (int i = 0; i < s.Length; i++)
-      {
-        hash = hash*31 + s[i];
-      }
-// ReSharper restore ForCanBeConvertedToForeach
-// ReSharper restore LoopCanBeConvertedToQuery
-
-      return hash;
     }
 
     public bool IsNil => myValue == Nil.myValue;
@@ -131,5 +77,62 @@ namespace JetBrains.Rd
   {
     Client,
     Server
-  }  
+  }
+
+  public static class RdIdUtil
+  {
+    public static RdId Define<T>(long? id = null)
+    {
+      return new RdId(id ?? Hash(typeof(T).Name));
+    }
+
+    public static RdId Define(Type type, long? id = null)
+    {
+      return new RdId(id ?? Hash(type.Name));
+    }
+
+    /// <summary>
+    /// Define an RdId by fully-qualified type name.
+    /// You should use it only in case of C#-C# communication.
+    /// </summary>
+    public static RdId DefineByFqn(Type type)
+    {
+      return new RdId(Hash(type.FullName));
+    }
+
+    [Pure]
+    public static RdId Mix(RdId rdId, string tail)
+    {
+      return new RdId(Hash(tail, rdId.Value));
+    }
+
+    [Pure]
+    public static RdId Mix(RdId rdId, int tail)
+    {
+      return Mix(rdId, (long) tail);
+    }
+
+    [Pure]
+    public static RdId Mix(RdId rdId, long tail)
+    {
+      return new RdId(rdId.Value * 31 + (tail + 1));
+    }
+
+    public static long Hash(string? s, long initValue = 19)
+    {
+      if (s == null) return 0;
+
+      long hash = initValue;
+// ReSharper disable LoopCanBeConvertedToQuery 
+// ReSharper disable ForCanBeConvertedToForeach
+      for (int i = 0; i < s.Length; i++)
+      {
+        hash = hash*31 + s[i];
+      }
+// ReSharper restore ForCanBeConvertedToForeach
+// ReSharper restore LoopCanBeConvertedToQuery
+
+      return hash;
+    }
+  }
 }

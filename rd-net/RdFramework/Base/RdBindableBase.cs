@@ -187,7 +187,7 @@ namespace JetBrains.Rd.Base
       RdId = id;
       foreach (var pair in BindableChildren)
       {
-        pair.Value?.IdentifyPolymorphic(identities, id.Mix("." + pair.Key));
+        pair.Value?.IdentifyPolymorphic(identities, identities.Mix(id, "." + pair.Key));
       }
     }
 
@@ -284,7 +284,7 @@ namespace JetBrains.Rd.Base
             if (bindLifetime.IsAlive)
             {
               if (bindable.RdId == RdId.Nil)
-                bindable.Identify(proto.Identities, RdId.Mix("." + name));
+                bindable.Identify(proto.Identities, proto.Identities.Mix(RdId, "." + name));
               bindable.PreBind(bindLifetime, this, name);
               bindable.Bind();
             }
