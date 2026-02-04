@@ -120,6 +120,13 @@ class InnerClass private constructor(
     private val _someClassValue: RdPerContextMap<String, RdOptionalProperty<PerClientIdStruct>>,
     private val _someClassSignal: RdPerContextMap<String, RdSignal<PerClientIdSignal>>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdPerContextMap.write(buffer, _someValue)
+        RdPerContextMap.write(buffer, _someClassValue)
+        RdPerContextMap.write(buffer, _someClassSignal)
+    }
     //companion
     
     companion object : IMarshaller<InnerClass> {
@@ -136,10 +143,7 @@ class InnerClass private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: InnerClass)  {
-            value.rdid.write(buffer)
-            RdPerContextMap.write(buffer, value._someValue)
-            RdPerContextMap.write(buffer, value._someClassValue)
-            RdPerContextMap.write(buffer, value._someClassSignal)
+            value.write(ctx, buffer)
         }
         
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
@@ -198,6 +202,9 @@ class InnerClass private constructor(
  */
 class PerClientIdSignal (
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+    }
     //companion
     
     companion object : IMarshaller<PerClientIdSignal> {
@@ -210,6 +217,7 @@ class PerClientIdSignal (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: PerClientIdSignal)  {
+            value.write(ctx, buffer)
         }
         
         
@@ -249,6 +257,9 @@ class PerClientIdSignal (
  */
 class PerClientIdStruct (
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+    }
     //companion
     
     companion object : IMarshaller<PerClientIdStruct> {
@@ -261,6 +272,7 @@ class PerClientIdStruct (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: PerClientIdStruct)  {
+            value.write(ctx, buffer)
         }
         
         

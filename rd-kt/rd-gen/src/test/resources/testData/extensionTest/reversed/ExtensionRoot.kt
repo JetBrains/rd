@@ -72,6 +72,14 @@ class ClassWithStr (
     val extFromClass3: String?,
     val reallyStrFromClass: @org.jetbrains.annotations.Nls String
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeNullable(extFromClass1) { buffer.writeString(it) }
+        buffer.writeNullable(_extFromClass2) { buffer.writeString(it) }
+        buffer.writeNullable(extFromClass3) { buffer.writeString(it) }
+        buffer.writeString(reallyStrFromClass)
+    }
     //companion
     
     companion object : IMarshaller<ClassWithStr> {
@@ -89,11 +97,7 @@ class ClassWithStr (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ClassWithStr)  {
-            value.rdid.write(buffer)
-            buffer.writeNullable(value.extFromClass1) { buffer.writeString(it) }
-            buffer.writeNullable(value._extFromClass2) { buffer.writeString(it) }
-            buffer.writeNullable(value.extFromClass3) { buffer.writeString(it) }
-            buffer.writeString(value.reallyStrFromClass)
+            value.write(ctx, buffer)
         }
         
         
@@ -139,6 +143,13 @@ data class StructWithStr (
     val extFromStruct3: String?,
     val reallyStrFromStruct: @org.jetbrains.annotations.Nls String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeNullable(extFromStruct1) { buffer.writeString(it) }
+        buffer.writeNullable(_extFromStruct2) { buffer.writeString(it) }
+        buffer.writeNullable(extFromStruct3) { buffer.writeString(it) }
+        buffer.writeString(reallyStrFromStruct)
+    }
     //companion
     
     companion object : IMarshaller<StructWithStr> {
@@ -155,10 +166,7 @@ data class StructWithStr (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: StructWithStr)  {
-            buffer.writeNullable(value.extFromStruct1) { buffer.writeString(it) }
-            buffer.writeNullable(value._extFromStruct2) { buffer.writeString(it) }
-            buffer.writeNullable(value.extFromStruct3) { buffer.writeString(it) }
-            buffer.writeString(value.reallyStrFromStruct)
+            value.write(ctx, buffer)
         }
         
         

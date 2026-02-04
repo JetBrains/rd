@@ -106,6 +106,11 @@ val IProtocol.recursivePolymorphicModel get() = getOrCreateExtension(RecursivePo
 open class BeTreeGridLine protected constructor(
     protected val _children: RdList<BeTreeGridLine>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdList.write(ctx, buffer, _children)
+    }
     //companion
     
     companion object : IMarshaller<BeTreeGridLine>, IAbstractDeclaration<BeTreeGridLine> {
@@ -120,8 +125,7 @@ open class BeTreeGridLine protected constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BeTreeGridLine)  {
-            value.rdid.write(buffer)
-            RdList.write(ctx, buffer, value._children)
+            value.write(ctx, buffer)
         }
         
         
@@ -177,6 +181,12 @@ class BeTreeGridLine_Unknown (
 ) : BeTreeGridLine (
     _children
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdList.write(ctx, buffer, _children)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<BeTreeGridLine_Unknown> {
@@ -189,9 +199,7 @@ class BeTreeGridLine_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BeTreeGridLine_Unknown)  {
-            value.rdid.write(buffer)
-            RdList.write(ctx, buffer, value._children)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         

@@ -417,6 +417,10 @@ open class Kotlin11Generator(
         baseClassTrait(decl)
 
         block("") {
+            if (decl.isConcrete || decl.isValue || decl.isOpen) {
+                +"//write-marshaller"
+                writerTrait(decl)
+            }
             + "//companion"
             companionTrait(decl, collector)
             + "//fields"
@@ -518,6 +522,12 @@ open class Kotlin11Generator(
         }
     }
 
+    protected fun PrettyPrinter.writerCompanionTrait(decl: Declaration) {
+        block("override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.name}) ") {
+            + "value.write(ctx, buffer)"
+        }
+    }
+
     protected fun PrettyPrinter.companionTrait(decl: Declaration, collector: MarshallersCollector) {
         val rdid = decl.marshallerRdid
         if (decl.isConcrete || decl.isValue) {
@@ -529,7 +539,7 @@ open class Kotlin11Generator(
                 println()
                 readerTrait(decl)
                 println()
-                writerTrait(decl)
+                writerCompanionTrait(decl)
                 println()
                 customSerializersTrait(decl)
                 println()
@@ -555,7 +565,7 @@ open class Kotlin11Generator(
                 println()
                 readerTrait(decl)
                 println()
-                writerTrait(decl)
+                writerCompanionTrait(decl)
                 println()
                 customSerializersTrait(decl)
                 println()
@@ -818,31 +828,31 @@ open class Kotlin11Generator(
 
 
         fun Member.writer() : String = when (this) {
-            is Member.Field -> type.writer("value.$encapsulatedName")
+            is Member.Field -> type.writer(encapsulatedName)
             is Member.Reactive.Stateful.Extension -> when (findDelegate()?.delegateType) {
-                is Member.DelegateType.Delegated -> delegatedBy.writer(("value.$encapsulatedName"))
-                else -> delegatedBy.writer(("value.$encapsulatedName.delegatedBy"))
+                is Member.DelegateType.Delegated -> delegatedBy.writer((encapsulatedName))
+                else -> delegatedBy.writer(("$encapsulatedName.delegatedBy"))
             }
             is Member.Reactive -> if(context != null) {
-                "RdPerContextMap.write(buffer, value.$encapsulatedName)"
+                "RdPerContextMap.write(buffer, $encapsulatedName)"
             } else {
-                "${implSimpleName(decl)}.write(ctx, buffer, value.$encapsulatedName)"
+                "${implSimpleName(decl)}.write(ctx, buffer, $encapsulatedName)"
             }
 
             else -> fail("Unknown member: $this")
         }
 
 
-        block("override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ${decl.name}) ") {
+        block("private fun write(ctx: SerializationCtx, buffer: AbstractBuffer) ") {
             if (decl is Class || decl is Aggregate) {
-                + "value.rdid.write(buffer)"
+                + "rdid.write(buffer)"
             }
             (decl.membersOfBaseClasses + decl.ownMembers).println(Member::writer)
             if (isUnknown(decl)) {
-                + "buffer.writeByteArrayRaw(value.unknownBytes)"
+                + "buffer.writeByteArrayRaw(unknownBytes)"
             }
             if(decl is Class && decl.internRootForScopes.isNotEmpty()) {
-                + "value.mySerializationContext = ctx.withInternRootsHere(value, ${decl.internRootForScopes.joinToString { "\"$it\"" }})"
+                + "mySerializationContext = ctx.withInternRootsHere(this, ${decl.internRootForScopes.joinToString { "\"$it\"" }})"
             }
         }
     }

@@ -83,6 +83,9 @@ class InternedModelsRoot private constructor(
  */
 class Abc (
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+    }
     //companion
     
     companion object : IMarshaller<Abc> {
@@ -95,6 +98,7 @@ class Abc (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Abc)  {
+            value.write(ctx, buffer)
         }
         
         
@@ -135,6 +139,11 @@ class Abc (
 class Editor (
     val xxx: List<Abc>? = null
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeNullable(xxx) { buffer.writeList(it) { v -> ctx.writeInterned(buffer, v, "Protocol") { _, _, internedValue -> Abc.write(ctx, buffer, internedValue) } } }
+    }
     //companion
     
     companion object : IMarshaller<Editor> {
@@ -149,8 +158,7 @@ class Editor (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Editor)  {
-            value.rdid.write(buffer)
-            buffer.writeNullable(value.xxx) { buffer.writeList(it) { v -> ctx.writeInterned(buffer, v, "Protocol") { _, _, internedValue -> Abc.write(ctx, buffer, internedValue) } } }
+            value.write(ctx, buffer)
         }
         
         

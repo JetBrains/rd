@@ -229,6 +229,15 @@ class A_Unknown (
     x,
     _sdf
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdOptionalProperty.write(ctx, buffer, _y)
+        RdOptionalProperty.write(ctx, buffer, _z)
+        buffer.writeInt(x)
+        RdMap.write(ctx, buffer, _sdf)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<A_Unknown> {
@@ -241,12 +250,7 @@ class A_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: A_Unknown)  {
-            value.rdid.write(buffer)
-            RdOptionalProperty.write(ctx, buffer, value._y)
-            RdOptionalProperty.write(ctx, buffer, value._z)
-            buffer.writeInt(value.x)
-            RdMap.write(ctx, buffer, value._sdf)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -366,6 +370,11 @@ class BaseClassWithInterface_Unknown (
     val unknownBytes: ByteArray
 ) : BaseClassWithInterface (
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<BaseClassWithInterface_Unknown> {
@@ -378,8 +387,7 @@ class BaseClassWithInterface_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseClassWithInterface_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -414,6 +422,12 @@ class BaseClass_Unknown (
 ) : BaseClass (
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<BaseClass_Unknown> {
@@ -426,9 +440,7 @@ class BaseClass_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseClass_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -527,6 +539,10 @@ class BaseStructWithInterface_Unknown (
     val unknownBytes: ByteArray
 ) : BaseStructWithInterface (
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<BaseStructWithInterface_Unknown> {
@@ -539,7 +555,7 @@ class BaseStructWithInterface_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseStructWithInterface_Unknown)  {
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -583,6 +599,11 @@ class BaseStruct_Unknown (
 ) : BaseStruct (
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<BaseStruct_Unknown> {
@@ -595,8 +616,7 @@ class BaseStruct_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: BaseStruct_Unknown)  {
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -668,6 +688,30 @@ class Baz private constructor(
     x,
     _sdf
 ) {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdOptionalProperty.write(ctx, buffer, _y)
+        RdOptionalProperty.write(ctx, buffer, _z)
+        buffer.writeInt(x)
+        RdMap.write(ctx, buffer, _sdf)
+        buffer.writeList(foo) { v -> ctx.serializers.writePolymorphic(ctx, buffer, v) }
+        buffer.writeList(bar) { v -> buffer.writeNullable(v) { ctx.serializers.writePolymorphic(ctx, buffer, it) } }
+        buffer.writeString(nls_field)
+        buffer.writeNullable(nls_nullable_field) { buffer.writeString(it) }
+        buffer.writeList(string_list_field) { v -> buffer.writeString(v) }
+        buffer.writeList(nls_list_field) { v -> buffer.writeString(v) }
+        RdProperty.write(ctx, buffer, _foo1)
+        RdProperty.write(ctx, buffer, _bar1)
+        RdMap.write(ctx, buffer, _mapScalar)
+        RdMap.write(ctx, buffer, _mapBindable)
+        RdProperty.write(ctx, buffer, _property_with_default_nls)
+        RdOptionalProperty.write(ctx, buffer, _property_with_several_attrs)
+        RdOptionalProperty.write(ctx, buffer, _nls_prop)
+        RdProperty.write(ctx, buffer, _nullable_nls_prop)
+        buffer.writeString(non_nls_open_field)
+        RdOptionalProperty.write(ctx, buffer, _duration_prop)
+    }
     //companion
     
     companion object : IMarshaller<Baz> {
@@ -701,27 +745,7 @@ class Baz private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Baz)  {
-            value.rdid.write(buffer)
-            RdOptionalProperty.write(ctx, buffer, value._y)
-            RdOptionalProperty.write(ctx, buffer, value._z)
-            buffer.writeInt(value.x)
-            RdMap.write(ctx, buffer, value._sdf)
-            buffer.writeList(value.foo) { v -> ctx.serializers.writePolymorphic(ctx, buffer, v) }
-            buffer.writeList(value.bar) { v -> buffer.writeNullable(v) { ctx.serializers.writePolymorphic(ctx, buffer, it) } }
-            buffer.writeString(value.nls_field)
-            buffer.writeNullable(value.nls_nullable_field) { buffer.writeString(it) }
-            buffer.writeList(value.string_list_field) { v -> buffer.writeString(v) }
-            buffer.writeList(value.nls_list_field) { v -> buffer.writeString(v) }
-            RdProperty.write(ctx, buffer, value._foo1)
-            RdProperty.write(ctx, buffer, value._bar1)
-            RdMap.write(ctx, buffer, value._mapScalar)
-            RdMap.write(ctx, buffer, value._mapBindable)
-            RdProperty.write(ctx, buffer, value._property_with_default_nls)
-            RdOptionalProperty.write(ctx, buffer, value._property_with_several_attrs)
-            RdOptionalProperty.write(ctx, buffer, value._nls_prop)
-            RdProperty.write(ctx, buffer, value._nullable_nls_prop)
-            buffer.writeString(value.non_nls_open_field)
-            RdOptionalProperty.write(ctx, buffer, value._duration_prop)
+            value.write(ctx, buffer)
         }
         
         private val __FooNullableSerializer = AbstractPolymorphic(Foo).nullable()
@@ -868,6 +892,10 @@ class Baz private constructor(
  */
 class Class (
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+    }
     //companion
     
     companion object : IMarshaller<Class> {
@@ -881,7 +909,7 @@ class Class (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Class)  {
-            value.rdid.write(buffer)
+            value.write(ctx, buffer)
         }
         
         
@@ -913,6 +941,11 @@ class Class (
 class Completion private constructor(
     private val _lookupItems: RdMap<Int, Boolean>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdMap.write(ctx, buffer, _lookupItems)
+    }
     //companion
     
     companion object : IMarshaller<Completion> {
@@ -927,8 +960,7 @@ class Completion private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Completion)  {
-            value.rdid.write(buffer)
-            RdMap.write(ctx, buffer, value._lookupItems)
+            value.write(ctx, buffer)
         }
         
         
@@ -1018,6 +1050,13 @@ class DerivedBaseClass_Unknown (
     derivedField,
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeBool(derivedField)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<DerivedBaseClass_Unknown> {
@@ -1030,10 +1069,7 @@ class DerivedBaseClass_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedBaseClass_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeBool(value.derivedField)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -1112,6 +1148,12 @@ class DerivedBaseStruct_Unknown (
     derivedField,
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeBool(derivedField)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<DerivedBaseStruct_Unknown> {
@@ -1124,9 +1166,7 @@ class DerivedBaseStruct_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedBaseStruct_Unknown)  {
-            buffer.writeBool(value.derivedField)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -1180,6 +1220,12 @@ class DerivedClass (
 ) : BaseClass (
     baseField
 ) {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(baseField)
+        buffer.writeBool(derivedField)
+    }
     //companion
     
     companion object : IMarshaller<DerivedClass> {
@@ -1195,9 +1241,7 @@ class DerivedClass (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedClass)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.baseField)
-            buffer.writeBool(value.derivedField)
+            value.write(ctx, buffer)
         }
         
         
@@ -1275,6 +1319,13 @@ class DerivedClassWith2Interfaces_Unknown (
     derivedField,
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeBool(derivedField)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<DerivedClassWith2Interfaces_Unknown> {
@@ -1287,10 +1338,7 @@ class DerivedClassWith2Interfaces_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedClassWith2Interfaces_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeBool(value.derivedField)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -1333,6 +1381,12 @@ open class DerivedOpenClass (
 ) : OpenClass (
     baseField
 ) {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(baseField)
+        buffer.writeBool(derivedField)
+    }
     //companion
     
     companion object : IMarshaller<DerivedOpenClass>, IAbstractDeclaration<DerivedOpenClass> {
@@ -1348,9 +1402,7 @@ open class DerivedOpenClass (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenClass)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.baseField)
-            buffer.writeBool(value.derivedField)
+            value.write(ctx, buffer)
         }
         
         
@@ -1401,6 +1453,13 @@ class DerivedOpenClass_Unknown (
     derivedField,
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeBool(derivedField)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<DerivedOpenClass_Unknown> {
@@ -1413,10 +1472,7 @@ class DerivedOpenClass_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenClass_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeBool(value.derivedField)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -1459,6 +1515,11 @@ open class DerivedOpenStruct (
 ) : OpenStruct (
     baseField
 ) {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+        buffer.writeBool(derivedField)
+    }
     //companion
     
     companion object : IMarshaller<DerivedOpenStruct>, IAbstractDeclaration<DerivedOpenStruct> {
@@ -1473,8 +1534,7 @@ open class DerivedOpenStruct (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenStruct)  {
-            buffer.writeInt(value.baseField)
-            buffer.writeBool(value.derivedField)
+            value.write(ctx, buffer)
         }
         
         
@@ -1535,6 +1595,12 @@ class DerivedOpenStruct_Unknown (
     derivedField,
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeBool(derivedField)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<DerivedOpenStruct_Unknown> {
@@ -1547,9 +1613,7 @@ class DerivedOpenStruct_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedOpenStruct_Unknown)  {
-            buffer.writeBool(value.derivedField)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -1603,6 +1667,11 @@ class DerivedStruct (
 ) : BaseStruct (
     baseField
 ) {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+        buffer.writeBool(derivedField)
+    }
     //companion
     
     companion object : IMarshaller<DerivedStruct> {
@@ -1617,8 +1686,7 @@ class DerivedStruct (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedStruct)  {
-            buffer.writeInt(value.baseField)
-            buffer.writeBool(value.derivedField)
+            value.write(ctx, buffer)
         }
         
         
@@ -1672,6 +1740,11 @@ class DerivedStructWith2Interfaces (
 ) : BaseStruct (
     baseField
 ), Interface, Interface2 {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+        buffer.writeBool(derivedField)
+    }
     //companion
     
     companion object : IMarshaller<DerivedStructWith2Interfaces> {
@@ -1686,8 +1759,7 @@ class DerivedStructWith2Interfaces (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: DerivedStructWith2Interfaces)  {
-            buffer.writeInt(value.baseField)
-            buffer.writeBool(value.derivedField)
+            value.write(ctx, buffer)
         }
         
         
@@ -1743,6 +1815,16 @@ class Document private constructor(
     val arr1: ByteArray,
     val arr2: Array<BooleanArray>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        FooBar.write(ctx, buffer, moniker)
+        buffer.writeNullable(buffer) { buffer.writeString(it) }
+        RdCall.write(ctx, buffer, _andBackAgain)
+        Completion.write(ctx, buffer, completion)
+        buffer.writeByteArray(arr1)
+        buffer.writeArray(arr2) { buffer.writeBooleanArray(it) }
+    }
     //companion
     
     companion object : IMarshaller<Document> {
@@ -1762,13 +1844,7 @@ class Document private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Document)  {
-            value.rdid.write(buffer)
-            FooBar.write(ctx, buffer, value.moniker)
-            buffer.writeNullable(value.buffer) { buffer.writeString(it) }
-            RdCall.write(ctx, buffer, value._andBackAgain)
-            Completion.write(ctx, buffer, value.completion)
-            buffer.writeByteArray(value.arr1)
-            buffer.writeArray(value.arr2) { buffer.writeBooleanArray(it) }
+            value.write(ctx, buffer)
         }
         
         
@@ -1905,6 +1981,11 @@ abstract class Foo (
 class FooBar (
     val a: Baz
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        Baz.write(ctx, buffer, a)
+    }
     //companion
     
     companion object : IMarshaller<FooBar> {
@@ -1919,8 +2000,7 @@ class FooBar (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: FooBar)  {
-            value.rdid.write(buffer)
-            Baz.write(ctx, buffer, value.a)
+            value.write(ctx, buffer)
         }
         
         
@@ -1963,6 +2043,13 @@ class Foo_Unknown (
     x,
     _sdf
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(x)
+        RdMap.write(ctx, buffer, _sdf)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<Foo_Unknown> {
@@ -1975,10 +2062,7 @@ class Foo_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Foo_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.x)
-            RdMap.write(ctx, buffer, value._sdf)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -2043,6 +2127,11 @@ interface Interface2
 open class OpenClass (
     val baseField: Int
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(baseField)
+    }
     //companion
     
     companion object : IMarshaller<OpenClass>, IAbstractDeclaration<OpenClass> {
@@ -2057,8 +2146,7 @@ open class OpenClass (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenClass)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.baseField)
+            value.write(ctx, buffer)
         }
         
         
@@ -2104,6 +2192,12 @@ class OpenClass_Unknown (
 ) : OpenClass (
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<OpenClass_Unknown> {
@@ -2116,9 +2210,7 @@ class OpenClass_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenClass_Unknown)  {
-            value.rdid.write(buffer)
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -2156,6 +2248,10 @@ class OpenClass_Unknown (
 open class OpenStruct (
     val baseField: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+    }
     //companion
     
     companion object : IMarshaller<OpenStruct>, IAbstractDeclaration<OpenStruct> {
@@ -2169,7 +2265,7 @@ open class OpenStruct (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenStruct)  {
-            buffer.writeInt(value.baseField)
+            value.write(ctx, buffer)
         }
         
         
@@ -2224,6 +2320,11 @@ class OpenStruct_Unknown (
 ) : OpenStruct (
     baseField
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(baseField)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<OpenStruct_Unknown> {
@@ -2236,8 +2337,7 @@ class OpenStruct_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: OpenStruct_Unknown)  {
-            buffer.writeInt(value.baseField)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -2285,6 +2385,10 @@ class OpenStruct_Unknown (
 data class ScalarExample (
     val intfield: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(intfield)
+    }
     //companion
     
     companion object : IMarshaller<ScalarExample> {
@@ -2298,7 +2402,7 @@ data class ScalarExample (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ScalarExample)  {
-            buffer.writeInt(value.intfield)
+            value.write(ctx, buffer)
         }
         
         
@@ -2377,6 +2481,11 @@ class ScalarPrimer_Unknown (
 ) : ScalarPrimer (
     x
 ), IUnknownInstance {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(x)
+        buffer.writeByteArrayRaw(unknownBytes)
+    }
     //companion
     
     companion object : IMarshaller<ScalarPrimer_Unknown> {
@@ -2389,8 +2498,7 @@ class ScalarPrimer_Unknown (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ScalarPrimer_Unknown)  {
-            buffer.writeInt(value.x)
-            buffer.writeByteArrayRaw(value.unknownBytes)
+            value.write(ctx, buffer)
         }
         
         
@@ -2442,6 +2550,14 @@ data class Selection (
     val enumSetTest: EnumSet<EnumSetTest>,
     val nls_field: @org.jetbrains.annotations.Nls String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(start)
+        buffer.writeInt(end)
+        buffer.writeIntArray(lst)
+        buffer.writeEnumSet(enumSetTest)
+        buffer.writeString(nls_field)
+    }
     //companion
     
     companion object : IMarshaller<Selection> {
@@ -2459,11 +2575,7 @@ data class Selection (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Selection)  {
-            buffer.writeInt(value.start)
-            buffer.writeInt(value.end)
-            buffer.writeIntArray(value.lst)
-            buffer.writeEnumSet(value.enumSetTest)
-            buffer.writeString(value.nls_field)
+            value.write(ctx, buffer)
         }
         
         
@@ -2520,6 +2632,9 @@ data class Selection (
  */
 class Struct (
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+    }
     //companion
     
     companion object : IMarshaller<Struct> {
@@ -2532,6 +2647,7 @@ class Struct (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: Struct)  {
+            value.write(ctx, buffer)
         }
         
         
@@ -2575,6 +2691,14 @@ class TextControl private constructor(
     private val _vsource: RdSignal<Unit>,
     private val _there1: RdCall<Int, String>
 ) : RdBindableBase() {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        rdid.write(buffer)
+        RdOptionalProperty.write(ctx, buffer, _selection)
+        RdSignal.write(ctx, buffer, _vsink)
+        RdSignal.write(ctx, buffer, _vsource)
+        RdCall.write(ctx, buffer, _there1)
+    }
     //companion
     
     companion object : IMarshaller<TextControl> {
@@ -2592,11 +2716,7 @@ class TextControl private constructor(
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: TextControl)  {
-            value.rdid.write(buffer)
-            RdOptionalProperty.write(ctx, buffer, value._selection)
-            RdSignal.write(ctx, buffer, value._vsink)
-            RdSignal.write(ctx, buffer, value._vsource)
-            RdCall.write(ctx, buffer, value._there1)
+            value.write(ctx, buffer)
         }
         
         
@@ -2662,6 +2782,11 @@ data class UseStructTest (
     val testField: Int,
     val testField2: String
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(testField)
+        buffer.writeString(testField2)
+    }
     //companion
     
     companion object : IMarshaller<UseStructTest> {
@@ -2676,8 +2801,7 @@ data class UseStructTest (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: UseStructTest)  {
-            buffer.writeInt(value.testField)
-            buffer.writeString(value.testField2)
+            value.write(ctx, buffer)
         }
         
         
@@ -2726,6 +2850,10 @@ data class UseStructTest (
 @kotlin.jvm.JvmInline value class ValueStruct (
     val value: Int
 ) : IPrintable {
+    //write-marshaller
+    private fun write(ctx: SerializationCtx, buffer: AbstractBuffer)  {
+        buffer.writeInt(value)
+    }
     //companion
     
     companion object : IMarshaller<ValueStruct> {
@@ -2739,7 +2867,7 @@ data class UseStructTest (
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: ValueStruct)  {
-            buffer.writeInt(value.value)
+            value.write(ctx, buffer)
         }
         
         
