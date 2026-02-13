@@ -14,7 +14,7 @@ using NUnit.Framework;
 namespace Test.RdFramework
 {
   [TestFixture]
-  [Apartment(System.Threading.ApartmentState.STA)]
+  [Apartment(ApartmentState.STA)]
   public class RdTaskTest : RdFrameworkTestBase
   {
 
@@ -239,6 +239,24 @@ namespace Test.RdFramework
       Assert.AreEqual("0", result.Value.Result);
     }
     
+    [Test]
+    public void TestWaitWithMaxTimeout()
+    {
+      var rdTask = new RdTask<int>();
+
+      var waitTask = Task.Run(() => rdTask.Wait(TimeSpan.MaxValue));
+
+      // Verify the wait is actually blocking (task not completed yet)
+      Assert.IsFalse(waitTask.Wait(TimeSpan.FromMilliseconds(1)));
+
+      rdTask.Set(42);
+
+      // The wait should wake up promptly
+      Assert.IsTrue(waitTask.Wait(TimeSpan.FromMilliseconds(10)));
+      Assert.IsTrue(waitTask.Result);
+      Assert.AreEqual(42, rdTask.Result.Value.Result);
+    }
+
     [Test]
     public void StartWithTerminatedLifetime()
     {

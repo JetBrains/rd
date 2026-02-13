@@ -45,7 +45,7 @@ namespace JetBrains.Rd.Tasks
       var mre = new ManualResetEvent(false);
       using var def = Lifetime.Define();
       task.Result.AdviseOnce(def.Lifetime, _ => mre.Set());
-      mre.WaitOne(timeout);
+      mre.WaitOne(millisecondsTimeout: timeout.TotalMilliseconds >= int.MaxValue ? Timeout.Infinite : (int)timeout.TotalMilliseconds);
     }
 
 
