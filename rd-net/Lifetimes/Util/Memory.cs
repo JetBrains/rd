@@ -1,4 +1,7 @@
+using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace JetBrains.Util.Internal
@@ -93,6 +96,83 @@ namespace JetBrains.Util.Internal
     public static void VolatileWrite(ref bool location, bool value)
     {
       Volatile.Write(ref location, value);
+    }
+
+    public static bool IsReadWriteAtomic<T>()
+    {
+      return IsReadWriteAtomicCache<T>.IsReadWriteAtomic;
+    }
+
+    private static int MaxAtomicSize = ComputeMaxAtomicSize();
+    private static int NonAtomicSize = MaxAtomicSize + 1;
+
+    private static int ComputeMaxAtomicSize()
+    {
+      if (Environment.Is64BitOperatingSystem)
+      {
+        return sizeof(long);
+      }
+      
+      return IntPtr.Size;
+    }
+
+    private static class IsReadWriteAtomicCache<T>
+    {
+      public static readonly bool IsReadWriteAtomic = Compute();
+
+      private static bool Compute()
+      {
+        var size = GetSize();
+        return size <= MaxAtomicSize;
+      }
+
+      private static int GetSize()
+      {
+#if NET5_0_OR_GREATER
+        return Unsafe.SizeOf<T>();
+#else
+        try
+        {
+          return ComputeApproximateSize(typeof(T));
+        }
+        catch
+        {
+          // just in case something went wrong
+          return NonAtomicSize;
+        }
+#endif
+      }
+
+      private static int ComputeApproximateSize(Type type)
+      {
+        if (!type.IsValueType)
+        {
+          return IntPtr.Size;
+        }
+
+        if (type.IsPrimitive || type.IsPointer)
+        {
+          return Marshal.SizeOf(type);
+        }
+        
+        if (type.IsEnum)
+        {
+          var underlyingType = Enum.GetUnderlyingType(type);
+          return Marshal.SizeOf(underlyingType);
+        }
+
+        var totalSize = 0;
+        var types = type.GetRuntimeFields();
+        foreach (var fieldInfo in types)
+        {
+          if (fieldInfo.IsStatic) continue;
+
+          totalSize += ComputeApproximateSize(fieldInfo.FieldType);
+          if (totalSize > MaxAtomicSize) return NonAtomicSize;
+        }
+        
+        return totalSize;
+      }
     }
   }
 }
