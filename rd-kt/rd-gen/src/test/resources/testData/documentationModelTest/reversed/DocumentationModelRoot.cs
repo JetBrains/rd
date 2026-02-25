@@ -68,7 +68,7 @@ namespace org.example
     
     public DocumentationModelRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "DocumentationModelRoot"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "DocumentationModelRoot"), true);
       this.BindTopLevel(lifetime, protocol, "DocumentationModelRoot");
     }
     

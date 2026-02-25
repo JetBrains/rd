@@ -40,10 +40,10 @@ namespace JetBrains.Rd.Reflection
       base.InitBindableFields(lifetime);
     }
 
-    public override void Identify(IIdentities identities, RdId id)
+    public override void Identify(IIdentities identities, RdId id, bool stable)
     {
       ((IReflectionBindable) this).EnsureBindableChildren();
-      base.Identify(identities, id);
+      base.Identify(identities, id, true); // enforce true to make stable ids for each built-in child
     }
 
     public override string ToString()

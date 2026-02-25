@@ -112,7 +112,7 @@ namespace JetBrains.Rd.Impl
           var item = this[index];
           if (item != null)
           {
-            item.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+            item.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId), false);
             definitions.Add(TryPreBindValue(lifetime, item, index, false));
           }
         }
@@ -152,7 +152,7 @@ namespace JetBrains.Rd.Impl
 
             if (it.Kind != AddUpdateRemove.Remove && it.NewValue != null)
             {
-              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId), false);
               definitions.Insert(it.Index, TryPreBindValue(lifetime, it.NewValue, it.Index, false));
             }
           }

@@ -77,6 +77,6 @@ public class RdBindableExUtilTest
 
     public void Bind() { throw new NotImplementedException(); }
 
-    public void Identify(IIdentities identities, RdId id) { throw new NotImplementedException(); }
+    public void Identify(IIdentities identities, RdId id, bool stable) { throw new NotImplementedException(); }
   }
 }

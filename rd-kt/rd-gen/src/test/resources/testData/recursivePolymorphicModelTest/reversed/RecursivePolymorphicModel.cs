@@ -91,7 +91,7 @@ namespace org.example
     
     public RecursivePolymorphicModel(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "RecursivePolymorphicModel"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "RecursivePolymorphicModel"), true);
       this.BindTopLevel(lifetime, protocol, "RecursivePolymorphicModel");
     }
     

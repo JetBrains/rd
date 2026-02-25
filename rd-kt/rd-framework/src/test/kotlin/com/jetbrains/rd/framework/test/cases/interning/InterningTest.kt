@@ -289,8 +289,8 @@ class InterningTest: RdFrameworkTestBase() {
         val serverProperty = RdOptionalProperty(InterningTestModel).slave()
         val clientProperty = RdOptionalProperty(InterningTestModel)
 
-        serverProperty.identify(serverProtocol.identity, RdId(1L))
-        clientProperty.identify(clientProtocol.identity, RdId(1L))
+        serverProperty.identify(serverProtocol.identity, RdId(1L), true)
+        clientProperty.identify(clientProtocol.identity, RdId(1L), true)
 
         serverProtocol.bindStatic(serverProperty, "top")
         clientProtocol.bindStatic(clientProperty, "top")
@@ -326,7 +326,7 @@ class InterningTest: RdFrameworkTestBase() {
 
 
     private fun <T : Any> InternRoot<T>.bindStatic(protocol: IProtocol, id: String) : InternRoot<T> {
-        identify(protocol.identity, protocol.identity.mix(RdId.Null, id))
+        identify(protocol.identity, protocol.identity.mix(RdId.Null, id), true)
         bindTopLevel(if(protocol === clientProtocol) clientLifetime else serverLifetime, protocol, id)
         return this
     }

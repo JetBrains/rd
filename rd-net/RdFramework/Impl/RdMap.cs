@@ -94,7 +94,7 @@ if (!OptimizeNested)
         {
           if (value != null)
           {
-            value.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+            value.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId), false);
             var definition = TryPreBindValue(lifetime, key, value, false);
             if (definition != null)
               definitions.Add(key, definition);
@@ -140,7 +140,7 @@ if (!OptimizeNested)
 
             if (it.Kind != AddUpdateRemove.Remove)
             {
-              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+              it.NewValue.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId), false);
               var definition = TryPreBindValue(lifetime, it.Key, it.NewValue, false);
               definitions[it.Key] = definition;
             }

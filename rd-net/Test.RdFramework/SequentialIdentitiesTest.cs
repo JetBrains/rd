@@ -32,31 +32,13 @@ namespace Test.RdFramework
       var serverIdentities = new SequentialIdentities(IdKind.Server);
 
       var testStrings = new[] { "", "a", "test", "Protocol", "Extension", "InternRoot" };
-      var testInts = new[] { 0, 1, -1, int.MaxValue, int.MinValue };
-      var testLongs = new[] { 0L, 1L, -1L, long.MaxValue, long.MinValue };
-
+      
       foreach (var s in testStrings)
       {
         var clientId = clientIdentities.Mix(RdId.Nil, s);
         var serverId = serverIdentities.Mix(RdId.Nil, s);
         Assert.That(clientId.Value & HighBit, Is.Not.EqualTo(0L), $"Client stable ID from string '{s}' should have high bit set");
         Assert.That(serverId.Value & HighBit, Is.Not.EqualTo(0L), $"Server stable ID from string '{s}' should have high bit set");
-      }
-
-      foreach (var i in testInts)
-      {
-        var clientId = clientIdentities.Mix(RdId.Nil, i);
-        var serverId = serverIdentities.Mix(RdId.Nil, i);
-        Assert.That(clientId.Value & HighBit, Is.Not.EqualTo(0L), $"Client stable ID from int {i} should have high bit set");
-        Assert.That(serverId.Value & HighBit, Is.Not.EqualTo(0L), $"Server stable ID from int {i} should have high bit set");
-      }
-
-      foreach (var l in testLongs)
-      {
-        var clientId = clientIdentities.Mix(RdId.Nil, l);
-        var serverId = serverIdentities.Mix(RdId.Nil, l);
-        Assert.That(clientId.Value & HighBit, Is.Not.EqualTo(0L), $"Client stable ID from long {l} should have high bit set");
-        Assert.That(serverId.Value & HighBit, Is.Not.EqualTo(0L), $"Server stable ID from long {l} should have high bit set");
       }
     }
 

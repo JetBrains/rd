@@ -64,7 +64,7 @@ open class RdMap<K : Any, V : Any> private constructor(
 
             for ((key, value) in this) {
                 if (value != null) {
-                    value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                    value.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
                     val definition = tryPreBindValue(lifetime, key, value, false)
                     if (definition != null)
                         definitions[key] = definition
@@ -96,7 +96,7 @@ open class RdMap<K : Any, V : Any> private constructor(
 
                     if (it !is IViewableMap.Event.Remove) {
                         val value = it.newValueOpt
-                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
                         val definition = tryPreBindValue(lifetime, it.key, value, false)
                         definitions.put(it.key, definition)?.terminate()
                     }

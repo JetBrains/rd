@@ -67,7 +67,7 @@ namespace JetBrains.Rd.Base
     RdId RdId { get; set; }
     void PreBind(Lifetime lf, IRdDynamic parent, string name);    
     void Bind();    
-    void Identify(IIdentities identities, RdId id);
+    void Identify(IIdentities identities, RdId id, bool stable);
   }
 
   internal readonly ref struct AllowBindCookie
@@ -228,42 +228,64 @@ namespace JetBrains.Rd.Base
 
     #region Identify
 
-    internal static void IdentifyPolymorphic(this object? value, IIdentities ids, RdId id)
+    internal static void IdentifyPolymorphic(this object? value, IIdentities ids, RdId id, bool stable)
     {  
       if (value is IRdBindable rdBindable)
-        rdBindable.Identify(ids, id);
+        rdBindable.Identify(ids, id, stable);
       else
-        (value as IEnumerable).Identify0(ids, id);
+        (value as IEnumerable).Identify0(ids, id, stable);
     }
     
 
 
-    private static void Identify0(this IEnumerable? items, IIdentities ids, RdId id)
+    private static void Identify0(this IEnumerable? items, IIdentities ids, RdId id, bool stable)
     {
       if (items == null) return;
 
       var i = 0;
       foreach (var x in items)
       {
-        (x as IRdBindable).IdentifyEx(ids, ids.Mix(id, i++));
+        if (x is IRdBindable bindableChild)
+        {
+          var childId = ComputeChildRdId(ids, id, stable, i++);
+          bindableChild.IdentifyEx(ids, childId, stable);
+        }
       }
+    }
+    
+    private static RdId ComputeChildRdId(IIdentities identities, RdId id, bool stable, int i)
+    {
+      if (stable)
+      {
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (identities is Identities legacyIdentities)
+#pragma warning restore CS0618 // Type or member is obsolete
+        {
+          // for backward compatibility
+          return legacyIdentities.Mix(id, i++);
+        }
+
+        return identities.Mix(id, i++.ToString());
+      }
+
+      return identities.Next(id);
     }
 
 
-    public static void IdentifyEx<T>(this T? value, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T? value, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      if (value != null) value.Identify(ids, id);
+      if (value != null) value.Identify(ids, id, stable);
     }
 
     //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just believe me
-    public static void IdentifyEx<T>(this List<T>? items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this List<T>? items, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      items.Identify0(ids, id);
+      items.Identify0(ids, id, stable);
     }
 
-    public static void IdentifyEx<T>(this T[]? items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T[]? items, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      items.Identify0(ids, id);
+      items.Identify0(ids, id, stable);
     }
 
     #endregion

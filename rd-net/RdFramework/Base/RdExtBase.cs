@@ -51,7 +51,7 @@ namespace JetBrains.Rd.Base
       var parentWire = parentProto.Wire;
 
       parentProto.Serializers.RegisterToplevelOnce(GetType(), Register);
-if (!TryGetSerializationContext(out var serializationContext))
+      if (!TryGetSerializationContext(out var serializationContext))
         return;
 
       var extScheduler = parentProto.Scheduler;
@@ -60,7 +60,8 @@ if (!TryGetSerializationContext(out var serializationContext))
         () =>
         {
           var parentProtocolImpl = (Protocol)parentProto;
-          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler, myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal(parentProto.Identities));
+          var proto = new Protocol(parentProto.Name, parentProto.Serializers, parentProto.Identities, extScheduler,
+            myExtWire, lifetime, parentProtocolImpl, this.CreateExtSignal(parentProto.Identities));
           myExtProtocol = proto;
 
           //protocol must be set first to allow bindable bind to it
@@ -75,20 +76,26 @@ if (!TryGetSerializationContext(out var serializationContext))
           using (Signal.NonPriorityAdviseCookie.Create())
 
 
-      {
-
-      parentProtocolImpl.SubmitExtCreated(info);
+          {
+            parentProtocolImpl.SubmitExtCreated(info);
           }
 
-          parentWire.Advise(lifetime, this);SendState(parentWire, ExtState.Ready);
+          parentWire.Advise(lifetime, this);
+          SendState(parentWire, ExtState.Ready);
 
-      Protocol.InitTrace?.Log($"{this} :: bound");},
+          Protocol.InitTrace?.Log($"{this} :: bound");
+        },
         () =>
         {
           myExtProtocol = null;
           SendState(parentWire, ExtState.Disconnected);
         }
       );
+    }
+
+    public override void Identify(IIdentities identities, RdId id, bool stable)
+    {
+      base.Identify(identities, id, true); // enforce true to make stable ids for each built-in child
     }
 
     protected override void AssertBindingThread() { }

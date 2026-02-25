@@ -20,15 +20,5 @@ namespace JetBrains.Rd
     /// Creates a stable identifier by mixing the parent ID with a string key.
     /// </summary>
     RdId Mix(RdId rdId, string tail);
-
-    /// <summary>
-    /// Creates a stable identifier by mixing the parent ID with an integer key.
-    /// </summary>
-    RdId Mix(RdId rdId, int tail);
-
-    /// <summary>
-    /// Creates a stable identifier by mixing the parent ID with a long key.
-    /// </summary>
-    RdId Mix(RdId rdId, long tail);
   }
 }

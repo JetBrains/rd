@@ -31,7 +31,7 @@ namespace JetBrains.Rd.Base
     public virtual void PreBind(Lifetime lf, IRdDynamic parent, string name) => Delegate.PreBind(lf, parent, name);
     public virtual void Bind() => Delegate.Bind();
 
-    public void Identify(IIdentities identities, RdId id) => Delegate.Identify(identities, id);
+    public void Identify(IIdentities identities, RdId id, bool stable) => Delegate.Identify(identities, id, stable);
 
     public RdId RdId
     {
