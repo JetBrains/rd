@@ -42,7 +42,7 @@ namespace JetBrains.Collections.Viewable
     public bool IsActive => ourActive > 0;
     public bool OutOfOrderExecution => false;
 
-    public bool RunWhile(Func<bool> condition, TimeSpan timeout, bool throwOnTimeout = false)
+    public bool RunWhile(Func<bool> condition, TimeSpan timeout)
     {
       // SynchronousScheduler executes actions inline when queued, so by the time
       // RunWhile is called the condition is typically already satisfied.
@@ -51,8 +51,6 @@ namespace JetBrains.Collections.Viewable
       {
         if (stopwatch != null && stopwatch.Elapsed >= timeout)
         {
-          if (throwOnTimeout)
-            throw new TimeoutException($"RunWhile timed out after {timeout}. Elapsed: {stopwatch.Elapsed}.");
           return false;
         }
       }

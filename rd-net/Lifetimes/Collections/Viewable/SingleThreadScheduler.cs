@@ -160,16 +160,14 @@ namespace JetBrains.Collections.Viewable
       }
     }
 
-    public bool RunWhile(Func<bool> condition, TimeSpan timeout, bool throwOnTimeout = false)
+    public bool RunWhile(Func<bool> condition, TimeSpan timeout)
     {
       var stopwatch = timeout == TimeSpan.MaxValue ? null : Stopwatch.StartNew();
 
       while (condition())
       {
         if (stopwatch != null && stopwatch.Elapsed >= timeout)
-        {
-          if (throwOnTimeout)
-            throw new TimeoutException($"RunWhile timed out after {timeout}. Elapsed: {stopwatch.Elapsed}.");
+        { 
           return false;
         }
 
