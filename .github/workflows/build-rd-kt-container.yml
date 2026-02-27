@@ -25,7 +25,7 @@ jobs:
       - name: Build
         run: ./gradlew build
       - name: Upload Test Results
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: ${{ always() }}
         with:
           name: tests-log.${{ runner.os }}
