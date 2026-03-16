@@ -418,15 +418,15 @@ namespace Test.Lifetimes.Utils
     }
 
     [Test]
-    public void IsReadWriteAtomic_Long_ReturnsTrue()
+    public void IsReadWriteAtomic_Long_DependsOnArchitecture()
     {
-      Assert.IsTrue(Memory.IsReadWriteAtomic<long>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<long>());
     }
 
     [Test]
-    public void IsReadWriteAtomic_ULong_ReturnsTrue()
+    public void IsReadWriteAtomic_ULong_DependsOnArchitecture()
     {
-      Assert.IsTrue(Memory.IsReadWriteAtomic<ulong>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<ulong>());
     }
 
     [Test]
@@ -436,9 +436,9 @@ namespace Test.Lifetimes.Utils
     }
 
     [Test]
-    public void IsReadWriteAtomic_Double_ReturnsTrue()
+    public void IsReadWriteAtomic_Double_DependsOnArchitecture()
     {
-      Assert.IsTrue(Memory.IsReadWriteAtomic<double>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<double>());
     }
 
     [Test]
@@ -706,17 +706,17 @@ namespace Test.Lifetimes.Utils
     #region Common BCL Types
 
     [Test]
-    public void IsReadWriteAtomic_DateTime_ReturnsTrue()
+    public void IsReadWriteAtomic_DateTime_DependsOnArchitecture()
     {
       // DateTime is 8 bytes (single ulong internally)
-      Assert.IsTrue(Memory.IsReadWriteAtomic<DateTime>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<DateTime>());
     }
 
     [Test]
-    public void IsReadWriteAtomic_TimeSpan_ReturnsTrue()
+    public void IsReadWriteAtomic_TimeSpan_DependsOnArchitecture()
     {
       // TimeSpan is 8 bytes (single long internally)
-      Assert.IsTrue(Memory.IsReadWriteAtomic<TimeSpan>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<TimeSpan>());
     }
 
     [Test]
@@ -767,7 +767,7 @@ namespace Test.Lifetimes.Utils
       // Same fields, different order → different real size due to padding
       // OptimalSequentialStruct: int + short + byte + 1pad = 8 bytes → atomic on 64-bit
       // PaddedSequentialStruct:  short + 2pad + int + byte + 3pad = 12 bytes → non-atomic
-      Assert.IsTrue(Memory.IsReadWriteAtomic<OptimalSequentialStruct>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<OptimalSequentialStruct>());
       Assert.IsFalse(Memory.IsReadWriteAtomic<PaddedSequentialStruct>());
     }
 
@@ -779,10 +779,10 @@ namespace Test.Lifetimes.Utils
     }
 
     [Test]
-    public void IsReadWriteAtomic_AutoLayoutMixedSmall_ReturnsTrue()
+    public void IsReadWriteAtomic_AutoLayoutMixedSmall_DependsOnArchitecture()
     {
-      // int + byte, worst-case padded to 8 → always atomic
-      Assert.IsTrue(Memory.IsReadWriteAtomic<AutoLayoutMixedSmall>());
+      // int + byte, worst-case padded to 8 → atomic only if MaxAtomicSize >= 8
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<AutoLayoutMixedSmall>());
     }
 
     [Test]
@@ -876,11 +876,11 @@ namespace Test.Lifetimes.Utils
     }
 
     [Test]
-    public void IsReadWriteAtomic_Pack16IntShort_ReturnsTrue()
+    public void IsReadWriteAtomic_Pack16IntShort_DependsOnArchitecture()
     {
       // Pack=16 >= MaxAtomicSize, so fields keep their natural alignment (no degradation).
       // Size=8 <= MaxAtomicSize on 64-bit, so this is atomic.
-      Assert.IsTrue(Memory.IsReadWriteAtomic<Pack16IntShort>());
+      Assert.AreEqual(MaxAtomicSize >= 8, Memory.IsReadWriteAtomic<Pack16IntShort>());
     }
 
     #endregion
@@ -1626,10 +1626,12 @@ namespace Test.Lifetimes.Utils
     }
 
     [Test]
-    public void SizeOf_DateTimeOffset_Returns16()
+    public void SizeOf_DateTimeOffset_DependsOnArchitecture()
     {
-      // DateTime(8) + short(2) + pad(6) = 16
-      Assert.AreEqual(16, Memory.SizeOf<DateTimeOffset>());
+      // 64-bit: DateTime(8) + short(2) + pad(6) = 16
+      // 32-bit: DateTime(8) + short(2) + pad(2) = 12
+      var expected = IntPtr.Size == 8 ? 16 : 12;
+      Assert.AreEqual(expected, Memory.SizeOf<DateTimeOffset>());
     }
 
     #endregion
