@@ -67,6 +67,28 @@ namespace JetBrains.Rd.Base
     RdId RdId { get; set; }
     void PreBind(Lifetime lf, IRdDynamic parent, string name);    
     void Bind();    
+    /// <summary>
+    /// Assigns an <see cref="RdId"/> to this node and recursively to all its child nodes.
+    /// </summary>
+    /// <param name="identities">The identity source used to generate child IDs.</param>
+    /// <param name="id">The <see cref="RdId"/> to assign to this node.</param>
+    /// <param name="stable">
+    /// A recommendation for how child RdIds should be generated. Entities may override this value.
+    /// <list type="bullet">
+    ///   <item><c>true</c> — uses <see cref="IIdentities.Mix"/> to produce hash-based, deterministic IDs
+    ///   derived from the parent ID and child name. Used when the same entity exists on both protocol sides
+    ///   and its children need matching IDs to find each other (e.g., extensions with built-in maps, sets,
+    ///   properties). Given the same parent ID, both sides will compute identical child IDs.</item>
+    ///   <item><c>false</c> — uses <see cref="IIdentities.Next"/> to produce dynamic IDs.
+    ///   Used for entities created at runtime (e.g., items added to RdMap/RdList) where each side assigns
+    ///   its own IDs independently.</item>
+    /// </list>
+    /// Entities can override this parameter when their children require a specific strategy. For example,
+    /// <see cref="RdExtBase"/> forces <c>stable = true</c> regardless of the incoming value, because its
+    /// built-in children are part of a statically known structure that must match on both protocol sides.
+    /// So even if an ext is encountered during dynamic (non-stable) identification, it will switch to stable
+    /// IDs for its own subtree.
+    /// </param>
     void Identify(IIdentities identities, RdId id, bool stable);
   }
 
