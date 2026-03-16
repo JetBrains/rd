@@ -59,7 +59,7 @@ private fun computeChildRdId(identities: IIdentities, parent: RdId, stable: Bool
             // for backward compatibility
             identities.mix(parent, i)
         } else {
-            identities.mix(parent, i.toString())
+            identities.mix(parent, i.toString(2))
         }
     } else {
         identities.next(parent)

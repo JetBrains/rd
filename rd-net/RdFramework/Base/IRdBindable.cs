@@ -287,7 +287,7 @@ namespace JetBrains.Rd.Base
           return legacyIdentities.Mix(id, i++);
         }
 
-        return identities.Mix(id, i++.ToString());
+        return identities.Mix(id, Convert.ToString(i, 2));
       }
 
       return identities.Next(id);
