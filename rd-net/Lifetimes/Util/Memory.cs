@@ -1,7 +1,6 @@
 using System;
-using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
 
 namespace JetBrains.Util.Internal
@@ -12,7 +11,7 @@ namespace JetBrains.Util.Internal
     public static unsafe void CopyMemory(byte* src, byte* dest, int len)
     {
 
-      
+
       if(len >= 0x10)
       {
         do
@@ -66,7 +65,7 @@ namespace JetBrains.Util.Internal
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite<T>(ref T location, T value) where T : class
     {
@@ -79,41 +78,55 @@ namespace JetBrains.Util.Internal
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref int location, int value)
     {
       Volatile.Write(ref location, value);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static bool VolatileRead(ref bool location)
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref bool location, bool value)
     {
       Volatile.Write(ref location, value);
     }
 
+    /// <summary>
+    /// Returns the managed slot size of <typeparamref name="T"/>: for value types, this is the struct size
+    /// including trailing padding; for reference types, this is <see cref="IntPtr.Size"/> (the reference
+    /// slot size, not the heap object size).
+    /// </summary>
+    public static int SizeOf<T>() => SizeOfCache<T>.Size;
+
     public static bool IsReadWriteAtomic<T>()
     {
       return IsReadWriteAtomicCache<T>.IsReadWriteAtomic;
     }
 
-    private static int MaxAtomicSize = ComputeMaxAtomicSize();
-    private static int NonAtomicSize = MaxAtomicSize + 1;
-
-    private static int ComputeMaxAtomicSize()
+    private static readonly int MaxAtomicSize = IntPtr.Size;
+    
+    private static class SizeOfCache<T>
     {
-      if (Environment.Is64BitOperatingSystem)
+      public static readonly int Size = Compute();
+
+      private static int Compute()
       {
-        return sizeof(long);
+#if NET5_0_OR_GREATER
+        return Unsafe.SizeOf<T>();
+#else
+        var dm = new DynamicMethod("SizeOf", typeof(int), Type.EmptyTypes, typeof(Memory).Module, true);
+        var il = dm.GetILGenerator();
+        il.Emit(OpCodes.Sizeof, typeof(T));
+        il.Emit(OpCodes.Ret);
+        return ((Func<int>)dm.CreateDelegate(typeof(Func<int>)))();
+#endif
       }
-      
-      return IntPtr.Size;
     }
 
     private static class IsReadWriteAtomicCache<T>
@@ -122,56 +135,15 @@ namespace JetBrains.Util.Internal
 
       private static bool Compute()
       {
-        var size = GetSize();
+        var type = typeof(T);
+        if (!type.IsValueType) return true;
+
+        var layoutAttr = type.StructLayoutAttribute;
+        if (layoutAttr != null && layoutAttr.Pack != 0 && layoutAttr.Pack < MaxAtomicSize)
+          return false;
+
+        var size = SizeOf<T>();
         return size <= MaxAtomicSize;
-      }
-
-      private static int GetSize()
-      {
-#if NET5_0_OR_GREATER
-        return Unsafe.SizeOf<T>();
-#else
-        try
-        {
-          return ComputeApproximateSize(typeof(T));
-        }
-        catch
-        {
-          // just in case something went wrong
-          return NonAtomicSize;
-        }
-#endif
-      }
-
-      private static int ComputeApproximateSize(Type type)
-      {
-        if (!type.IsValueType)
-        {
-          return IntPtr.Size;
-        }
-
-        if (type.IsPrimitive || type.IsPointer)
-        {
-          return Marshal.SizeOf(type);
-        }
-        
-        if (type.IsEnum)
-        {
-          var underlyingType = Enum.GetUnderlyingType(type);
-          return Marshal.SizeOf(underlyingType);
-        }
-
-        var totalSize = 0;
-        var types = type.GetRuntimeFields();
-        foreach (var fieldInfo in types)
-        {
-          if (fieldInfo.IsStatic) continue;
-
-          totalSize += ComputeApproximateSize(fieldInfo.FieldType);
-          if (totalSize > MaxAtomicSize) return NonAtomicSize;
-        }
-        
-        return totalSize;
       }
     }
   }
