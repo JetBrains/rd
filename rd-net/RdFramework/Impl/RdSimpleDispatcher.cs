@@ -84,7 +84,7 @@ namespace JetBrains.Rd.Impl
       myEvent.Set();
     }
 
-    public bool RunWhile(Func<bool> condition, TimeSpan timeout, bool throwOnTimeout = false)
+    public bool RunWhile(Func<bool> condition, TimeSpan timeout)
     {
       var stopwatch = timeout == TimeSpan.MaxValue ? (LocalStopwatch?)null : LocalStopwatch.StartNew();
 
@@ -92,8 +92,6 @@ namespace JetBrains.Rd.Impl
       {
         if (stopwatch.HasValue && stopwatch.Value.Elapsed >= timeout)
         {
-          if (throwOnTimeout)
-            throw new TimeoutException($"RunWhile timed out after {timeout}. Elapsed: {stopwatch.Value.Elapsed}.");
           return false;
         }
 
