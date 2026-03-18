@@ -41,8 +41,8 @@ class DynamicEntity<T>(val _foo: RdProperty<T>) : RdBindableBase() {
         _foo.bind()
     }
 
-    override fun identify(identities: IIdentities, id: RdId) {
-        _foo.identify(identities, identities.mix(id, "foo"))
+    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+        _foo.identify(identities, identities.mix(id, "foo"), stable)
     }
 
     constructor(_foo: T) : this(RdProperty<T>(_foo, Polymorphic<T>()))

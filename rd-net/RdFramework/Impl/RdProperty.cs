@@ -88,12 +88,12 @@ namespace JetBrains.Rd.Impl
     public bool OptimizeNested = false;
     private LifetimeDefinition? myBindDefinition;
 
-    public override void Identify(IIdentities identities, RdId id)
+    public override void Identify(IIdentities identities, RdId id, bool stable)
     {
-      base.Identify(identities, id);
+      base.Identify(identities, id, stable);
       if (!OptimizeNested)
       {
-        Maybe.ValueOrDefault.IdentifyPolymorphic(identities, identities.Next(id));
+        Maybe.ValueOrDefault.IdentifyPolymorphic(identities, identities.Next(id), false);
       }
     }
 
@@ -143,7 +143,7 @@ namespace JetBrains.Rd.Impl
           // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.
           Memory.VolatileRead(ref myBindDefinition)?.Terminate();
 
-          v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId));
+          v.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(RdId), false);
 
           var prevDefinition = Interlocked.Exchange(ref myBindDefinition, TryPreBindValue(lifetime, v, false));
           prevDefinition?.Terminate();

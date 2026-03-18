@@ -30,10 +30,10 @@ namespace Test.RdFramework.Interning
       base.Init(lifetime, proto, ctx);
     }
 
-    public override void Identify(IIdentities identities, RdId id)
+    public override void Identify(IIdentities identities, RdId id, bool stable)
     {
-      Property.Identify(identities, id);
-      base.Identify(identities, id);
+      Property.Identify(identities, id, stable);
+      base.Identify(identities, id, stable);
     }
   }
 }

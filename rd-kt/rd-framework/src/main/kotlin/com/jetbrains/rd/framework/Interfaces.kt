@@ -173,16 +173,6 @@ interface IIdentities {
      * Creates a stable identifier by mixing the parent ID with a string key.
      */
     fun mix(rdId: RdId, tail: String): RdId
-
-    /**
-     * Creates a stable identifier by mixing the parent ID with an integer key.
-     */
-    fun mix(rdId: RdId, tail: Int): RdId
-
-    /**
-     * Creates a stable identifier by mixing the parent ID with a long key.
-     */
-    fun mix(rdId: RdId, tail: Long): RdId
 }
 
 /**

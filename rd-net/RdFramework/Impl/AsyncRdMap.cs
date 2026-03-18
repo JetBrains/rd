@@ -52,10 +52,10 @@ public class AsyncRdMap<K, V> : IRdBindable, IAsyncSource<MapEvent<K, V>>, IDict
       myMap.Bind();
   }
 
-  public void Identify(IIdentities identities, RdId id)
+  public void Identify(IIdentities identities, RdId id, bool stable)
   {
     lock (myMap) 
-      myMap.Identify(identities, id);
+      myMap.Identify(identities, id, stable);
   }
 
   public bool OptimizeNested

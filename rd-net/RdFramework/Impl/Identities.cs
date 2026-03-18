@@ -72,20 +72,16 @@ namespace JetBrains.Rd.Impl
       // Ignore parent to avoid collisions from different creation order on client/server
       return new RdId(Interlocked.Add(ref myId, 2));
     }
-    
+
     public RdId Mix(RdId rdId, string tail)
     {
-      return new RdId(StableMask | RdIdUtil.Mix(rdId, tail).Value);
-    }
-
-    public RdId Mix(RdId rdId, int tail)
-    {
-      return new RdId(StableMask | RdIdUtil.Mix(rdId, tail).Value);
-    }
-
-    public RdId Mix(RdId rdId, long tail)
-    {
-      return new RdId(StableMask | RdIdUtil.Mix(rdId, tail).Value);
+      // Since dynamic RdIds are generated sequentially, the parent RdId often uses only a small number of bits (low entropy).
+      // Additionally, the tail string may be short, which can increase the risk of hash collisions.
+      // To improve hash distribution and reliability, we mix in extra data (tail length and a constant string) before mixing the tail itself.
+      var newRdId = RdIdUtil.Mix(rdId, tail.Length);
+      newRdId = RdIdUtil.Mix(newRdId, "SequentialIdentities::Mix::RdId");
+      newRdId = RdIdUtil.Mix(newRdId, tail);
+      return new RdId(StableMask | newRdId.Value);
     }
   }
 }

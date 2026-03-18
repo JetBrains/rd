@@ -692,7 +692,7 @@ open class CSharp50Generator(
         +"{"
 
         indent {
-            +"Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, \"${decl.name}\"));"
+            +"Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, \"${decl.name}\"), true);"
             +"this.BindTopLevel(lifetime, protocol, \"${decl.name}\");" //better than nameof(${decl.name}) because one could rename generated class and it'll still able to connect to Kt
         }
         +"}"

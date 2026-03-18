@@ -67,7 +67,29 @@ namespace JetBrains.Rd.Base
     RdId RdId { get; set; }
     void PreBind(Lifetime lf, IRdDynamic parent, string name);    
     void Bind();    
-    void Identify(IIdentities identities, RdId id);
+    /// <summary>
+    /// Assigns an <see cref="RdId"/> to this node and recursively to all its child nodes.
+    /// </summary>
+    /// <param name="identities">The identity source used to generate child IDs.</param>
+    /// <param name="id">The <see cref="RdId"/> to assign to this node.</param>
+    /// <param name="stable">
+    /// A recommendation for how child RdIds should be generated. Entities may override this value.
+    /// <list type="bullet">
+    ///   <item><c>true</c> — uses <see cref="IIdentities.Mix"/> to produce hash-based, deterministic IDs
+    ///   derived from the parent ID and child name. Used when the same entity exists on both protocol sides
+    ///   and its children need matching IDs to find each other (e.g., extensions with built-in maps, sets,
+    ///   properties). Given the same parent ID, both sides will compute identical child IDs.</item>
+    ///   <item><c>false</c> — uses <see cref="IIdentities.Next"/> to produce dynamic IDs.
+    ///   Used for entities created at runtime (e.g., items added to RdMap/RdList) where each side assigns
+    ///   its own IDs independently.</item>
+    /// </list>
+    /// Entities can override this parameter when their children require a specific strategy. For example,
+    /// <see cref="RdExtBase"/> forces <c>stable = true</c> regardless of the incoming value, because its
+    /// built-in children are part of a statically known structure that must match on both protocol sides.
+    /// So even if an ext is encountered during dynamic (non-stable) identification, it will switch to stable
+    /// IDs for its own subtree.
+    /// </param>
+    void Identify(IIdentities identities, RdId id, bool stable);
   }
 
   internal readonly ref struct AllowBindCookie
@@ -228,42 +250,64 @@ namespace JetBrains.Rd.Base
 
     #region Identify
 
-    internal static void IdentifyPolymorphic(this object? value, IIdentities ids, RdId id)
+    internal static void IdentifyPolymorphic(this object? value, IIdentities ids, RdId id, bool stable)
     {  
       if (value is IRdBindable rdBindable)
-        rdBindable.Identify(ids, id);
+        rdBindable.Identify(ids, id, stable);
       else
-        (value as IEnumerable).Identify0(ids, id);
+        (value as IEnumerable).Identify0(ids, id, stable);
     }
     
 
 
-    private static void Identify0(this IEnumerable? items, IIdentities ids, RdId id)
+    private static void Identify0(this IEnumerable? items, IIdentities ids, RdId id, bool stable)
     {
       if (items == null) return;
 
       var i = 0;
       foreach (var x in items)
       {
-        (x as IRdBindable).IdentifyEx(ids, ids.Mix(id, i++));
+        if (x is IRdBindable bindableChild)
+        {
+          var childId = ComputeChildRdId(ids, id, stable, i++);
+          bindableChild.IdentifyEx(ids, childId, stable);
+        }
       }
+    }
+    
+    private static RdId ComputeChildRdId(IIdentities identities, RdId id, bool stable, int i)
+    {
+      if (stable)
+      {
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (identities is Identities legacyIdentities)
+#pragma warning restore CS0618 // Type or member is obsolete
+        {
+          // for backward compatibility
+          return legacyIdentities.Mix(id, i++);
+        }
+
+        return identities.Mix(id, Convert.ToString(i, 2));
+      }
+
+      return identities.Next(id);
     }
 
 
-    public static void IdentifyEx<T>(this T? value, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T? value, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      if (value != null) value.Identify(ids, id);
+      if (value != null) value.Identify(ids, id, stable);
     }
 
     //PLEASE DON'T MERGE these two methods into one with IEnumerable<T>, just believe me
-    public static void IdentifyEx<T>(this List<T>? items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this List<T>? items, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      items.Identify0(ids, id);
+      items.Identify0(ids, id, stable);
     }
 
-    public static void IdentifyEx<T>(this T[]? items, IIdentities ids, RdId id) where T : IRdBindable
+    public static void IdentifyEx<T>(this T[]? items, IIdentities ids, RdId id, bool stable) where T : IRdBindable
     {
-      items.Identify0(ids, id);
+      items.Identify0(ids, id, stable);
     }
 
     #endregion

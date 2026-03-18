@@ -161,7 +161,7 @@ class EndpointWiredRdTask<TReq, TRes>(
                         return@adviseOnce
                     }
 
-                    taskResult.value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
+                    taskResult.value.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
                     lifetime.executeIfAlive {
                         taskResult.value.preBindPolymorphic(lifetime, call, rdid.toString())
                         if (lifetime.isNotAlive)

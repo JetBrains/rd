@@ -53,7 +53,7 @@ namespace Test.RdFramework.Interning
     
     public InterningRoot1(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, GetType().Name));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, GetType().Name), true);
       this.BindTopLevel(lifetime, protocol, GetType().Name);
       Protocol.InitTrace?.Log ($"CREATED toplevel object {this.PrintToString()}");
     }

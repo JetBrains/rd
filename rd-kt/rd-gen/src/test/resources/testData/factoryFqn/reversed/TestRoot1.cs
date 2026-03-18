@@ -67,7 +67,7 @@ namespace Org.TestRoot1
     
     public TestRoot1(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "TestRoot1"));
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "TestRoot1"), true);
       this.BindTopLevel(lifetime, protocol, "TestRoot1");
     }
     

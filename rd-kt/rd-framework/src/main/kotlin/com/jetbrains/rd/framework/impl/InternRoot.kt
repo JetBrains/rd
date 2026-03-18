@@ -130,7 +130,7 @@ class InternRoot<TBase: Any>(val serializer: ISerializer<TBase> = Polymorphic())
 
     }
 
-    override fun identify(identities: IIdentities, id: RdId) {
+    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
         require(rdid.isNull) { "Already has RdId: $rdid, entity: $this" }
         require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }
 
