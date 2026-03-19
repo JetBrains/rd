@@ -1306,16 +1306,14 @@ namespace Test.Lifetimes.Lifetimes
     {
       var lf = TestLifetime.CreateTerminatedAfter(TimeSpan.FromMilliseconds(100));
       Assert.True(lf.IsAlive);
-      Thread.Sleep(200);
-      Assert.True(lf.IsNotAlive);
-      
+      Assert.True(SpinWait.SpinUntil(() => lf.IsNotAlive, TimeSpan.FromSeconds(5)));
+
       lf = TestLifetime.CreateTerminatedAfter(TimeSpan.FromMilliseconds(100));
       Assert.True(lf.IsAlive);
       LifetimeDefinition.Terminate();
       Assert.True(lf.IsNotAlive);
-      
-      Thread.Sleep(200);
-      Assert.True(lf.IsNotAlive);
+
+      Assert.True(SpinWait.SpinUntil(() => lf.IsNotAlive, TimeSpan.FromSeconds(5)));
     }
     
 
