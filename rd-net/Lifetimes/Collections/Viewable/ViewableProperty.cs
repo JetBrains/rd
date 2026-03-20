@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Util.Internal;
 
 namespace JetBrains.Collections.Viewable
 {
@@ -12,11 +14,35 @@ namespace JetBrains.Collections.Viewable
   /// <typeparam name="T"></typeparam>
   public class ViewableProperty<T> : IViewableProperty<T>
   {
+    private static readonly bool ourIsReadWriteAtomic = Memory.IsReadWriteAtomic<T>();
+    
     private readonly Signal<T> myChange = new Signal<T>();
+
+    private T myValue = default!;
+    private volatile bool myHasValue;
 
     public ISource<T> Change => myChange;
 
-    public Maybe<T> Maybe { get; private set; }
+    public Maybe<T> Maybe
+    {
+      get
+      {
+        if (myHasValue)
+        {
+          if (ourIsReadWriteAtomic)
+          {
+            return new Maybe<T>(myValue);
+          }
+
+          lock (myChange)
+          {
+            return new Maybe<T>(myValue);
+          }
+        }
+        
+        return Maybe<T>.None;
+      }
+    }
 
     public ViewableProperty() {}
 
@@ -36,7 +62,13 @@ namespace JetBrains.Collections.Viewable
         lock (myChange)
         {
           if (Maybe.HasValue && EqualityComparer<T>.Default.Equals(Maybe.Value, value)) return;
-          Maybe = new Maybe<T>(value);
+          myValue = value;
+          myHasValue = true;
+          
+          // After optimizing signal, `Fire` no longer provides a full memory fence (triggered by `Interlocked.CompareExchange`).
+          // This caused our tests to become flaky because we rely on `Fire(value)` being observed strictly after `myValue = value`;
+          // To enforce this ordering, we explicitly add a memory barrier here.
+          Interlocked.MemoryBarrier();
           myChange.Fire(value);
         }
       }
