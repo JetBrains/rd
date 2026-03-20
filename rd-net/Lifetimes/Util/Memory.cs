@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -93,6 +94,54 @@ namespace JetBrains.Util.Internal
     public static void VolatileWrite(ref bool location, bool value)
     {
       Volatile.Write(ref location, value);
+    }
+
+    public static bool IsReadWriteAtomic<T>()
+    {
+      return IsReadWriteAtomicCache<T>.IsReadWriteAtomic;
+    }
+
+    private static class IsReadWriteAtomicCache<T>
+    {
+      // ReSharper disable once StaticMemberInGenericType
+      public static readonly bool IsReadWriteAtomic = Compute();
+
+      private static bool Compute()
+      {
+        //According to runtime specification
+        //https://github.com/dotnet/runtime/blob/main/docs/design/specs/Memory-model.md#atomic-memory-accesses
+        //Managed references accesses are atomic
+        if (!typeof(T).IsValueType)
+          return true;
+        //Otherwise, only primitive and Enum types with size up to the platform pointer size accesses are atomic
+        if (!typeof(T).IsPrimitive && !typeof(T).IsEnum)
+          return false;
+
+        //Native integer primitive types
+        if (typeof(T) == typeof(IntPtr) || typeof(T) == typeof(UIntPtr))
+          return true;
+
+        //Other primitive types and Enum types (via underlying primitive type)
+        switch (Type.GetTypeCode(typeof(T)))
+        {
+          case TypeCode.Boolean:
+          case TypeCode.SByte:
+          case TypeCode.Byte:
+          case TypeCode.Char:
+          case TypeCode.Int16:
+          case TypeCode.UInt16:
+          case TypeCode.Int32:
+          case TypeCode.UInt32:
+          case TypeCode.Single:
+            return true;
+          case TypeCode.Int64:
+          case TypeCode.UInt64:
+          case TypeCode.Double:
+            return IntPtr.Size == 8;
+          default:
+            return false;
+        }
+      }
     }
   }
 }
