@@ -1,3 +1,5 @@
+using System;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -9,7 +11,7 @@ namespace JetBrains.Util.Internal
     public static unsafe void CopyMemory(byte* src, byte* dest, int len)
     {
 
-      
+
       if(len >= 0x10)
       {
         do
@@ -63,7 +65,7 @@ namespace JetBrains.Util.Internal
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite<T>(ref T location, T value) where T : class
     {
@@ -76,23 +78,73 @@ namespace JetBrains.Util.Internal
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref int location, int value)
     {
       Volatile.Write(ref location, value);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static bool VolatileRead(ref bool location)
     {
       return Volatile.Read(ref location);
     }
-    
+
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void VolatileWrite(ref bool location, bool value)
     {
       Volatile.Write(ref location, value);
+    }
+
+    /// <summary>
+    /// Returns the managed slot size of <typeparamref name="T"/>: for value types, this is the struct size
+    /// including trailing padding; for reference types, this is <see cref="IntPtr.Size"/> (the reference
+    /// slot size, not the heap object size).
+    /// </summary>
+    public static int SizeOf<T>() => SizeOfCache<T>.Size;
+
+    public static bool IsReadWriteAtomic<T>()
+    {
+      return IsReadWriteAtomicCache<T>.IsReadWriteAtomic;
+    }
+
+    private static readonly int MaxAtomicSize = IntPtr.Size;
+    
+    private static class SizeOfCache<T>
+    {
+      public static readonly int Size = Compute();
+
+      private static int Compute()
+      {
+#if NET5_0_OR_GREATER
+        return Unsafe.SizeOf<T>();
+#else
+        var dm = new DynamicMethod("SizeOf", typeof(int), Type.EmptyTypes, typeof(Memory).Module, true);
+        var il = dm.GetILGenerator();
+        il.Emit(OpCodes.Sizeof, typeof(T));
+        il.Emit(OpCodes.Ret);
+        return ((Func<int>)dm.CreateDelegate(typeof(Func<int>)))();
+#endif
+      }
+    }
+
+    private static class IsReadWriteAtomicCache<T>
+    {
+      public static readonly bool IsReadWriteAtomic = Compute();
+
+      private static bool Compute()
+      {
+        var type = typeof(T);
+        if (!type.IsValueType) return true;
+
+        var layoutAttr = type.StructLayoutAttribute;
+        if (layoutAttr != null && layoutAttr.Pack != 0 && layoutAttr.Pack < MaxAtomicSize)
+          return false;
+
+        var size = SizeOf<T>();
+        return size <= MaxAtomicSize;
+      }
     }
   }
 }
