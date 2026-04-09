@@ -154,5 +154,45 @@ namespace JetBrains.Threading
           return true;
       }
     }
+
+    /// <summary>
+    /// Performs a single spin iteration, guaranteeing that the current thread is never blocked via
+    /// <see cref="Thread.Sleep(int)"/>.
+    /// <para>
+    /// On .NET 5 and later, delegates to <see cref="SpinWait.SpinOnce(int)"/> with
+    /// <c>sleepThreshold = -1</c>, which disables the sleep phase entirely while still allowing
+    /// CPU-level spinning and <see cref="Thread.Yield()"/>.
+    /// </para>
+    /// <para>
+    /// On earlier targets, falls back to <see cref="Thread.Yield()"/> when
+    /// <see cref="SpinWait.NextSpinWillYield"/> is <c>true</c> (i.e., when the next ordinary
+    /// <see cref="SpinWait.SpinOnce()"/> call would otherwise invoke <c>Thread.Sleep</c>),
+    /// so the CPU is yielded to other ready threads without blocking.
+    /// </para>
+    /// </summary>
+    /// <remarks>
+    /// Prefer this method over <see cref="SpinWait.SpinOnce()"/> in contexts where sleeping the
+    /// thread is unacceptable — for example, inside a lock-free loop
+    /// that must remain responsive. <c>Thread.Sleep(1)</c>, which <see cref="SpinWait.SpinOnce()"/>
+    /// eventually calls, can block for up to ~16 ms on Windows due to the default system timer
+    /// resolution.
+    /// </remarks>
+    /// <param name="spinWait">The <see cref="SpinWait"/> instance to advance.</param>
+    [PublicAPI]
+    public static void SpinOnceWithoutSleep(this SpinWait spinWait)
+    {
+#if NET5_0_OR_GREATER
+      spinWait.SpinOnce(-1);
+#else
+      if (spinWait.NextSpinWillYield)
+      {
+        Thread.Yield();
+      }
+      else
+      {
+        spinWait.SpinOnce();
+      }
+#endif
+    }
   }
 }
