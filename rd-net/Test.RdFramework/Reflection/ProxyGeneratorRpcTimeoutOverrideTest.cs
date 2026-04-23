@@ -1,8 +1,9 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using JetBrains.Lifetimes;
 using JetBrains.Rd.Reflection;
 using NUnit.Framework;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Test.RdFramework.Reflection;
 
@@ -18,32 +19,31 @@ public class ProxyGeneratorRpcTimeoutOverrideTest : ProxyGeneratorTestBase
   public interface ICallTest
   {
     [RpcTimeout(1)]
-    void MTimeout();
+    void MTimeout(Lifetime cancel);
 
     [RpcTimeout]
-    void MQuick();
+    void MQuick(Lifetime cancel);
   }
 
   [RdExt]
   internal class CallTest : RdExtReflectionBindableBase, ICallTest
   {
-    public void MTimeout() => Thread.Sleep(50);
-    public void MQuick() { }
+    public void MTimeout(Lifetime cancel) => SpinWait.SpinUntil(() => !cancel.IsAlive, 5000);
+    public void MQuick(Lifetime cancel) { }
   }
 
-  [Test]
+  [Test, Timeout(1000)]
   public async Task TestRpcTimeouts()
   {
     ThrowLoggedExceptions();
 
     await TestTemplate<CallTest, ICallTest>(model =>
     {
-      model.MQuick(); // should not throw, timeouts are satisfied
-      ThrowLoggedExceptions(); 
+      model.MQuick(TestLifetime); // should not throw, timeouts are satisfied
+      ThrowLoggedExceptions();
 
-      // should produce log message with level=Error, timeout 1ms is violated
-      model.MTimeout();
-      Assert.Throws<Exception>(ThrowLoggedExceptions);
+      // should exit fast, expected timeout 1ms is violated, returning TimeoutException
+      Assert.Throws<TimeoutException>(() => model.MTimeout(TestLifetime));
 
       return Task.CompletedTask;
     });
@@ -54,22 +54,21 @@ public class ProxyGeneratorRpcTimeoutOverrideTest : ProxyGeneratorTestBase
   [RdRpc, RpcTimeout(1)]
   public interface ICall2Test
   {
-    void MTimeout();
+    void MTimeout(Lifetime cancel);
   }
   [RdExt]
   internal class Call2Test : RdExtReflectionBindableBase, ICall2Test
   {
-    public void MTimeout() => Thread.Sleep(50);
+    public void MTimeout(Lifetime cancel) => SpinWait.SpinUntil(() => !cancel.IsAlive, 5000);
   }
 
-  [Test]
+  [Test, Timeout(1000)]
   public async Task TestRpcTimeouts2()
   {
     await TestTemplate<Call2Test, ICall2Test>(model =>
     {
-      // should produce log message with level=Error, timeout 1ms is violated
-      model.MTimeout();
-      Assert.Throws<Exception>(ThrowLoggedExceptions);
+      // should exit fast, expected timeout 1ms is violated, returning TimeoutException
+      Assert.Throws<TimeoutException>(() => model.MTimeout(TestLifetime));
       return Task.CompletedTask;
     });
   }

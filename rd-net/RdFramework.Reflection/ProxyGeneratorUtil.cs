@@ -67,7 +67,7 @@ namespace JetBrains.Rd.Reflection
       var scheduler = protocol.Scheduler as IRunWhileScheduler;
       Assertion.Assert(scheduler != null, "Scheduler must implement IRunWhileScheduler for nested calls. Scheduler type: {0}", protocol.Scheduler.GetType());
 
-      var task = call.Start(lifetime, request, null);
+      var task = (RdTask<TRes>)call.Start(lifetime, request, null);
 
       RpcTimeouts timeoutsToUse = RpcTimeouts.GetRpcTimeouts(timeouts);
 
@@ -78,7 +78,10 @@ namespace JetBrains.Rd.Reflection
       stopwatch.Stop();
 
       if (!completed)
+      {
+        task.SetCancelled();
         throw new TimeoutException($"Sync execution of rpc `{call.Location}` is timed out in {timeoutsToUse.ErrorAwaitTime.TotalMilliseconds} ms");
+      }
 
       var freezeTime = stopwatch.ElapsedMilliseconds;
       if (freezeTime > timeoutsToUse.WarnAwaitTime.TotalMilliseconds)
