@@ -73,15 +73,15 @@ namespace JetBrains.Rd.Reflection
 
       var stopwatch = Stopwatch.StartNew();
 
-      // Pump messages while waiting for the result (no hard timeout; use thresholds for logging only)
-      scheduler.RunWhile(() => !task.Result.HasValue(), TimeSpan.MaxValue);
+      var completed = scheduler.RunWhile(() => !task.Result.HasValue(), timeoutsToUse.ErrorAwaitTime);
 
       stopwatch.Stop();
 
+      if (!completed)
+        throw new TimeoutException($"Sync execution of rpc `{call.Location}` is timed out in {timeoutsToUse.ErrorAwaitTime.TotalMilliseconds} ms");
+
       var freezeTime = stopwatch.ElapsedMilliseconds;
-      if (freezeTime > timeoutsToUse.ErrorAwaitTime.TotalMilliseconds)
-        Log.Root.Error("Sync execution of rpc `{0}` executed too long: {1} ms", call.Location, freezeTime);
-      else if (freezeTime > timeoutsToUse.WarnAwaitTime.TotalMilliseconds)
+      if (freezeTime > timeoutsToUse.WarnAwaitTime.TotalMilliseconds)
         Log.Root.Warn("Sync execution of rpc `{0}` executed too long: {1} ms", call.Location, freezeTime);
 
       return task.Result.Value.Unwrap();
