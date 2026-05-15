@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -241,6 +242,38 @@ namespace Test.Lifetimes.Threading
       {
         cookie.Writer.WriteInt64(l);
         buffer.Put(cookie);
+      }
+    }
+  
+    [Test]
+    public void AbandonedThreadProcTest()
+    {
+      const string disconnect = "Disconnect";
+      for (int i = 0; i < 20_000; i++)
+      {
+        ByteBufferAsyncProcessor processor = null;
+        
+        var bytes = new byte[1];
+        var tasks = new ConcurrentQueue<Task>();
+        var mre = new ManualResetEvent(false);
+        
+        processor = new ByteBufferAsyncProcessor("Processor", (byte[] data, int offset, int len, ref long n) =>
+        {
+          mre.Set();
+          processor!.Pause(disconnect);
+          
+          tasks.Enqueue(Task.Run(() =>
+          {
+            processor.Pause(disconnect);
+          }));
+        });
+        
+        processor.Start();
+        processor.Put(bytes);
+        mre.WaitOne();
+        var success = processor.Stop(5000);
+        Assert.IsTrue(success);
+        Task.WaitAll(tasks.ToArray());
       }
     }
   }

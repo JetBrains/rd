@@ -105,6 +105,7 @@ namespace JetBrains.Threading
     private Chunk myChunkToFill;
 
     private bool myProcessing;
+    private long myProcessingFinishWaitingCount = 0;
     
     private volatile Chunk myChunkToProcess;
 
@@ -185,7 +186,8 @@ namespace JetBrains.Threading
         }
 
         State = state;
-        Monitor.Pulse(myLock);
+        // Use pulse all to wake up ThreadProc even if there is another waiter (to avoid accidentally leaving ThreadProc in wait infinitely) 
+        Monitor.PulseAll(myLock);
       }
 
       var res =  myAsyncProcessingThread.Join(timeoutMs);
@@ -247,8 +249,7 @@ namespace JetBrains.Threading
       Assertion.Require(Thread.CurrentThread != myAsyncProcessingThread);
       lock (myLock)
       {
-        while (myProcessing) 
-          Monitor.Wait(myLock, 1);
+        WaitProcessingFinished();
 
         var chunk = myChunkToFill.Next;
         while (chunk != myChunkToFill)
@@ -333,9 +334,21 @@ namespace JetBrains.Threading
               if (myChunkToProcess.Ptr == 0)
                 myAllDataProcessed = true;
             }
+
+            if (myProcessingFinishWaitingCount > 0)
+            {
+              Monitor.PulseAll(myLock);
+            }
           }
         }
       }
+    }
+    
+    [MustUseReturnValue]
+    private ProcessingFinishedCountCookie ProcessingFinishedCookie()
+    {
+      Assertion.Assert(Monitor.IsEntered(myLock));
+      return new ProcessingFinishedCountCookie(this);
     }
 
     #endregion
@@ -408,8 +421,11 @@ namespace JetBrains.Threading
     {
       if (Thread.CurrentThread == myAsyncProcessingThread) return; //don't want to deadlock
       
-      while (myProcessing) 
-        Monitor.Wait(myLock, 1);
+      using (ProcessingFinishedCookie())
+      {
+        while (myProcessing) 
+          Monitor.Wait(myLock, 1);
+      }
     }
 
     public bool Resume([NotNull] string reason)
@@ -547,5 +563,21 @@ namespace JetBrains.Threading
     }
     #endregion
 
+    private readonly ref struct ProcessingFinishedCountCookie
+    {
+      private readonly ByteBufferAsyncProcessor myProcessor;
+
+      public ProcessingFinishedCountCookie(ByteBufferAsyncProcessor processor)
+      {
+        myProcessor = processor;
+        processor.myProcessingFinishWaitingCount++;
+      }
+
+      public void Dispose()
+      {
+        myProcessor.myProcessingFinishWaitingCount--;
+        Assertion.Assert(Monitor.IsEntered(myProcessor.myLock));
+      }
+    }
   }
 }
