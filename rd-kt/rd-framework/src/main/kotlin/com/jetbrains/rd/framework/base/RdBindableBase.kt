@@ -216,6 +216,11 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
     }
 
     private fun computeChildRdId(identities: IIdentities, parent: RdId, name: String, stable: Boolean): RdId {
+        // Legacy Identities: always use mix(parent, ".$name") regardless of stable — restores pre-fix
+        // behavior for users that haven't migrated to SequentialIdentities.
+        if (identities is Identities) {
+            return identities.mix(parent, ".$name")
+        }
         return if (stable) {
             identities.mix(parent, ".$name")
         } else {

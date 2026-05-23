@@ -193,6 +193,13 @@ namespace JetBrains.Rd.Base
 
     private static RdId ComputeChildRdId(IIdentities identities, RdId parent, string name, bool stable)
     {
+      // Legacy Identities: always use Mix(parent, ".name") regardless of stable — restores pre-fix
+      // behavior for users that haven't migrated to SequentialIdentities.
+#pragma warning disable CS0618 // Type or member is obsolete
+      if (identities is Identities)
+#pragma warning restore CS0618 // Type or member is obsolete
+        return identities.Mix(parent, "." + name);
+
       return stable ? identities.Mix(parent, "." + name) : identities.Next(parent);
     }
 

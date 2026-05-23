@@ -54,13 +54,15 @@ interface IRdBindable : IRdDynamic {
 }
 
 private fun computeChildRdId(identities: IIdentities, parent: RdId, stable: Boolean, i: Int): RdId {
+    // Legacy Identities: always use mix(parent, i) — pre-fix behavior had better effective distribution
+    // for collection elements than next(parent), whose underlying hash mix(parent, counter) is a poor
+    // linear function (acc*31 + counter+1). Restore that for backward compatibility with users that
+    // haven't migrated to SequentialIdentities.
+    if (identities is Identities) {
+        return identities.mix(parent, i)
+    }
     return if (stable) {
-        if (identities is Identities) {
-            // for backward compatibility
-            identities.mix(parent, i)
-        } else {
-            identities.mix(parent, i.toString(2))
-        }
+        identities.mix(parent, i.toString(2))
     } else {
         identities.next(parent)
     }

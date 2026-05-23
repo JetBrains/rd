@@ -277,18 +277,19 @@ namespace JetBrains.Rd.Base
     
     private static RdId ComputeChildRdId(IIdentities identities, RdId id, bool stable, int i)
     {
-      if (stable)
-      {
+      // Legacy Identities: always use Mix(parent, i) — pre-fix behavior had better effective distribution
+      // for collection elements than Next(parent), whose underlying hash Mix(parent, counter) is a poor
+      // linear function (acc*31 + counter+1). Restore that for backward compatibility with users that
+      // haven't migrated to SequentialIdentities.
 #pragma warning disable CS0618 // Type or member is obsolete
-        if (identities is Identities legacyIdentities)
+      if (identities is Identities legacyIdentities)
 #pragma warning restore CS0618 // Type or member is obsolete
-        {
-          // for backward compatibility
-          return legacyIdentities.Mix(id, i++);
-        }
-
-        return identities.Mix(id, Convert.ToString(i, 2));
+      {
+        return legacyIdentities.Mix(id, i);
       }
+
+      if (stable)
+        return identities.Mix(id, Convert.ToString(i, 2));
 
       return identities.Next(id);
     }
