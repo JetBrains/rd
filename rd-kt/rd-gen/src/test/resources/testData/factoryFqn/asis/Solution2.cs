@@ -141,7 +141,7 @@ namespace Org.TestRoot1
     
     public Solution2(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "Solution2"), true);
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "Solution2"));
       this.BindTopLevel(lifetime, protocol, "Solution2");
     }
     

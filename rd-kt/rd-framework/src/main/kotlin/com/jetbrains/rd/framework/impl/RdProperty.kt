@@ -80,7 +80,7 @@ abstract class RdPropertyBase<T>(val valueSerializer: ISerializer<T>) : RdReacti
                 // We need to terminate the current lifetime to unbind the existing value before assigning a new value, especially in cases where we are reassigning it.
                 bindDefinition.get()?.terminate()
 
-                v.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
+                v.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
 
                 val prevDefinition = bindDefinition.getAndSet(tryPreBindValue(lifetime, v, false))
                 prevDefinition?.terminate()
@@ -207,10 +207,10 @@ class RdOptionalProperty<T : Any>(valueSerializer: ISerializer<T> = Polymorphic(
         }
     }
 
-    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
-        super.identify(identities, id, stable)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            valueOrNull?.identifyPolymorphic(identities, identities.next(id), false)
+            valueOrNull?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {
@@ -290,10 +290,10 @@ class RdProperty<T>(defaultValue: T, valueSerializer: ISerializer<T> = Polymorph
         value = newValue
     }
 
-    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
-        super.identify(identities, id, stable)
+    override fun identify(identities: IIdentities, id: RdId) {
+        super.identify(identities, id)
         if (!optimizeNested)
-            value?.identifyPolymorphic(identities, identities.next(id), false)
+            value?.identifyPolymorphic(identities, identities.next(id))
     }
 
     override fun advise(lifetime: Lifetime, handler: (T) -> Unit) {

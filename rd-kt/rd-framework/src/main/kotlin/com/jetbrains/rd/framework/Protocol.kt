@@ -130,7 +130,7 @@ class Protocol internal constructor(
                 val newExtension = create()
                 extensions[clazz] = newExtension
                 val declName = clazz.simpleName ?: error("Can't get simple name for class $clazz")
-                newExtension.identify(identity, identity.mix(RdId.Null, declName), true)
+                newExtension.identify(identity, identity.mix(RdId.Null, declName))
                 newExtension.bindTopLevel(lifetime, this, declName)
                 newExtension
             }

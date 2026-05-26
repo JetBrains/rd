@@ -172,7 +172,7 @@ namespace JetBrains.Rd.Impl
         myExtensions[name] = res;
         if (res is IRdBindable rdBindable)
         {
-          rdBindable.Identify(Identities, Identities.Mix(RdId.Root, name), true);
+          rdBindable.Identify(Identities, Identities.Mix(RdId.Root, name));
           rdBindable.PreBind(Lifetime, this, name);
           rdBindable.Bind();
         }

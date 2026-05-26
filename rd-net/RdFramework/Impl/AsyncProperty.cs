@@ -161,7 +161,7 @@ public class AsyncRdProperty<T> : IRdReactive, IAsyncProperty<T>, INotifyPropert
   public IAsyncSource<T> Change => myChange;
 
 
-  public void Identify(IIdentities identities, RdId id, bool stable)
+  public void Identify(IIdentities identities, RdId id)
   {
     Assertion.Require(!id.IsNil, $"Assigned RdId mustn't be null, entity: {this}");
 

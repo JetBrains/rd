@@ -77,9 +77,9 @@ class AsyncRdMap<K : Any, V : Any> private constructor(
         }
     }
 
-    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+    override fun identify(identities: IIdentities, id: RdId) {
         synchronized(map) {
-            map.identify(identities, id, stable)
+            map.identify(identities, id)
         }
     }
 
