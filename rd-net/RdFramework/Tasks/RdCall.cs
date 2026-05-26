@@ -204,7 +204,7 @@ namespace JetBrains.Rd.Tasks
           if (result.Result.IsBindable())
           {
             // we mock the endpoint side, since we are on stub wire, so identify bindable result here
-            result.Result.IdentifyPolymorphic(proto.Identities, proto.Identities.Next(taskId), false);
+            result.Result.IdentifyPolymorphic(proto.Identities, proto.Identities.Mix(RdId, taskId.ToString()));
           }
           
           task.OnResultReceived(result, new SynchronousDispatchHelper(taskId, requestLifetime));

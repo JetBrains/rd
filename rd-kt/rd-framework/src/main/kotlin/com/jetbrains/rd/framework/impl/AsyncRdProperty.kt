@@ -162,7 +162,7 @@ class AsyncRdProperty<T>(val valueSerializer: ISerializer<T> = Polymorphic()) : 
         }
     }
 
-    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+    override fun identify(identities: IIdentities, id: RdId) {
         require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }
 
         synchronized (property) {

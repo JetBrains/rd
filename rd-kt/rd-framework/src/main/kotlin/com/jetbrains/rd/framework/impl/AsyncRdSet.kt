@@ -76,9 +76,9 @@ class AsyncRdSet<T : Any> private constructor(
         }
     }
 
-    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+    override fun identify(identities: IIdentities, id: RdId) {
         synchronized(set) {
-            set.identify(identities, id, stable)
+            set.identify(identities, id)
         }
     }
 

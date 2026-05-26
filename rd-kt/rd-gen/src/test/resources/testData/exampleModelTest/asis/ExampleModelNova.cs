@@ -141,7 +141,7 @@ namespace org.example
     
     public ExampleModelNova(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "ExampleModelNova"), true);
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "ExampleModelNova"));
       this.BindTopLevel(lifetime, protocol, "ExampleModelNova");
     }
     

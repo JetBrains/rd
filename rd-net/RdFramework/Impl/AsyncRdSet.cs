@@ -53,10 +53,10 @@ public class AsyncRdSet<T> : IRdBindable, IAsyncSource<SetEvent<T>>,
       mySet.Bind();
   }
 
-  public void Identify(IIdentities identities, RdId id, bool stable)
+  public void Identify(IIdentities identities, RdId id)
   {
     lock (mySet) 
-      mySet.Identify(identities, id, stable);
+      mySet.Identify(identities, id);
   }
 
   public bool OptimizeNested

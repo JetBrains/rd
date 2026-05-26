@@ -65,7 +65,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
             for (index in 0 until size) {
                 val item = this[index]
                 if (item != null) {
-                    item.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
+                    item.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
                     definitions.add(tryPreBindValue(lifetime, item, index, false))
                 }
             }
@@ -95,7 +95,7 @@ class RdList<V : Any> private constructor(val valSzr: ISerializer<V>, private va
 
                     val value = it.newValueOpt
                     if (it !is IViewableList.Event.Remove) {
-                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid), false)
+                        value.identifyPolymorphic(proto.identity, proto.identity.next(rdid))
                         definitions.add(it.index, tryPreBindValue(lifetime, value, it.index, false))
                     }
                 }

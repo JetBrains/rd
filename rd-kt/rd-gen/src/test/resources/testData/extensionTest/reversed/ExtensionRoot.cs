@@ -66,7 +66,7 @@ namespace ExtensionRoot
     
     public ExtensionRoot(Lifetime lifetime, IProtocol protocol) : this()
     {
-      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "ExtensionRoot"), true);
+      Identify(protocol.Identities, protocol.Identities.Mix(RdId.Root, "ExtensionRoot"));
       this.BindTopLevel(lifetime, protocol, "ExtensionRoot");
     }
     
