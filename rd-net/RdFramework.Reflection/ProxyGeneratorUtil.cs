@@ -84,10 +84,6 @@ namespace JetBrains.Rd.Reflection
         throw new TimeoutException($"Sync execution of rpc `{call.Location}` is timed out in {timeoutsToUse.ErrorAwaitTime.TotalMilliseconds} ms");
       }
 
-      var freezeTime = stopwatch.ElapsedMilliseconds;
-      if (freezeTime > timeoutsToUse.WarnAwaitTime.TotalMilliseconds)
-        Log.Root.Warn("Sync execution of rpc `{0}` executed too long: {1} ms", call.Location, freezeTime);
-
       SyncCallMonitor.RaiseSyncCallFinished(new SyncCallInfo(call.Location, stopwatch.Elapsed, timeoutsToUse));
       return task.Result.Value.Unwrap();
     }

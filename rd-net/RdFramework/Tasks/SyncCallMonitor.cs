@@ -30,6 +30,19 @@ namespace JetBrains.Rd.Tasks
   /// </summary>
   public static class SyncCallMonitor
   {
+    /// The default <see cref="SyncCallFinished"/> handler: logs when a call exceeds WarnAwaitTime.
+    /// Opt-out.
+    public static readonly Action<SyncCallInfo> DefaultWarnHandler = static info =>
+    {
+      if (info.ElapsedTime > info.Timeouts.WarnAwaitTime)
+        Log.Root.Error("Sync execution of rpc `{0}` executed too long: {1} ms, the freeze time: {2} ms", info.Location, info.Timeouts.WarnAwaitTime.TotalMilliseconds, info.ElapsedTime.TotalMilliseconds);
+    };
+
+    static SyncCallMonitor()
+    {
+      SyncCallFinished += DefaultWarnHandler;
+    }
+
     /// <summary>
     /// Raised after every synchronous RPC call that completed within its timeout.
     /// Use this to track sync call volume and identify candidates for async migration.
