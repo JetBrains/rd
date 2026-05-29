@@ -208,7 +208,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
     {
       var mi = memberInfos[index];
       var returnType = ReflectionUtil.GetReturnType(mi);
-      var serPair = GetOrRegisterSerializerPair(returnType);
+      var serPair = GetOrRegisterSerializerPair(returnType, instance: true);
       memberDeserializers[index] = SerializerReflectionUtil.ConvertReader<object>(serPair.Reader);
       memberSerializers[index] = SerializerReflectionUtil.ConvertWriter<object?>(serPair.Writer);
     }

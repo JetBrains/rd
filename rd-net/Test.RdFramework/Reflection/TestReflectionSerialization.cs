@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using JetBrains.Collections.Viewable;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Impl;
@@ -21,6 +23,7 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<FieldsNullableOk> FieldsNullableOk { get; }
       public IViewableProperty<PropertiesNotNullOk> PropertiesNotNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
+      public IViewableProperty<ModelLight> ModelLight { get; }
       
       public ModelSample ModelMember { get; }
     }
@@ -31,6 +34,8 @@ namespace Test.RdFramework.Reflection
       AddType(typeof(Animal));
       AddType(typeof(Bear));
       AddType(typeof(EmptyOK));
+      AddType(typeof(AbstractModel));
+      AddType(typeof(ConcreteModel));
     }
 
     [Test]
@@ -94,7 +99,7 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestReactiveListOfReactiveLists()
     {
-      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var s = SFacade.InitBind(new RootModel() , TestLifetime, ClientProtocol);
       var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
 
       var cm = c.ModelMember;
@@ -106,6 +111,21 @@ namespace Test.RdFramework.Reflection
       CollectionAssert.AreEqual(cm.Multilist[0], sm.Multilist[0]);
       CollectionAssert.AreEqual(cm.MultimapNonReactive["x"], sm.MultimapNonReactive["x"]);
     }
+
+    [Test]
+    public void TestNestedPolyModels()
+    {
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
+      var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
+
+      var model = new ModelLight
+      {
+        AbstractModelField = new ConcreteModel()
+      };
+      c.ModelLight.Value = model;
+      Assert.IsTrue(s.ModelLight.Value.AbstractModelField is ConcreteModel);
+    }
+
 
     [Test]
     public void TestOptimizeNested()

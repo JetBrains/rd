@@ -41,6 +41,18 @@ namespace Test.RdFramework.Reflection
   {
   }
 
+  [RdModel]
+  public class ModelLight : RdReflectionBindableBase
+  {
+    public AbstractModel AbstractModelField;
+  }
+
+  [RdModel]
+  public class AbstractModel : RdReflectionBindableBase{}
+
+  [RdModel]
+  public class ConcreteModel : AbstractModel{}
+
   public interface IPolymorphicScalar
   {
 
