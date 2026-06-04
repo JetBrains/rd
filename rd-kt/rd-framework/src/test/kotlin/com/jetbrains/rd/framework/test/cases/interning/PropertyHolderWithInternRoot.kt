@@ -25,9 +25,9 @@ class PropertyHolderWithInternRoot<T : Any>(val property: RdOptionalProperty<T>,
         super.bind()
     }
 
-    override fun identify(identities: IIdentities, id: RdId) {
-        property.identify(identities, identities.mix(id, "propertyHolderWithInternRoot"))
-        super.identify(identities, id)
+    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+        property.identify(identities, identities.mix(id, "propertyHolderWithInternRoot"), stable)
+        super.identify(identities, id, stable)
     }
 
     override val serializationContext: SerializationCtx

@@ -179,7 +179,7 @@ namespace JetBrains.Rd.Base
       }
     }
 
-    public virtual void Identify(IIdentities identities, RdId id)
+    public virtual void Identify(IIdentities identities, RdId id, bool stable)
     {
       Assertion.Require(RdId.IsNil, "Already has RdId: {0}, entity: {1}", RdId, this);      
       Assertion.Require(!id.IsNil, "Assigned RdId mustn't be null, entity: {0}", this);
@@ -187,8 +187,13 @@ namespace JetBrains.Rd.Base
       RdId = id;
       foreach (var pair in BindableChildren)
       {
-        pair.Value?.IdentifyPolymorphic(identities, identities.Mix(id, "." + pair.Key));
+        pair.Value?.IdentifyPolymorphic(identities, ComputeChildRdId(identities, id, pair.Key, stable), stable);
       }
+    }
+
+    private static RdId ComputeChildRdId(IIdentities identities, RdId parent, string name, bool stable)
+    {
+      return stable ? identities.Mix(parent, "." + name) : identities.Next(parent);
     }
 
     public virtual RdBindableBase? FindByRName(RName rName)
@@ -284,7 +289,7 @@ namespace JetBrains.Rd.Base
             if (bindLifetime.IsAlive)
             {
               if (bindable.RdId == RdId.Nil)
-                bindable.Identify(proto.Identities, proto.Identities.Mix(RdId, "." + name));
+                bindable.Identify(proto.Identities, proto.Identities.Mix(RdId, "." + name), true);
               bindable.PreBind(bindLifetime, this, name);
               bindable.Bind();
             }

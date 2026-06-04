@@ -177,7 +177,7 @@ namespace JetBrains.Rd.Impl
     {
     }
 
-    public void Identify(IIdentities identities, RdId id)
+    public void Identify(IIdentities identities, RdId id, bool stable)
     {
       Assertion.Require(RdId.IsNil, "Already has RdId: {0}, entity: {1}", RdId, this);      
       Assertion.Require(!id.IsNil, "Assigned RdId mustn't be null, entity: {0}", this);

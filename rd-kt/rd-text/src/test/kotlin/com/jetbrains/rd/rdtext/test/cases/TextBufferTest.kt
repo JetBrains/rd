@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 private fun IRdBindable.top(lifetime: Lifetime, protocol: IProtocol) {
-    identify(protocol.identity, protocol.identity.mix(RdId.Null, this.javaClass.simpleName))
+    identify(protocol.identity, protocol.identity.mix(RdId.Null, this.javaClass.simpleName), true)
     preBind(lifetime, protocol, this.javaClass.simpleName)
     bind()
 }

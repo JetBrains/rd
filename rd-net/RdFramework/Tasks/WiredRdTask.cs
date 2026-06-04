@@ -171,7 +171,7 @@ namespace JetBrains.Rd.Tasks
             }
 
             var bindableRdId = proto.Identities.Next(RdId);
-            potentiallyBindable.IdentifyPolymorphic(proto.Identities, bindableRdId);
+            potentiallyBindable.IdentifyPolymorphic(proto.Identities, bindableRdId, false);
 
             using var cookie = Lifetime.UsingExecuteIfAlive();
             if (cookie.Succeed) // lifetime can be terminated from background thread
