@@ -162,12 +162,16 @@ namespace JetBrains.Rd.Tasks
         var deltaAwaitTime = timeoutsToUse.ErrorAwaitTime - timeoutsToUse.WarnAwaitTime;
         var res = deltaAwaitTime > TimeSpan.Zero && task.Wait(deltaAwaitTime);
         stopwatch.Stop();
-        
+
         if (!res)
+        {
+          SyncCallMonitor.RaiseSyncCallTimedOut(new SyncCallInfo(Location, stopwatch.Elapsed, timeoutsToUse));
           throw new TimeoutException($"Sync execution of rpc `{Location}` is timed out in {timeoutsToUse.ErrorAwaitTime.TotalMilliseconds} ms, the freeze time is {stopwatch.ElapsedMilliseconds} ms");
-        Log.Root.Error("Sync execution of rpc `{0}` executed too long: {1} ms, the freeze time: {2} ms", Location, timeoutsToUse.WarnAwaitTime.TotalMilliseconds, stopwatch.ElapsedMilliseconds);
+        }
       }
 
+      stopwatch.Stop();
+      SyncCallMonitor.RaiseSyncCallFinished(new SyncCallInfo(Location, stopwatch.Elapsed, timeoutsToUse));
       return task.Result.Value.Unwrap();
     }
 
