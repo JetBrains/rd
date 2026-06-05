@@ -199,7 +199,7 @@ namespace JetBrains.Serialization
       public IntPtr Data => myHolder.Data;
       public int Length => myHolder.Length;
 
-      internal IntPtr Realloc(int size)
+      public IntPtr Realloc(int size)
       {
         return myHolder.Realloc(size);
       }
