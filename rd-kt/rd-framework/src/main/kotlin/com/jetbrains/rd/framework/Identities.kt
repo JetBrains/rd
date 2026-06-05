@@ -103,11 +103,11 @@ class Identities(override val dynamicKind : IdKind) : IIdentities {
         return RdIdUtil.mix(rdId, tail)
     }
 
-    override fun mix(rdId: RdId, tail: Int): RdId {
+    fun mix(rdId: RdId, tail: Int): RdId {
         return RdIdUtil.mix(rdId, tail)
     }
 
-    override fun mix(rdId: RdId, tail: Long): RdId {
+    fun mix(rdId: RdId, tail: Long): RdId {
         return RdIdUtil.mix(rdId, tail)
     }
 }
@@ -141,14 +141,12 @@ class SequentialIdentities(override val dynamicKind : IdKind) : IIdentities {
     }
 
     override fun mix(rdId: RdId, tail: String): RdId {
-        return RdId(StableMask or RdIdUtil.mix(rdId, tail).hash)
-    }
-
-    override fun mix(rdId: RdId, tail: Int): RdId {
-        return RdId(StableMask or RdIdUtil.mix(rdId, tail).hash)
-    }
-
-    override fun mix(rdId: RdId, tail: Long): RdId {
-        return RdId(StableMask or RdIdUtil.mix(rdId, tail).hash)
+        // Since dynamic RdIds are generated sequentially, the parent RdId often uses only a small number of bits (low entropy).
+        // Additionally, the tail string may be short, which can increase the risk of hash collisions.
+        // To improve hash distribution and reliability, we mix in extra data (tail length and a constant string) before mixing the tail itself.
+        var newRdId = RdIdUtil.mix(rdId, tail.length)
+        newRdId = RdIdUtil.mix(newRdId, "SequentialIdentities::Mix::RdId")
+        newRdId = RdIdUtil.mix(newRdId, tail)
+        return RdId(StableMask or newRdId.hash)
     }
 }

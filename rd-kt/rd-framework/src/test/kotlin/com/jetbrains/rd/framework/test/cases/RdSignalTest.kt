@@ -131,8 +131,8 @@ class RdSignalTest : RdFrameworkTestBase() {
             _foo.bind()
         }
 
-        override fun identify(identities: IIdentities, id: RdId) {
-            _foo.identify(identities, identities.mix(id, "foo"))
+        override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+            _foo.identify(identities, identities.mix(id, "foo"), stable)
         }
 
 
@@ -279,8 +279,8 @@ class RdSignalTest : RdFrameworkTestBase() {
             _foo.bind()
         }
 
-        override fun identify(identities: IIdentities, id: RdId) {
-            _foo.identify(identities, identities.mix(id, "foo"))
+        override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
+            _foo.identify(identities, identities.mix(id, "foo"), stable)
         }
 
         constructor() : this(RdSignal<Unit>())

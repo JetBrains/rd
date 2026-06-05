@@ -80,9 +80,9 @@ namespace Test.RdFramework
         myValue.Bind();
       }
 
-      public override void Identify(IIdentities identities, RdId id)
+      public override void Identify(IIdentities identities, RdId id, bool stable)
       {
-        myValue.Identify(identities, id);
+        myValue.Identify(identities, id, stable);
       }
     }
   }

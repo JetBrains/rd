@@ -41,28 +41,12 @@ class RdIdTest {
         val serverIdentities = SequentialIdentities(IdKind.Server)
 
         val testStrings = listOf("", "a", "test", "Protocol", "Extension", "InternRoot")
-        val testInts = listOf(0, 1, -1, Int.MAX_VALUE, Int.MIN_VALUE)
-        val testLongs = listOf(0L, 1L, -1L, Long.MAX_VALUE, Long.MIN_VALUE)
 
         for (s in testStrings) {
             val clientId = clientIdentities.mix(RdId.Null, s)
             val serverId = serverIdentities.mix(RdId.Null, s)
             assertTrue(clientId.hash and HIGH_BIT != 0L, "Client stable ID from string '$s' should have high bit set")
             assertTrue(serverId.hash and HIGH_BIT != 0L, "Server stable ID from string '$s' should have high bit set")
-        }
-
-        for (i in testInts) {
-            val clientId = clientIdentities.mix(RdId.Null, i)
-            val serverId = serverIdentities.mix(RdId.Null, i)
-            assertTrue(clientId.hash and HIGH_BIT != 0L, "Client stable ID from int $i should have high bit set")
-            assertTrue(serverId.hash and HIGH_BIT != 0L, "Server stable ID from int $i should have high bit set")
-        }
-
-        for (l in testLongs) {
-            val clientId = clientIdentities.mix(RdId.Null, l)
-            val serverId = serverIdentities.mix(RdId.Null, l)
-            assertTrue(clientId.hash and HIGH_BIT != 0L, "Client stable ID from long $l should have high bit set")
-            assertTrue(serverId.hash and HIGH_BIT != 0L, "Server stable ID from long $l should have high bit set")
         }
     }
 

@@ -97,9 +97,9 @@ namespace Test.RdFramework.Reflection
 
       public bool TryGetSerializationContext(out SerializationCtx ctx) => myRdSignal.TryGetSerializationContext(out ctx);
 
-      public void Identify(IIdentities identities, RdId id)
+      public void Identify(IIdentities identities, RdId id, bool stable)
       {
-        myRdSignal.Identify(identities, id);
+        myRdSignal.Identify(identities, id, stable);
       }
     }
   }

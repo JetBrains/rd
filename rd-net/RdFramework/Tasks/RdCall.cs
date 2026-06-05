@@ -208,7 +208,15 @@ namespace JetBrains.Rd.Tasks
           if (result.Result.IsBindable())
           {
             // we mock the endpoint side, since we are on stub wire, so identify bindable result here
-            result.Result.IdentifyPolymorphic(proto.Identities, proto.Identities.Mix(RdId, taskId.ToString()));
+            // Legacy Identities: restore pre-fix Mix(RdId, taskId.ToString()) for backward compatibility —
+            // the string-hash path has much better distribution than Next() (mix(parent, counter), a poor
+            // linear function). SequentialIdentities continues to use the dynamic Next() path.
+#pragma warning disable CS0618 // Type or member is obsolete
+            var resultId = proto.Identities is Identities legacyIdentities
+              ? legacyIdentities.Mix(RdId, taskId.ToString())
+              : proto.Identities.Next(taskId);
+#pragma warning restore CS0618 // Type or member is obsolete
+            result.Result.IdentifyPolymorphic(proto.Identities, resultId, false);
           }
           
           task.OnResultReceived(result, new SynchronousDispatchHelper(taskId, requestLifetime));

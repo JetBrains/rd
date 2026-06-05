@@ -138,7 +138,7 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
                     val localBindLifetime = bindLifetime
                     if (localBindLifetime.isAlive) {
                         if (newExtension.rdid == RdId.Null)
-                            newExtension.identify(proto.identity, proto.identity.mix(rdid, ".$name"))
+                            newExtension.identify(proto.identity, proto.identity.mix(rdid, ".$name"), true)
                         newExtension.preBind(localBindLifetime, this, name)
                         newExtension.bind()
                     }
@@ -205,13 +205,26 @@ abstract class RdBindableBase : IRdBindable, IPrintable {
         return child.findByRName(rName.dropNonEmptyRoot())
     }
     
-    override fun identify(identities: IIdentities, id: RdId) {
+    override fun identify(identities: IIdentities, id: RdId, stable: Boolean) {
         require(rdid.isNull) { "Already has RdId: $rdid, entity: $this" }
         require(!id.isNull) { "Assigned RdId mustn't be null, entity: $this" }
 
         rdid = id
         for ((name, child) in bindableChildren) {
-            child?.identifyPolymorphic(identities, identities.mix(id, ".$name"))
+            child?.identifyPolymorphic(identities, computeChildRdId(identities, id, name, stable), stable)
+        }
+    }
+
+    private fun computeChildRdId(identities: IIdentities, parent: RdId, name: String, stable: Boolean): RdId {
+        // Legacy Identities: always use mix(parent, ".$name") regardless of stable — restores pre-fix
+        // behavior for users that haven't migrated to SequentialIdentities.
+        if (identities is Identities) {
+            return identities.mix(parent, ".$name")
+        }
+        return if (stable) {
+            identities.mix(parent, ".$name")
+        } else {
+            identities.next(parent)
         }
     }
 
