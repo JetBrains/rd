@@ -81,10 +81,9 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
   {
     lock (myLock)
     {
-      var implementingType = ReflectionSerializerVerifier.GetImplementingType(type.GetTypeInfo()).GetTypeInfo();
-      var isRdType = implementingType != type;
+      var implementingType = ReflectionSerializerVerifier.GetImplementingType(type.GetTypeInfo(), out var isRdPrimitive).GetTypeInfo();
 
-      if (!isRdType && instance && SerializerReflectionUtil.CanBePolymorphic(type))
+      if (!isRdPrimitive && instance && SerializerReflectionUtil.CanBePolymorphic(type))
       {
         myCatalog.AddType(type);
         if (myInstanceSerializers.TryGetValue(type, out var pair))
@@ -114,7 +113,7 @@ public class ReflectionSerializers : ISerializers, ISerializersSource
         {
           myStaticSerializers.Add(type, null!);
 
-          if (isRdType)
+          if (isRdPrimitive)
           {
             var builtIn = BuiltInSerializers.TryGet(implementingType, t => GetOrRegisterSerializerPair(t, true));
             Assertion.AssertNotNull(builtIn, "Unable to get built in serializer for type {0}, thought it should be implemented for Rd-types.", type);

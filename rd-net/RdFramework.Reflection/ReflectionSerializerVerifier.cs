@@ -54,6 +54,21 @@ namespace JetBrains.Rd.Reflection
     };
 
     private static readonly string ourFakeTupleFullName = typeof(ProxyGenerator.FakeTuple<>).FullName.NotNull().TrimEnd('1');
+    private static readonly Dictionary<Type, Type> ourRdPrimitives = new()
+    {
+      [typeof(IViewableProperty<>)] = typeof(RdProperty<>),
+      [typeof(RdProperty<>)] = typeof(RdProperty<>),
+      [typeof(ISignal<>)] = typeof(RdSignal<>),
+      [typeof(RdSignal<>)] = typeof(RdSignal<>),
+      [typeof(IViewableSet<>)] = typeof(RdSet<>),
+      [typeof(RdSet<>)] = typeof(RdSet<>),
+      [typeof(IViewableList<>)] = typeof(RdList<>),
+      [typeof(RdList<>)] = typeof(RdList<>),
+      [typeof(IViewableMap<,>)] = typeof(RdMap<,>),
+      [typeof(RdMap<,>)] = typeof(RdMap<,>),
+      [typeof(IRdCall<,>)] = typeof(RdCall<,>),
+      [typeof(RdCall<,>)] = typeof(RdCall<,>),
+    };
 
     public static bool IsPrimitive(Type typeInfo)
     {
@@ -225,19 +240,19 @@ namespace JetBrains.Rd.Reflection
 
     public static Type GetImplementingType(TypeInfo typeInfo)
     {
-      if (!typeInfo.IsGenericType) return typeInfo.AsType();
+      return GetImplementingType(typeInfo, out _);
+    }
 
-      var genericDefinition = typeInfo.GetGenericTypeDefinition();
-      if (genericDefinition == typeof(IViewableProperty<>)) return typeof(RdProperty<>).MakeGenericType(typeInfo.GetGenericArguments());
+    public static Type GetImplementingType(TypeInfo typeInfo, out bool isRdPrimitive)
+    {
+      if (typeInfo.IsGenericType &&
+          ourRdPrimitives.TryGetValue(typeInfo.GetGenericTypeDefinition(), out var implementation))
+      {
+        isRdPrimitive = true;
+        return implementation.MakeGenericType(typeInfo.GetGenericArguments());
+      }
 
-      if (genericDefinition == typeof(ISignal<>)) return typeof(RdSignal<>).MakeGenericType(typeInfo.GetGenericArguments());
-      if (genericDefinition == typeof(IViewableSet<>)) return typeof(RdSet<>).MakeGenericType(typeInfo.GetGenericArguments());
-      if (genericDefinition == typeof(IViewableList<>)) return typeof(RdList<>).MakeGenericType(typeInfo.GetGenericArguments());
-
-      if (genericDefinition == typeof(IViewableMap<,>)) return typeof(RdMap<,>).MakeGenericType(typeInfo.GetGenericArguments());
-
-      if (genericDefinition == typeof(IRdCall<,>)) return typeof(RdCall<,>).MakeGenericType(typeInfo.GetGenericArguments());
-
+      isRdPrimitive = false;
       return typeInfo.AsType();
     }
 

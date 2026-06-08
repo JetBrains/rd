@@ -12,7 +12,7 @@ namespace Test.RdFramework.Reflection
     /// <summary>
     /// It is possible to have arbitrary data in live models if attribute <see cref="NonSerializedAttribute"/> is specified
     /// </summary>
-    [NonSerialized] [CanBeNull] public string[] arrays;
+    [NonSerialized] [CanBeNull] public string[] arraysNonSerialized;
 
     /// <summary>
     /// Arbitrary data without [NonSerialized] will be serialized only once at the moment of passing to the other side.
