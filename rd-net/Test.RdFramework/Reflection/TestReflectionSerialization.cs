@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using JetBrains.Collections.Viewable;
-using JetBrains.Diagnostics;
+﻿using JetBrains.Collections.Viewable;
+using JetBrains.Rd;
 using JetBrains.Rd.Impl;
 using JetBrains.Rd.Reflection;
+using JetBrains.Rd.Tasks;
+using JetBrains.Serialization;
 using NUnit.Framework;
+using System.Collections.Generic;
+using static Test.RdFramework.Reflection.PolymorphicScalarTest;
 
 namespace Test.RdFramework.Reflection
 {
@@ -24,7 +24,7 @@ namespace Test.RdFramework.Reflection
       public IViewableProperty<PropertiesNotNullOk> PropertiesNotNullOk { get; }
       public IViewableProperty<Animal> PolyProperty { get; }
       public IViewableProperty<ModelLight> ModelLight { get; }
-      
+
       public ModelSample ModelMember { get; }
     }
 
@@ -87,7 +87,7 @@ namespace Test.RdFramework.Reflection
       cm.List.Add("val2");
       cm.Set.Add("val3");
       cm.Map["x"] = "val";
-      
+
       CollectionAssert.AreEqual(cm.IList, sm.IList);
       CollectionAssert.AreEqual(cm.List, sm.List);
       CollectionAssert.AreEqual(cm.Set, sm.Set);
@@ -99,15 +99,15 @@ namespace Test.RdFramework.Reflection
     [Test]
     public void TestReactiveListOfReactiveLists()
     {
-      var s = SFacade.InitBind(new RootModel() , TestLifetime, ClientProtocol);
+      var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
       var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
 
       var cm = c.ModelMember;
       var sm = s.ModelMember;
 
-      cm.Multilist.Add(CFacade.Activator.Activate<RdList<string>>()); 
+      cm.Multilist.Add(CFacade.Activator.Activate<RdList<string>>());
       cm.Multilist[0].Add("123");
-      cm.MultimapNonReactive["x"] = new List<string> {"123"};
+      cm.MultimapNonReactive["x"] = new List<string> { "123" };
       CollectionAssert.AreEqual(cm.Multilist[0], sm.Multilist[0]);
       CollectionAssert.AreEqual(cm.MultimapNonReactive["x"], sm.MultimapNonReactive["x"]);
     }
@@ -132,7 +132,7 @@ namespace Test.RdFramework.Reflection
     {
       var list = CFacade.Activator.Activate<RdList<string>>();
       Assert.AreEqual(true, list.OptimizeNested);
-      
+
       var listInts = CFacade.Activator.Activate<RdList<int>>();
       Assert.AreEqual(true, listInts.OptimizeNested);
       var listPoly = CFacade.Activator.Activate<IViewableList<Animal>>();
@@ -161,17 +161,17 @@ namespace Test.RdFramework.Reflection
     {
       var s = SFacade.InitBind(new RootModel(), TestLifetime, ClientProtocol);
       var c = CFacade.InitBind(new RootModel(), TestLifetime, ServerProtocol);
-      
+
       var serverAnimal = CFacade.Activator.Activate<Animal>();
-      serverAnimal.arrays = new[]{"initial"}; 
-      serverAnimal.arrays2 = new[]{"initial2"};
+      serverAnimal.arraysNonSerialized = new[] { "initial" };
+      serverAnimal.arrays2 = new[] { "initial2" };
 
       s.PolyProperty.Value = serverAnimal;
-      serverAnimal.arrays[0]= "null";
-      serverAnimal.arrays2[0]= "null";
-      
+      serverAnimal.arraysNonSerialized[0] = "null";
+      serverAnimal.arrays2[0] = "null";
+
       var clientAnimal = c.PolyProperty.Value;
-      Assert.AreEqual(clientAnimal.arrays, null); /* NonSerialized filed should not be initialized*/
+      Assert.AreEqual(clientAnimal.arraysNonSerialized, null); /* NonSerialized filed should not be initialized*/
       CollectionAssert.AreEqual(new[] { "initial2" }, clientAnimal.arrays2); /* other fields should serialize their content only once */
     }
 
@@ -185,6 +185,69 @@ namespace Test.RdFramework.Reflection
         Assert.AreEqual(s.PropertiesNotNullOk.Value.Second, "Second");
         Assert.AreEqual(s.PropertiesNotNullOk.Value.Enum, MyEnum.Second);
       });
+    }
+
+    [Test]
+    public void TestSerializeRoundTrip()
+    {
+      var source = CFacade.Activator.Activate<Animal>();
+      source.Identify(ClientProtocol.Identities, RdId.TestValue, true);
+      source.arraysNonSerialized = new[] { "etest" };
+      source.arrays2 = new[] { "serialized" };
+      var recovered = SerializationRoundTrip(source);
+
+      Assert.IsNull(recovered.arraysNonSerialized, nameof(Animal.arraysNonSerialized));
+      AssertEqualNullability(source.arrays2, recovered.arrays2);
+      AssertEqualNullability(source.scalar, recovered.scalar);
+      AssertEqualNullability(source.NestedRdModel, recovered.NestedRdModel);
+      AssertEqualNullability(source.LiveList, recovered.LiveList);
+      AssertEqualNullability(source.Maps, recovered.Maps);
+      AssertEqualNullability(source.Sets, recovered.Sets);
+    }
+
+    [RdModel]
+    public class SingleCallBase : RdReflectionBindableBase
+    {
+    }
+
+    [RdModel]
+    public class SingleCall : SingleCallBase
+    {
+      public RdCall<ProjectInfo, ProjectInfo> Call;
+    }
+
+
+    [Test]
+    public void TestSerializeRoundTripLigthModel()
+    {
+      AddType(typeof(SingleCall));
+      var source = CFacade.Activator.Activate<SingleCall>();
+      source.Identify(ClientProtocol.Identities, RdId.TestValue, true);
+      var recovered = (SingleCall)SerializationRoundTrip<SingleCallBase>(source);
+
+      AssertEqualNullability(source.Call, recovered.Call);
+    }
+
+    private static void AssertEqualNullability<T>(T expected, T actual)
+      where T : class
+    {
+      Assert.AreEqual(expected == null, actual == null);
+    }
+
+    private unsafe T SerializationRoundTrip<T>(T value)
+    {
+      var clientSer = CFacade.Serializers.GetOrRegisterSerializerPair(typeof(T), true);
+      var serverSer = SFacade.Serializers.GetOrRegisterSerializerPair(typeof(T), true);
+      var ctx = new SerializationCtx(ClientProtocol);
+      using var cookie = UnsafeWriter.NewThreadLocalWriter();
+      var startBookmark = cookie.Writer.MakeBookmark();
+      var ctxWriteDelegate = clientSer.GetWriter<T>();
+      ctxWriteDelegate(ctx, cookie.Writer, value);
+
+      var written = UnsafeReader.CreateReader(startBookmark.Data, cookie.Count);
+      var recovered = serverSer.GetReader<T>()(ctx, written);
+
+      return recovered;
     }
   }
 }
