@@ -179,7 +179,7 @@ namespace JetBrains.Threading
     /// </remarks>
     /// <param name="spinWait">The <see cref="SpinWait"/> instance to advance.</param>
     [PublicAPI]
-    public static void SpinOnceWithoutSleep(this SpinWait spinWait)
+    public static void SpinOnceWithoutSleep(this ref SpinWait spinWait)
     {
 #if NET5_0_OR_GREATER
       spinWait.SpinOnce(-1);

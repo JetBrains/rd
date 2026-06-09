@@ -259,26 +259,46 @@ namespace JetBrains.Rd.Base
       if (RealWire.IsStub)
         return;
 
-      lock (mySendQ)
+      if (IsConnectedAndFlushed())
       {
-        if (mySendQ.Count > 0 || !Connected.Value)
+        RealWire.Send(id, param, writer);
+        return;
+      }
+
+      byte[] clonedData;
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        // Do not call writer under lock
+        writer(param, cookie.Writer);
+        lock (mySendQ)
         {
-          using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+          if (!IsConnectedAndFlushed())
           {
-            writer(param, cookie.Writer);
             var storedContext = Contexts.IsSendWithoutContexts
               ? EmptyArray<KeyValuePair<RdContextBase, object>>.Instance
-              : Contexts.RegisteredContexts.Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed)).ToArray();
+              : Contexts.RegisteredContexts.Select(it => new KeyValuePair<RdContextBase, object>(it, it.ValueBoxed))
+                .ToArray();
+
             mySendQ.Enqueue(new QueueItem(id, cookie.CloneData(), storedContext));
-            if (!RealWire.Contexts.IsSendWithoutContexts)
+            if (!RealWire.Contexts.IsSendWithoutContexts) 
               Contexts.RegisterCurrentValuesInValueSets();
+            return;
           }
 
-          return;
+          clonedData = cookie.CloneData();
         }
       }
 
-      RealWire.Send(id, param, writer);
+      // fallback if ext was connected right after first IsConnectedAndFlushed check
+      RealWire.Send(id, clonedData, static (data, writer) => writer.WriteRaw(data));
+    }
+
+    private bool IsConnectedAndFlushed()
+    {
+      lock (mySendQ)
+      {
+        return mySendQ.Count == 0 && Connected.Value;
+      }
     }
 
     public void Advise(Lifetime lifetime, IRdWireable entity)

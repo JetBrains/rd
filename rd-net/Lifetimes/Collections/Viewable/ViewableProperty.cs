@@ -4,6 +4,7 @@ using System.Threading;
 using JetBrains.Core;
 using JetBrains.Diagnostics;
 using JetBrains.Lifetimes;
+using JetBrains.Threading;
 using JetBrains.Util.Internal;
 
 namespace JetBrains.Collections.Viewable
@@ -19,30 +20,56 @@ namespace JetBrains.Collections.Viewable
     private readonly Signal<T> myChange = new Signal<T>();
 
     private T myValue = default!;
-    private volatile bool myHasValue;
+    private const long ValueNotSetFlag = 0;
+    private const long InProgressIncrement = 1;
+    private const long SetIncrement = 2;
+    private long myTimestamp = ValueNotSetFlag;
 
     public ISource<T> Change => myChange;
+
+    private bool HasValue => Volatile.Read(ref myTimestamp) >= (ValueNotSetFlag + SetIncrement);
 
     public Maybe<T> Maybe 
     {
       get
       {
-        if (myHasValue)
+        if (!HasValue)
         {
-          if (ourIsReadWriteAtomic)
-          {
-            return new Maybe<T>(myValue);
-          }
+          return Maybe<T>.None;
+        }
+        
+        if (ourIsReadWriteAtomic)
+        {
+          return new Maybe<T>(myValue);
+        }
+        
+        return GetBigValueSlowNoLock();
+      }
+    }
 
-          lock (myChange)
-          {
-            return new Maybe<T>(myValue);
-          }
+    private Maybe<T> GetBigValueSlowNoLock()
+    {
+      var spinWait = new SpinWait();
+      while (true)
+      {
+        var timestamp = Volatile.Read(ref myTimestamp);
+        if ((timestamp & InProgressIncrement) != 0) // myValue is being written not -> wait
+        {
+          spinWait.SpinOnceWithoutSleep();
+          continue;
         }
 
-        return Maybe<T>.None;
+        var value = myValue;
+        Interlocked.MemoryBarrier();
+        var timestampAfter = Volatile.Read(ref myTimestamp);
+        if (timestampAfter != timestamp) // changed during read, retry ->
+        {
+          spinWait.SpinOnceWithoutSleep();
+          continue;
+        }
+        
+        return new Maybe<T>(value);
       }
-
     }
 
     public ViewableProperty() {}
@@ -62,13 +89,23 @@ namespace JetBrains.Collections.Viewable
       {
         lock (myChange)
         {
-          if (myHasValue && EqualityComparer<T>.Default.Equals(myValue, value)) return;
+          if (HasValue && EqualityComparer<T>.Default.Equals(myValue, value))
+          {
+            return;
+          }
+          
+          var timestampBefore = Volatile.Read(ref myTimestamp);
+          // use volatile for atomic write on x86
+          Volatile.Write(ref myTimestamp, timestampBefore + InProgressIncrement);
+          Interlocked.MemoryBarrier(); // myValue must be set strictly after myTimestamp  
           myValue = value;
-          myHasValue = true;
+          Volatile.Write(ref myTimestamp, timestampBefore + SetIncrement); // myTimestamp must be updated strictly after myValue is set 
+          
           // After optimizing signal, `Fire` no longer provides a full memory fence (triggered by `Interlocked.CompareExchange`).
           // This caused our tests to become flaky because we rely on `Fire(value)` being observed strictly after `myValue = value`;
           // To enforce this ordering, we explicitly add a memory barrier here.
           Interlocked.MemoryBarrier();
+          // todo move fire out of lock to avoid deadlocks (breaking change)
           myChange.Fire(value);
         }
       }
@@ -84,6 +121,7 @@ namespace JetBrains.Collections.Viewable
         myChange.Advise(lifetime, handler);
         try
         {
+          // todo move handler our of lock to avoid deadlock (breaking change)
           if (Maybe.HasValue) handler(Value);
         }
         catch (Exception e)
