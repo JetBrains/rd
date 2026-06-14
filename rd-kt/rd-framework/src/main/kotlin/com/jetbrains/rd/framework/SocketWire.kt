@@ -352,36 +352,44 @@ class SocketWire {
             }
         }
 
+        // RIDER-127935: serialize concurrent senders so the send buffer only ever sees a single
+        // producer at a time. ByteBufferAsyncProcessor's chunk ring is single-producer-safe; concurrent
+        // producers (e.g. AsyncRdProperty set from arbitrary threads) corrupt the chunk linkage.
+        // Reentrant by design (nested sends from the context machinery run on the same thread).
+        private val sendSerializationLock = Any()
+
         override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
             require(!id.isNull) { "id mustn't be null" }
 
-            val unsafeBuffer = threadLocalBufferArray.get()
-            val initialPosition = unsafeBuffer.position
-            try {
+            synchronized(sendSerializationLock) {
+                val unsafeBuffer = threadLocalBufferArray.get()
+                val initialPosition = unsafeBuffer.position
+                try {
 
-                unsafeBuffer.writeInt(0) //placeholder for length
+                    unsafeBuffer.writeInt(0) //placeholder for length
 
-                id.write(unsafeBuffer) //write id
-                contexts.writeCurrentMessageContext(unsafeBuffer)
-                writer(unsafeBuffer) //write rest
+                    id.write(unsafeBuffer) //write id
+                    contexts.writeCurrentMessageContext(unsafeBuffer)
+                    writer(unsafeBuffer) //write rest
 
-                val len = unsafeBuffer.position - initialPosition
+                    val len = unsafeBuffer.position - initialPosition
 
-                if (len > maxMessageLength) {
-                    val entry = messageBroker.tryGetById(id)
-                    logger.error { "Too long message: $len. ${entry?.location?.toString() ?: "<NULL>"}" }
-                }
+                    if (len > maxMessageLength) {
+                        val entry = messageBroker.tryGetById(id)
+                        logger.error { "Too long message: $len. ${entry?.location?.toString() ?: "<NULL>"}" }
+                    }
 
-                unsafeBuffer.position = initialPosition
-                unsafeBuffer.writeInt(len - 4)
-
-                val bytes = unsafeBuffer.getArray()
-                sendBuffer.put(bytes, initialPosition, len)
-            } finally {
-                if (initialPosition == 0)
-                    unsafeBuffer.reset() // apply shrinking logic
-                else
                     unsafeBuffer.position = initialPosition
+                    unsafeBuffer.writeInt(len - 4)
+
+                    val bytes = unsafeBuffer.getArray()
+                    sendBuffer.put(bytes, initialPosition, len)
+                } finally {
+                    if (initialPosition == 0)
+                        unsafeBuffer.reset() // apply shrinking logic
+                    else
+                        unsafeBuffer.position = initialPosition
+                }
             }
         }
     }
