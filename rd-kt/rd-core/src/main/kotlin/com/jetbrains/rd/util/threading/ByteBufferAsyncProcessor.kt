@@ -325,7 +325,14 @@ class ByteBufferAsyncProcessor(val id : String,
     }
 
     private fun growConditionally() {
-        if (chunkToFill.next.checkEmpty(this))
+        // RIDER-127935: never advance the producer onto the chunk the consumer is currently processing
+        // (`chunkToProcess`). Reusing it would let the producer overwrite that chunk's data and, worse,
+        // re-point its `next` before the consumer captures it in its finally block — re-routing the consumer
+        // into freshly-filled (newer) data ahead of older still-unfed chunks (a FIFO/ordering violation that
+        // permutes the byte stream under producer-outruns-consumer / lapping). Splicing a fresh chunk here
+        // keeps the producer strictly behind the consumer's head, so new data is always appended at the true
+        // tail and fed last.
+        if (chunkToFill.next !== chunkToProcess && chunkToFill.next.checkEmpty(this))
             return
 
         log.trace {"Grow: $chunkSize bytes" }
