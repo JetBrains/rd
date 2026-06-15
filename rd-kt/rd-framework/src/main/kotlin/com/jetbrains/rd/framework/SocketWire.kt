@@ -361,35 +361,33 @@ class SocketWire {
         override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
             require(!id.isNull) { "id mustn't be null" }
 
-            synchronized(sendSerializationLock) {
-                val unsafeBuffer = threadLocalBufferArray.get()
-                val initialPosition = unsafeBuffer.position
-                try {
+            val unsafeBuffer = threadLocalBufferArray.get()
+            val initialPosition = unsafeBuffer.position
+            try {
 
-                    unsafeBuffer.writeInt(0) //placeholder for length
+                unsafeBuffer.writeInt(0) //placeholder for length
 
-                    id.write(unsafeBuffer) //write id
-                    contexts.writeCurrentMessageContext(unsafeBuffer)
-                    writer(unsafeBuffer) //write rest
+                id.write(unsafeBuffer) //write id
+                contexts.writeCurrentMessageContext(unsafeBuffer)
+                writer(unsafeBuffer) //write rest
 
-                    val len = unsafeBuffer.position - initialPosition
+                val len = unsafeBuffer.position - initialPosition
 
-                    if (len > maxMessageLength) {
-                        val entry = messageBroker.tryGetById(id)
-                        logger.error { "Too long message: $len. ${entry?.location?.toString() ?: "<NULL>"}" }
-                    }
-
-                    unsafeBuffer.position = initialPosition
-                    unsafeBuffer.writeInt(len - 4)
-
-                    val bytes = unsafeBuffer.getArray()
-                    sendBuffer.put(bytes, initialPosition, len)
-                } finally {
-                    if (initialPosition == 0)
-                        unsafeBuffer.reset() // apply shrinking logic
-                    else
-                        unsafeBuffer.position = initialPosition
+                if (len > maxMessageLength) {
+                    val entry = messageBroker.tryGetById(id)
+                    logger.error { "Too long message: $len. ${entry?.location?.toString() ?: "<NULL>"}" }
                 }
+
+                unsafeBuffer.position = initialPosition
+                unsafeBuffer.writeInt(len - 4)
+
+                val bytes = unsafeBuffer.getArray()
+                sendBuffer.put(bytes, initialPosition, len)
+            } finally {
+                if (initialPosition == 0)
+                    unsafeBuffer.reset() // apply shrinking logic
+                else
+                    unsafeBuffer.position = initialPosition
             }
         }
     }
