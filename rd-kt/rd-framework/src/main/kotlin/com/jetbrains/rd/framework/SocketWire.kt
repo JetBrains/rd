@@ -352,12 +352,6 @@ class SocketWire {
             }
         }
 
-        // RIDER-127935: serialize concurrent senders so the send buffer only ever sees a single
-        // producer at a time. ByteBufferAsyncProcessor's chunk ring is single-producer-safe; concurrent
-        // producers (e.g. AsyncRdProperty set from arbitrary threads) corrupt the chunk linkage.
-        // Reentrant by design (nested sends from the context machinery run on the same thread).
-        private val sendSerializationLock = Any()
-
         override fun send(id: RdId, writer: (AbstractBuffer) -> Unit) {
             require(!id.isNull) { "id mustn't be null" }
 
