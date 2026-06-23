@@ -116,7 +116,11 @@ object RdDefaultErrorLoggerHolder {
 inline fun Logger.catch(comment: String?, action:() -> Unit) {
     try {
         action()
-    } catch (e : Throwable) {
+    }
+    catch (ce: CancellationException) {
+        throw ce
+    }
+    catch (e : Throwable) {
         val sfx = "${e.javaClass.name} ${e.message}" + if (comment.isNullOrBlank()) "" else " ($comment)"
         error("Catch $sfx", e)
     }
