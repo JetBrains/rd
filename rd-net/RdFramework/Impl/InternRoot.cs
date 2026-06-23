@@ -191,6 +191,12 @@ namespace JetBrains.Rd.Impl
       set => throw new NotSupportedException("Intern Roots are always async");
     }
 
+    public bool ValueCanBeNull
+    {
+      get => false;
+      set => throw new NotSupportedException("Intern Roots are always non-nullable");
+    }
+
     public void OnWireReceived(UnsafeReader reader, IRdWireableDispatchHelper dispatchHelper)
     {
       if (!TryGetSerializationContext(out var serializationCtx))
