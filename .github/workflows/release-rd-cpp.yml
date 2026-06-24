@@ -48,7 +48,7 @@ jobs:
           }
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       
     - name: Cache submodules
       uses: actions/cache@v6
