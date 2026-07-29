@@ -9,12 +9,14 @@ namespace rd
 {
 size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
 
+size_t ByteBufferAsyncProcessor::DEFAULT_CHUNK_SIZE = 16370;
+
 std::shared_ptr<spdlog::logger> ByteBufferAsyncProcessor::logger =
 	spdlog::stderr_color_mt<spdlog::synchronous_factory>("byteBufferLog", spdlog::color_mode::automatic);
 
 ByteBufferAsyncProcessor::ByteBufferAsyncProcessor(
-	std::string id, std::function<bool(Buffer::ByteArray const&, sequence_number_t)> processor)
-	: id(std::move(id)), processor(std::move(processor))
+	std::string id, std::function<bool(Buffer::ByteArray const&, sequence_number_t)> processor, size_t chunk_size)
+	: id(std::move(id)), processor(std::move(processor)), chunk_size(chunk_size)
 {
 	data.reserve(INITIAL_CAPACITY);
 }
@@ -219,7 +221,23 @@ void ByteBufferAsyncProcessor::put(Buffer::ByteArray new_data)
 		{
 			return;
 		}
-		data.emplace_back(std::move(new_data));
+
+		const size_t count = new_data.size();
+
+		if (count <= chunk_size)
+		{
+			data.emplace_back(std::move(new_data));
+		}
+		else
+		{
+			logger->debug("{}: splitting message of {} bytes into packages of {} bytes", id, count, chunk_size);
+			for (size_t ptr = 0; ptr < count; ptr += chunk_size)
+			{
+				const size_t rest = count - ptr;
+				const size_t copylen = rest < chunk_size ? rest : chunk_size;
+				data.emplace_back(new_data.begin() + ptr, new_data.begin() + ptr + copylen);
+			}
+		}
 	}
 	cv.notify_all();
 }
