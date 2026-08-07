@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Diagnostics;
 using JetBrains.Rd.Base;
+using JetBrains.Rd.Tasks;
 using JetBrains.Rd.Util;
 using JetBrains.Util;
 
@@ -85,6 +86,13 @@ namespace JetBrains.Rd.Reflection
             // value can be null for fields primitive types in RdModels. They are used in serializations, but send their value on bind
             if (value != null)
               obj.BindableChildren.Add(new KeyValuePair<string, object>(bindableMembers[i].Name, value));
+
+            if (value is IRdReactive reactive)
+            {
+              reactive.ValueCanBeNull = true;
+              if (value is IRdCall)
+                reactive.Async = true;
+            }
           }
         };
         lock (ourFillBindableChildren)
