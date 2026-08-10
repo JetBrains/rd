@@ -64,8 +64,15 @@ namespace JetBrains.Serialization
       // NOTE: having this makes it possible for JIT to just drop the remaining method's body when assertions are disabled
       if (!Mode.IsAssertion) return;
 
+      CheckLength(size);
+    }
+
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private void CheckLength(int size)
+    {
       var alreadyRead = (int)(myPtr - myInitialPtr);
-      if (alreadyRead + size > myMaxlen)
+      // size < 0 protects against overflows when writing strings with length bigger than 0x4000_0000
+      if (size < 0 || alreadyRead + size > myMaxlen)
       {
         ThrowOutOfRange(size, alreadyRead);
       }
@@ -84,7 +91,7 @@ namespace JetBrains.Serialization
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public byte* ReadRaw(int count)
     {
-      AssertLength(count);
+      CheckLength(count);
       var res = myPtr;
       myPtr += count;
       return res;

@@ -760,18 +760,32 @@ namespace JetBrains.Serialization
       }
     }
 
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    private static void CheckDataLength(int dataLength, int count, int itemSize)
+    {
+      if (dataLength < 0)
+      {
+        Assertion.Fail("Can't write an array that big: count={0}, itemSize={1}. " +
+                       "Maximum allowed length is {2}. ", count, itemSize, int.MaxValue / itemSize);
+      }
+    }
+
     // Mono 5.4 tries to inline this method and crashes.
     // [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     private static void WriteStringContentInternalAfterMono5(UnsafeWriter writer, string value, int offset, int count)
     {
+      var dataLength = count * sizeof(char);
+      CheckDataLength(dataLength, count, sizeof(char));
       fixed (char* c = value)
       {
-        writer.Write((byte*) (c + offset), count * sizeof(char));
+        writer.Write((byte*) (c + offset), dataLength);
       }
     }
 
     private static void WriteStringContentInternalBeforeMono5(UnsafeWriter writer, string value, int offset, int count)
     {
+      var dataLength = count * sizeof(char);
+      CheckDataLength(dataLength, count, sizeof(char));
       for (var index = offset; index < offset + count; index++)
       {
         writer.WriteChar(value[index]);
@@ -837,9 +851,11 @@ namespace JetBrains.Serialization
       else
       {
         WriteInt32(value.Length);
+        var dataLength = value.Length * sizeof(int);
+        CheckDataLength(dataLength, value.Length, sizeof(int));
         fixed (int* c = value)
         {
-          Write((byte*)c, value.Length * sizeof(int));
+          Write((byte*)c, dataLength);
         }
       }
     }
