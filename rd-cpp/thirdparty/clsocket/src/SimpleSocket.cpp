@@ -588,7 +588,7 @@ int32_t CSimpleSocket::Send(const struct iovec *sendVector, int32_t nNumItems)
     SetSocketError(SocketSuccess);
     m_nBytesSent = 0;
 
-    if ((m_nBytesSent = static_cast<int32_t>(WRITEV(m_socket, sendVector, nNumItems)) == CSimpleSocket::SocketError))
+    if ((m_nBytesSent = static_cast<int32_t>(WRITEV(m_socket, sendVector, nNumItems))) == CSimpleSocket::SocketError)
     {
         TranslateSocketError();
     }
