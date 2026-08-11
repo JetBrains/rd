@@ -329,7 +329,8 @@ int32_t SocketWire::Base::read_package() const
 	send_ack(seqn);
 	if (seqn <= max_received_seqn && seqn != 1)
 	{
-		return true;
+		logger->trace("{}: duplicate package seqn={} (max_received_seqn={}), skipping", this->id, seqn, max_received_seqn);
+		return 0;
 	}
 	max_received_seqn = seqn;
 
