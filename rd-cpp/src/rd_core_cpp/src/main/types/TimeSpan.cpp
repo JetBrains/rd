@@ -28,7 +28,7 @@ TimeSpan TimeSpan::CreateFromSeconds(int32_t seconds)
 
 TimeSpan TimeSpan::CreateFromMilliseconds(int32_t milliseconds)
 {
-	return TimeSpan{milliseconds * TicksPerSecond};
+	return TimeSpan{milliseconds * TicksPerMillisecond};
 }
 
 TimeSpan::TimeSpan(int64_t ticks) : m_ticks(ticks)
