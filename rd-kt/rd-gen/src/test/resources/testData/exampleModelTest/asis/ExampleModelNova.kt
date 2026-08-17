@@ -31,6 +31,7 @@ class ExampleModelNova private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(576020388116153), classLoader, "org.example.Selection"))
             serializers.register(LazyCompanionMarshaller(RdId(632584), classLoader, "org.example.Baz"))
