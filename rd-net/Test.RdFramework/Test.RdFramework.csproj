@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <!--suppress MsbuildTargetFrameworkTagInspection -->
-        <TargetFrameworks>net8.0</TargetFrameworks>
+        <TargetFrameworks>net10.0</TargetFrameworks>
         <TargetFrameworks Condition=" $(OS) == 'Windows_NT' ">net472;$(TargetFrameworks)</TargetFrameworks>
 
         <DebugType>Full</DebugType>
