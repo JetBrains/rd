@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -53,11 +53,51 @@ namespace JetBrains.Util.Internal
       }
     }
 
+    /// <summary>
+    /// Synchronizes memory access as follows:
+    /// The processor that executes the current thread cannot reorder instructions in such a way that memory reads before
+    /// the call to <see cref="ReadBarrier"/> execute after memory accesses that follow the call to <see cref="ReadBarrier"/>.
+    /// </summary>
+    /// <remarks>
+    /// On .NET 10 and later, delegates to <c>Volatile.ReadBarrier()</c>; on earlier targets, falls back to the
+    /// stronger full fence <see cref="Barrier()"/>.
+    /// </remarks>
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static void ReadBarrier()
+    {
+#if NET10_0_OR_GREATER
+      Volatile.ReadBarrier();
+#else
+      Barrier();
+#endif
+    }
+
+    /// <summary>
+    /// Synchronizes memory access as follows:
+    /// The processor that executes the current thread cannot reorder instructions in such a way that memory writes after
+    /// the call to <see cref="WriteBarrier"/> execute before memory accesses that precede the call to <see cref="WriteBarrier"/>.
+    /// </summary>
+    /// <remarks>
+    /// On .NET 10 and later, delegates to <c>Volatile.WriteBarrier()</c>; on earlier targets, falls back to the
+    /// stronger full fence <see cref="Barrier()"/>.
+    /// </remarks>
+    [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
+    public static void WriteBarrier()
+    {
+#if NET10_0_OR_GREATER
+      Volatile.WriteBarrier();
+#else
+      Barrier();
+#endif
+    }
+
+    /// <inheritdoc cref="Interlocked.MemoryBarrier()"/>
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static void Barrier()
     {
-  Interlocked.MemoryBarrier();
+      Interlocked.MemoryBarrier();
     }
+    
 #nullable disable
     [MethodImpl(MethodImplAdvancedOptions.AggressiveInlining)]
     public static T VolatileRead<T>(ref T location) where T : class
