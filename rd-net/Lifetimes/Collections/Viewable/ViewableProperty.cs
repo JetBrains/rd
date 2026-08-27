@@ -60,7 +60,7 @@ namespace JetBrains.Collections.Viewable
         }
 
         var value = myValue;
-        Interlocked.MemoryBarrier();
+        Memory.ReadBarrier();
         var timestampAfter = Volatile.Read(ref myTimestamp);
         if (timestampAfter != timestamp) // changed during read, retry ->
         {
@@ -97,7 +97,7 @@ namespace JetBrains.Collections.Viewable
           var timestampBefore = Volatile.Read(ref myTimestamp);
           // use volatile for atomic write on x86
           Volatile.Write(ref myTimestamp, timestampBefore + InProgressIncrement);
-          Interlocked.MemoryBarrier(); // myValue must be set strictly after myTimestamp  
+          Memory.WriteBarrier(); // myValue must be set strictly after myTimestamp  
           myValue = value;
           Volatile.Write(ref myTimestamp, timestampBefore + SetIncrement); // myTimestamp must be updated strictly after myValue is set 
           

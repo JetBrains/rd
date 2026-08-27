@@ -46,13 +46,14 @@ namespace JetBrains.Lifetimes
         while (++myPos < mySize)
         {
           ref var item = ref myItems[myPos];
-          if (item.Lifetime.IsNotAlive) continue;
+          var lifetime = item.Lifetime;
+          if (lifetime.IsNotAlive) continue;
           
           myCurValue = item;
 
           // double-check `IsAlive` because myCurValue may be partially cleared if ClearValuesIfNotAlive was called at the same time
-          Memory.Barrier(); // to suppress reordering
-          if (item.Lifetime.IsAlive)
+          Memory.ReadBarrier(); // to suppress reordering
+          if (lifetime.IsAlive)
             return true;
         }
 
