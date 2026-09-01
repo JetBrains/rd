@@ -49,7 +49,7 @@
 
 #pragma warning( push )
 #pragma warning( disable:4668 )
-  #include <Winsock2.h>
+  #include <WinSock2.h>
   #include <time.h>
 #pragma warning( pop )
 
