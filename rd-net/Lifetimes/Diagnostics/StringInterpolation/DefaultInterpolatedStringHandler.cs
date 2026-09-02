@@ -1,14 +1,15 @@
-﻿using System;
-using System.Runtime.CompilerServices;
+#if !NET8_0_OR_GREATER
 using System.Text;
 
-namespace JetBrains.Diagnostics.StringInterpolation;
+// ReSharper disable once CheckNamespace
+namespace System.Runtime.CompilerServices;
 
-internal struct JetDefaultInterpolatedStringHandler
+[InterpolatedStringHandler]
+internal ref struct DefaultInterpolatedStringHandler
 {
   private StringBuilder? myBuffer;
 
-  public JetDefaultInterpolatedStringHandler(int literalLength, int formattedCount)
+  public DefaultInterpolatedStringHandler(int literalLength, int formattedCount)
   {
     myBuffer = new StringBuilder(literalLength + formattedCount * 11);
   }
@@ -22,7 +23,7 @@ internal struct JetDefaultInterpolatedStringHandler
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void AppendLiteral(string? value)
+  public void AppendLiteral(string value)
   {
     myBuffer ??= new StringBuilder();
 
@@ -111,3 +112,4 @@ internal struct JetDefaultInterpolatedStringHandler
     }
   }
 }
+#endif
