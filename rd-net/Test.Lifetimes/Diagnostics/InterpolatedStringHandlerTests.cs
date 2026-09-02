@@ -32,12 +32,12 @@ public class InterpolatedStringHandlerTests
     Assert.AreEqual("test  foo", handler.ToStringAndClear());
   }
 
-  [TestCase("foo", null, "foo", 0)]
+  [TestCase("foo", "", "foo", 0)]
   [TestCase("barfoo", "bar", "foo", -1)]
   [TestCase("barfoo", "bar", "foo", 1)]
-  public void MoreAlignmentTests(string expected, [CanBeNull] string initial, string value, int alignment)
+  public void MoreAlignmentTests(string expected, string initial, string value, int alignment)
   {
-    var handler = new JetDefaultInterpolatedStringHandler();
+    var handler = new JetDefaultInterpolatedStringHandler(initial.Length, 0);
     handler.AppendLiteral(initial);
     handler.AppendFormatted(value, alignment);
     Assert.AreEqual(expected, handler.ToStringAndClear());
