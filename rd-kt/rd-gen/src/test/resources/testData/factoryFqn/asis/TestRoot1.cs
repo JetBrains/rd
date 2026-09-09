@@ -55,7 +55,7 @@ namespace Org.TestRoot1
     
     
     
-    protected override long SerializationHash => 474298181957578587L;
+    public override long SerializationHash => 474298181957578587L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

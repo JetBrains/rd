@@ -77,7 +77,7 @@ namespace Test.RdFramework.Reflection.Generated
     
     public static  CtxWriteDelegate<OpenClass> WriteOpenClass = Polymorphic<OpenClass>.Write;
     
-    protected override long SerializationHash => 7552167435222878147L;
+    public override long SerializationHash => 7552167435222878147L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

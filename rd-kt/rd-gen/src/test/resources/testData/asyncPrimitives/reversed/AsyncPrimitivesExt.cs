@@ -95,7 +95,7 @@ namespace org.example
     
     public static  CtxWriteDelegate<string> WriteStringNullable = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass();
     
-    protected override long SerializationHash => -5414287245037713638L;
+    public override long SerializationHash => -5414287245037713638L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
