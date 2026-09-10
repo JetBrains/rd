@@ -55,7 +55,7 @@ namespace Test.RdFramework.Reflection.Generated
     
     
     
-    protected override long SerializationHash => 96470360907636947L;
+    public override long SerializationHash => 96470360907636947L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

@@ -99,7 +99,7 @@ namespace JetBrains.Platform.Tests.Cases.RdFramework.PerClientId
     
     
     
-    protected override long SerializationHash => 3214444051594582608L;
+    public override long SerializationHash => 3214444051594582608L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

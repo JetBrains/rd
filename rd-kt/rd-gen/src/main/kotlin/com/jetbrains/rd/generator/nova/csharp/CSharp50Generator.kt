@@ -579,7 +579,7 @@ open class CSharp50Generator(
 
         if (decl is Toplevel) {
             println()
-            +"protected override long SerializationHash => ${decl.serializationHash(IncrementalHash64()).result}L;"
+            +"public override long SerializationHash => ${decl.serializationHash(IncrementalHash64()).result}L;"
             println()
             registerSerializersTrait(decl, decl.declaredTypes + unknowns(decl.declaredTypes))
             println()

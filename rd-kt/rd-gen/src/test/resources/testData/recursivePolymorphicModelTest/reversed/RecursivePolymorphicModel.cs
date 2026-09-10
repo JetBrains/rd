@@ -78,7 +78,7 @@ namespace org.example
     public static  CtxWriteDelegate<BeTreeGridLine> WriteBeTreeGridLine = Polymorphic<BeTreeGridLine>.Write;
     public static  CtxWriteDelegate<List<BeTreeGridLine>> WriteBeTreeGridLineList = Polymorphic<BeTreeGridLine>.Write.List();
     
-    protected override long SerializationHash => 4259101978417261843L;
+    public override long SerializationHash => 4259101978417261843L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

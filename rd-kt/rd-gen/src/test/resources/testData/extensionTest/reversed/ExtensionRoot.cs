@@ -55,7 +55,7 @@ namespace ExtensionRoot
     
     
     
-    protected override long SerializationHash => -8799809714061118005L;
+    public override long SerializationHash => -8799809714061118005L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

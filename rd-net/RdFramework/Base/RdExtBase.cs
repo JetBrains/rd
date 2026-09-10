@@ -38,7 +38,7 @@ namespace JetBrains.Rd.Base
     }
 
     protected abstract Action<ISerializers> Register { get; }
-    protected virtual long SerializationHash => 0L;
+    public virtual long SerializationHash => 0L;
 
     protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {

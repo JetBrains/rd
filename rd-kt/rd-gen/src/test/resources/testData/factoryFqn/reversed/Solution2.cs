@@ -130,7 +130,7 @@ namespace Org.TestRoot1
     public static  CtxWriteDelegate<List<string>> WriteStringList = JetBrains.Rd.Impl.Serializers.WriteString.List();
     public static  CtxWriteDelegate<List<string>> WriteStringNullableList = JetBrains.Rd.Impl.Serializers.WriteString.NullableClass().List();
     
-    protected override long SerializationHash => -7739621369434209029L;
+    public override long SerializationHash => -7739621369434209029L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
