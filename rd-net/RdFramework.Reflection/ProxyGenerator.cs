@@ -19,6 +19,7 @@ namespace JetBrains.Rd.Reflection
 
     private const String DynamicAssemblyName = "JetBrains.Rd.ProxyGenerator";
     private readonly bool myAllowSave;
+    private readonly ProxyGeneratorMembers myMembers;
 
     // todo remove
     /*
@@ -71,17 +72,19 @@ namespace JetBrains.Rd.Reflection
 
     public const int MaxTuplePayload = 7;
 
-    private static Lazy<ProxyGeneratorMembers> ourLazyMembers => new Lazy<ProxyGeneratorMembers>(() => new ProxyGeneratorMembers());
-    private static ProxyGeneratorMembers Members => ourLazyMembers.Value;
-
     private readonly Lazy<AssemblyBuilder> myAssemblyBuilder;
     private readonly Lazy<ModuleBuilder> myModuleBuilder;
 
     public AssemblyBuilder DynamicAssembly => myAssemblyBuilder.Value;
     public ModuleBuilder DynamicModule => myModuleBuilder.Value;
 
-    public ProxyGenerator(bool allowSave = false)
+    public ProxyGenerator(bool allowSave = false) : this(ProxyGeneratorMembers.Default, allowSave)
     {
+    }
+
+    public ProxyGenerator(ProxyGeneratorMembers members, bool allowSave = false)
+    {
+      myMembers = members;
       myAllowSave = allowSave;
 #if NETSTANDARD
      myAssemblyBuilder = new Lazy<AssemblyBuilder>(() => AssemblyBuilder.DefineDynamicAssembly(new AssemblyName(DynamicAssemblyName), AssemblyBuilderAccess.Run));
@@ -123,7 +126,7 @@ namespace JetBrains.Rd.Reflection
         typebuilder.AddInterfaceImplementation(typeof(IProxyTypeMarker));
 
         // Add RdExt attribute to type
-        var rdExtConstructor = Members.RdExtConstructor;
+        var rdExtConstructor = ProxyGeneratorMembers.OurRdExtConstructor;
         typebuilder.SetCustomAttribute(new CustomAttributeBuilder(rdExtConstructor, new object[] { interfaceType }));
 
         var ctx = new TypeBuilderContext(typebuilder);
@@ -154,7 +157,7 @@ namespace JetBrains.Rd.Reflection
             // ProxyGeneration which are located on our project.
             il.Emit(OpCodes.Ldc_I8, kvp.Value.WarnAwaitTime.Ticks);
             il.Emit(OpCodes.Ldc_I8, kvp.Value.ErrorAwaitTime.Ticks);
-            il.Emit(OpCodes.Call, ProxyGeneratorMembers.CreateRpcTimeoutMethod);
+            il.Emit(OpCodes.Call, myMembers.CreateRpcTimeoutsMethod);
 
             // set the static field
             il.Emit(OpCodes.Stsfld, kvp.Key);
@@ -245,14 +248,14 @@ namespace JetBrains.Rd.Reflection
         // load Unit result if necessary
         if (method.ReturnType == typeof(void) && IsSync(method))
         {
-          il.Emit(OpCodes.Ldsfld, Members.UnitInstance);
+          il.Emit(OpCodes.Ldsfld, ProxyGeneratorMembers.OurUnitInstance);
         }
 
         if (IsSync(method))
         {
           // Create RdTask
-          var taskFactoryMethod = typeof(RdTask).GetMethod(nameof(RdTask.Successful))?.MakeGenericMethod(responseType);
-          il.Emit(OpCodes.Call, taskFactoryMethod.NotNull("RdTask.Successful<Unit> not found"));
+          var taskFactoryMethod = myMembers.RdTaskSuccessful.MakeGenericMethod(responseType);
+          il.Emit(OpCodes.Call, taskFactoryMethod);
         }
         else
         {
@@ -445,7 +448,7 @@ namespace JetBrains.Rd.Reflection
         LoadArgument(ilgen, lifetimeArgument + 1);
       else
       {
-        ilgen.Emit(OpCodes.Call, Members.EternalLifetimeGet);
+        ilgen.Emit(OpCodes.Call, myMembers.DefaultCallLifetimeGetter);
       }
 
       // TReq
@@ -485,7 +488,7 @@ namespace JetBrains.Rd.Reflection
       }
       else
       {
-        ilgen.Emit(OpCodes.Ldsfld, Members.UnitInstance);
+        ilgen.Emit(OpCodes.Ldsfld, ProxyGeneratorMembers.OurUnitInstance);
       }
 
       if (isSyncCall)
@@ -497,18 +500,18 @@ namespace JetBrains.Rd.Reflection
         else
           ilgen.Emit(OpCodes.Ldnull);
 
-        ilgen.Emit(OpCodes.Call, Members.SyncNested4.MakeGenericMethod(requestType, responseType));
+        ilgen.Emit(OpCodes.Call, myMembers.SyncNested.MakeGenericMethod(requestType, responseType));
       }
       else
       {
         // Start(Lifetime, TReq, Scheduler)
-        var startMethod = ProxyGeneratorMembers.StartRdCall(fieldType);
+        var startMethod = myMembers.StartRdCall(fieldType);
 
         // async
         ilgen.Emit(OpCodes.Ldnull); // ResponseScheduler
-        ilgen.Emit(OpCodes.Callvirt, startMethod.NotNull("fieldType.GetMethod(Start) != null"));
+        ilgen.Emit(startMethod.IsStatic ? OpCodes.Call : OpCodes.Callvirt, startMethod);
 
-        ilgen.Emit(OpCodes.Call, Members.ToTask.MakeGenericMethod(responseType));
+        ilgen.Emit(OpCodes.Call, myMembers.ToTask.MakeGenericMethod(responseType));
       }
 
       if (method.ReturnType == typeof(void))
@@ -620,42 +623,6 @@ namespace JetBrains.Rd.Reflection
         TimeoutFields.Value.Add(timeoutsField, timeouts.Timeout);
         return timeoutsField;
       }
-    }
-  }
-
-  internal class ProxyGeneratorMembers
-  {
-    public readonly ConstructorInfo RdExtConstructor = typeof(RdExtAttribute)
-      .GetConstructors()
-      .Single(c => c.GetParameters().Length == 1)
-      .NotNull(nameof(RdExtConstructor));
-
-    public readonly FieldInfo UnitInstance = typeof(Unit)
-      .GetField(nameof(Unit.Instance))
-      .NotNull(nameof(UnitInstance));
-
-    // ReSharper disable once PossibleNullReferenceException
-    public readonly MethodInfo EternalLifetimeGet = typeof(Lifetime)
-      .GetProperty(nameof(Lifetime.Eternal), BindingFlags.Static | BindingFlags.Public)
-      .GetGetMethod()
-      .NotNull(nameof(EternalLifetimeGet));
-
-    public readonly MethodInfo SyncNested4 = typeof(ProxyGeneratorUtil)
-      .GetMethods()
-      .Single(m => m.Name == nameof(ProxyGeneratorUtil.SyncNested) && m.GetParameters().Length == 4)
-      .NotNull(nameof(SyncNested4));
-
-    public MethodInfo ToTask = (typeof(ProxyGeneratorUtil))
-      .GetMethod(nameof(ProxyGeneratorUtil.ToTask))
-      .NotNull(nameof(ToTask));
-
-    public static readonly MethodInfo CreateRpcTimeoutMethod = typeof(ProxyGeneratorUtil)
-      .GetMethod(nameof(ProxyGeneratorUtil.CreateRpcTimeouts))
-      .NotNull();
-
-    public static MethodInfo StartRdCall(Type rdCallType)
-    {
-      return rdCallType.GetMethods().Single(info => info.Name == nameof(IRdCall<int, int>.Start) && info.GetParameters().Length == 3);
     }
   }
 }
