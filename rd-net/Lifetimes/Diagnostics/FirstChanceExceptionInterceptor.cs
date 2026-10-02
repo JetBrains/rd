@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using JetBrains.Annotations;
+using System.Runtime.ExceptionServices;
 using JetBrains.Util;
 
 namespace JetBrains.Diagnostics
@@ -25,17 +25,23 @@ namespace JetBrains.Diagnostics
     
     static FirstChanceExceptionInterceptor()
     {
-      
-      AppDomain.CurrentDomain.FirstChanceException += (sender, args) =>
-      {
-        var info = string.Join("\n -> ", GetThreadLocalDebugInfo());
-        if (!string.IsNullOrEmpty(info) && !args.Exception.Data.IsReadOnly && !args.Exception.Data.Contains(ExceptionDataKey))
-        {
-          args.Exception.Data[ExceptionDataKey] = info;
-        }
-      };
+      AppDomain.CurrentDomain.FirstChanceException += OnFirstChanceException;
     }
-    
+
+    public static void DisposeForever()
+    {
+      AppDomain.CurrentDomain.FirstChanceException -= OnFirstChanceException;
+    }
+
+    private static void OnFirstChanceException(object? sender, FirstChanceExceptionEventArgs args)
+    {
+      var info = string.Join("\n -> ", GetThreadLocalDebugInfo());
+      if (!string.IsNullOrEmpty(info) && !args.Exception.Data.IsReadOnly && !args.Exception.Data.Contains(ExceptionDataKey))
+      {
+        args.Exception.Data[ExceptionDataKey] = info;
+      }
+    }
+
     public readonly struct ThreadLocalDebugInfo : IDisposable
     {
       private readonly object myDebugInfo;
