@@ -38,7 +38,12 @@ namespace JetBrains.Rd.Base
     }
 
     protected abstract Action<ISerializers> Register { get; }
-    public virtual long SerializationHash => 0L;
+    protected virtual long SerializationHash => 0L;
+
+    /// <summary>
+    /// Returns the <see cref="SerializationHash"/> of this model.
+    /// </summary>
+    public long GetSerializationHash() => SerializationHash;
 
     protected override void PreInit(Lifetime lifetime, IProtocol parentProto)
     {

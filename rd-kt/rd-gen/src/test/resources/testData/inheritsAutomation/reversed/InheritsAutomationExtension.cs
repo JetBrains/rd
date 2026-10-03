@@ -55,7 +55,7 @@ namespace InheritsAutomationRoot
     
     
     
-    public override long SerializationHash => -7010073710305884329L;
+    protected override long SerializationHash => -7010073710305884329L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

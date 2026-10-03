@@ -55,7 +55,7 @@ namespace DefaultFieldValuesRoot
     
     
     
-    public override long SerializationHash => 3367454536443547292L;
+    protected override long SerializationHash => 3367454536443547292L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

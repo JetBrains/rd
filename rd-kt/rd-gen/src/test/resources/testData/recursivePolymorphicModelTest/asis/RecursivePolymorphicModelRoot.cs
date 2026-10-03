@@ -55,7 +55,7 @@ namespace org.example
     
     
     
-    public override long SerializationHash => -6059810059586225403L;
+    protected override long SerializationHash => -6059810059586225403L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

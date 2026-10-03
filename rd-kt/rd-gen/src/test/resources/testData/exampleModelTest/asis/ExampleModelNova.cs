@@ -108,7 +108,7 @@ namespace org.example
     
     public static  CtxWriteDelegate<UseStructTest?> WriteUseStructTestNullable = UseStructTest.Write.NullableStruct();
     
-    public override long SerializationHash => -4242378315094463055L;
+    protected override long SerializationHash => -4242378315094463055L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)

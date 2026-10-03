@@ -33,7 +33,7 @@ namespace Test.RdFramework.Interning
     
     
     
-    public override long SerializationHash => 2016272947314984652L;
+    protected override long SerializationHash => 2016272947314984652L;
     
     protected override Action<ISerializers> Register => RegisterDeclaredTypesSerializers;
     public static void RegisterDeclaredTypesSerializers(ISerializers serializers)
