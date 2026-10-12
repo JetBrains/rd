@@ -223,6 +223,65 @@ namespace Test.RdFramework.Reflection
     }
 
     [Test]
+    public void TestEnumsOfAllUnderlyingTypes()
+    {
+      void Check<T>(int expectedSize, params T[] values) where T : Enum
+      {
+        foreach (var value in values)
+        {
+          RunScalarTest(value, (a, b) => Assert.AreEqual(a, b));
+          Assert.AreEqual(expectedSize, SerializedSize(value), "{0}.{1}", typeof(T).Name, value);
+        }
+      }
+
+      Check(4, SByteEnum.Min, SByteEnum.Max, SByteEnum.MinusOne);
+      Check(4, ByteEnum.Min, ByteEnum.Max);
+      Check(4, ShortEnum.Min, ShortEnum.Max, ShortEnum.MinusOne);
+      Check(4, UShortEnum.Min, UShortEnum.Max);
+      Check(4, IntEnum.Min, IntEnum.Max, IntEnum.MinusOne);
+      Check(4, UIntFlags.None, UIntFlags.Bit0, UIntFlags.Bit31, UIntFlags.All);
+      Check(8, LongEnum.Min, LongEnum.Max, LongEnum.MinusOne, LongEnum.IntMaxPlusOne);
+      Check(8, ULongFlags.None, ULongFlags.Bit31, ULongFlags.Bit32, ULongFlags.Bit63, ULongFlags.All);
+    }
+
+    [Test]
+    public void TestIntEnumWireFormatIsUnchanged()
+    {
+      var serializerPair = new ReflectionSerializers(CFacade.TypesCatalog).GetOrRegisterSerializerPair(typeof(UIntFlags), true);
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        serializerPair.GetWriter<UIntFlags>()(default, cookie.Writer, UIntFlags.Bit31 | UIntFlags.Bit0);
+        unsafe
+        {
+          Assert.AreEqual(unchecked((int) 0x80000001), UnsafeReader.CreateReader(cookie.Data, cookie.Count).ReadInt());
+        }
+      }
+    }
+
+    private int SerializedSize<T>(T value)
+    {
+      var writer = new ReflectionSerializers(CFacade.TypesCatalog).GetOrRegisterSerializerPair(typeof(T), true).GetWriter<T>();
+      using (var cookie = UnsafeWriter.NewThreadLocalWriter())
+      {
+        writer(default, cookie.Writer, value);
+        return cookie.Count;
+      }
+    }
+
+    public enum SByteEnum : sbyte { Min = sbyte.MinValue, MinusOne = -1, Max = sbyte.MaxValue }
+    public enum ByteEnum : byte { Min = byte.MinValue, Max = byte.MaxValue }
+    public enum ShortEnum : short { Min = short.MinValue, MinusOne = -1, Max = short.MaxValue }
+    public enum UShortEnum : ushort { Min = ushort.MinValue, Max = ushort.MaxValue }
+    public enum IntEnum { Min = int.MinValue, MinusOne = -1, Max = int.MaxValue }
+    public enum LongEnum : long { Min = long.MinValue, MinusOne = -1, IntMaxPlusOne = (long) int.MaxValue + 1, Max = long.MaxValue }
+
+    [Flags]
+    public enum UIntFlags : uint { None = 0, Bit0 = 1, Bit31 = 0x80000000, All = uint.MaxValue }
+
+    [Flags]
+    public enum ULongFlags : ulong { None = 0, Bit31 = 0x80000000, Bit32 = 0x100000000, Bit63 = 0x8000000000000000, All = ulong.MaxValue }
+
+    [Test]
     public void TestCyclic()
     {
       RunScalarTest(new RedBlackList {Start = new RedBlackList.BlackNode() {Next = new RedBlackList.RedNode()}}, (a, b) =>
