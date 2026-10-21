@@ -190,21 +190,33 @@ namespace JetBrains.Rd.Reflection
 
     private SerializerPair CreateEnumSerializer<T>()
     {
-      var readerParameter = Expression.Parameter(typeof(int), "reader");
-      var readerConvert = Expression.ConvertChecked(readerParameter, typeof(T));
-      var readerCaster = Expression.Lambda<Func<int, T>>(readerConvert, readerParameter).Compile();
-
-      var writerParameter = Expression.Parameter(typeof(T), "writer");
-      var writerConvert = Expression.ConvertChecked(writerParameter, typeof(int));
-      var writerCaster = Expression.Lambda<Func<T, int>>(writerConvert, writerParameter).Compile();
-
       if (Mode.IsAssertion) Assertion.Require(typeof(T).IsSubclassOf(typeof(Enum)), "{0}", typeof(T));
 
-      var result = new SerializerPair(
-        (CtxReadDelegate<T>) ((_, reader) => readerCaster(reader.ReadInt())),
-        (CtxWriteDelegate<T>) ((_, writer, o) => writer.WriteInt32(writerCaster(o))));
+      // Enums are transferred as raw bits. Enums of 4 bytes or less keep the 4-byte wire format, 64-bit enums use 8 bytes.
+      var underlyingType = Enum.GetUnderlyingType(typeof(T));
+      if (underlyingType == typeof(long) || underlyingType == typeof(ulong))
+      {
+        var readerCaster = CreateUncheckedCaster<long, T>();
+        var writerCaster = CreateUncheckedCaster<T, long>();
+        return new SerializerPair(
+          (CtxReadDelegate<T>) ((_, reader) => readerCaster(reader.ReadInt64())),
+          (CtxWriteDelegate<T>) ((_, writer, o) => writer.WriteInt64(writerCaster(o))));
+      }
+      else
+      {
+        var readerCaster = CreateUncheckedCaster<int, T>();
+        var writerCaster = CreateUncheckedCaster<T, int>();
+        return new SerializerPair(
+          (CtxReadDelegate<T>) ((_, reader) => readerCaster(reader.ReadInt())),
+          (CtxWriteDelegate<T>) ((_, writer, o) => writer.WriteInt32(writerCaster(o))));
+      }
+    }
 
-      return result;
+    private static Func<TFrom, TTo> CreateUncheckedCaster<TFrom, TTo>()
+    {
+      var parameter = Expression.Parameter(typeof(TFrom), "value");
+      var convert = Expression.Convert(parameter, typeof(TTo));
+      return Expression.Lambda<Func<TFrom, TTo>>(convert, parameter).Compile();
     }
 
     private SerializerPair RegisterNullable<T>(ISerializersSource serializers) where T : struct
