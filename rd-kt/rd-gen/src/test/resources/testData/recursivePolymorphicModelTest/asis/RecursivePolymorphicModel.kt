@@ -27,6 +27,7 @@ class RecursivePolymorphicModel private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(8163186073645594862), classLoader, "org.example.BeTreeGridLine"))
             serializers.register(LazyCompanionMarshaller(RdId(7212854712083994073), classLoader, "org.example.BeTreeGridLine_Unknown"))

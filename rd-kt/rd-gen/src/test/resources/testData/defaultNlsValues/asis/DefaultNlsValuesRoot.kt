@@ -25,6 +25,7 @@ class DefaultNlsValuesRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(17439278522805508), classLoader, "DefaultNlsValuesRoot.ClassModel"))
             DefaultNlsValuesRoot.register(serializers)

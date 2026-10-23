@@ -25,6 +25,7 @@ class CallGeneratedCodeRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(18933576544), classLoader, "call.generated.code.root.Editor"))
             serializers.register(LazyCompanionMarshaller(RdId(20513), classLoader, "call.generated.code.root.Es"))

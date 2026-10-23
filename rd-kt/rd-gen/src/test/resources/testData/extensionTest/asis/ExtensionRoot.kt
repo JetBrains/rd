@@ -25,6 +25,7 @@ class ExtensionRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(-1687597404575351130), classLoader, "ExtensionRoot.ClassWithStr"))
             serializers.register(LazyCompanionMarshaller(RdId(-2602185343174852445), classLoader, "ExtensionRoot.StructWithStr"))
