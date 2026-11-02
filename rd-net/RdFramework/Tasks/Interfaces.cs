@@ -20,7 +20,11 @@ namespace JetBrains.Rd.Tasks
     void SetRdTask(Func<Lifetime, TReq, RdTask<TRes>> handler, IScheduler? cancellationScheduler = null, IScheduler? handlerScheduler = null);
   }
 
-  public interface IRdCall<in TReq, TRes>
+  public interface IRdCall
+  {
+  }
+
+  public interface IRdCall<in TReq, TRes> : IRdCall
   {
     TRes Sync(TReq request, RpcTimeouts? timeouts = null);
     
