@@ -40,8 +40,8 @@ jobs:
               suffix: linux-clang
           }
         - {
-            name: "RD CPP macOS 14 Clang", artifact: "RD-CPP-macOS-Clang-",
-            os: macos-14,
+            name: "RD CPP macOS 15 Clang", artifact: "RD-CPP-macOS-Clang-",
+            os: macos-15,
             cc: "clang", cxx: "clang++",
             SEP: /,
               suffix: mac-clang
