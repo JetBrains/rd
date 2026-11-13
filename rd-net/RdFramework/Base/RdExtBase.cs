@@ -114,7 +114,12 @@ namespace JetBrains.Rd.Base
       switch (remoteState)
       {
         case ExtState.Ready:
-          SendState(myExtWire.RealWire, ExtState.ReceivedCounterPart);
+          // The ext can be unbound on another thread meanwhile, so reply only while it is still bound
+          using (var cookie = dispatchHelper.Lifetime.UsingExecuteIfAlive())
+          {
+            if (cookie.Succeed)
+              SendState(myExtWire.RealWire, ExtState.ReceivedCounterPart);
+          }
           myExtWire.Connected.Set(true);
           break;
 
