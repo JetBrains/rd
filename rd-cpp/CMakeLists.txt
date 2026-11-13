@@ -32,6 +32,13 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID
         if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0")
             message(FATAL_ERROR "Insufficient clang version")
         endif ()
+        # Clang 19+ (AppleClang 17+) enables P0522 relaxed template template argument matching by default,
+        # which makes the container specialization of Polymorphic<> ambiguous for RdCall/RdEndpoint.
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag(-fno-relaxed-template-template-args RD_HAS_NO_RELAXED_TEMPLATE_TEMPLATE_ARGS)
+        if (RD_HAS_NO_RELAXED_TEMPLATE_TEMPLATE_ARGS)
+            add_compile_options(-fno-relaxed-template-template-args)
+        endif ()
         if (CMAKE_BUILD_TYPE MATCHES "Debug")
             option(USE_ADDRESS_SANITIZER "Use address sanitizer to troubleshoot invalid allocations" ON)
         else ()
