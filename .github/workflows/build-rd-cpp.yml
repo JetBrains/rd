@@ -3,8 +3,23 @@ name: build-rd-cpp
 on:
   push:
     branches: [ master ]
+    paths: &rd-cpp-paths
+      - '.github/workflows/build-rd-cpp.yml'
+      - 'rd-cpp/**'
+      - 'rd-kt/rd-core/**'
+      - 'rd-kt/rd-gen/**'
+      - 'buildSrc/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - 'gradlew'
+      - 'gradlew.bat'
   pull_request:
     branches: [ master ]
+    paths: *rd-cpp-paths
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NINJA_VERSION: 1.9.0
