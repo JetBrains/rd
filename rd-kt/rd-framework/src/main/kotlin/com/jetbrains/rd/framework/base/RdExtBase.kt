@@ -130,7 +130,10 @@ abstract class RdExtBase : RdReactiveBase() {
         @Suppress("REDUNDANT_ELSE_IN_WHEN")
         when (remoteState) {
             ExtState.Ready -> {
-                extWire.realWire.sendState(ExtState.ReceivedCounterpart)
+                // The ext can be unbound on another thread meanwhile, so reply only while it is still bound
+                dispatchHelper.lifetime.executeIfAlive {
+                    extWire.realWire.sendState(ExtState.ReceivedCounterpart)
+                }
                 extWire.connected.value = true
             }
 
