@@ -632,6 +632,7 @@ open class Kotlin11Generator(
             types.filter { !it.isAbstract }.filterIsInstance<IType>().forEach {
                 if (it is Declaration) {
                     if (first && collector.shouldGenerateRegistrations) {
+                        + """@Suppress("JAVA_CLASS_ON_COMPANION")"""
                         +"val classLoader = javaClass.classLoader"
                         first = false
                     }

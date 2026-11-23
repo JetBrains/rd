@@ -30,6 +30,7 @@ class PerClientIdRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(17599967238820149), classLoader, "com.jetbrains.rd.framework.test.cases.perClientId.InnerClass"))
             serializers.register(LazyCompanionMarshaller(RdId(948719498381570149), classLoader, "com.jetbrains.rd.framework.test.cases.perClientId.PerClientIdStruct"))

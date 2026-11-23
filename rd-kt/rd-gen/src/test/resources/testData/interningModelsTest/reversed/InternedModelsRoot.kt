@@ -26,6 +26,7 @@ class InternedModelsRoot private constructor(
     companion object : ISerializersOwner {
         
         override fun registerSerializersCore(serializers: ISerializers)  {
+            @Suppress("JAVA_CLASS_ON_COMPANION")
             val classLoader = javaClass.classLoader
             serializers.register(LazyCompanionMarshaller(RdId(18933576544), classLoader, "InternedModelsRoot.Editor"))
             serializers.register(LazyCompanionMarshaller(RdId(631631), classLoader, "InternedModelsRoot.Abc"))
