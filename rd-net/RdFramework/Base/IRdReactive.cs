@@ -8,6 +8,7 @@ namespace JetBrains.Rd.Base
   public interface IRdReactive : IRdBindable, IRdWireable
   {
     bool Async { get; set; }
+    bool ValueCanBeNull { get; set; }
   }
 
 
